@@ -1,0 +1,12 @@
+{
+    "whoIAm": "SContext",
+    "version": 2,
+    "data": [
+        {
+            "type": "object",
+            "dataType": "float",
+            "name": "var",
+            "initial": 42
+        }
+    ]
+}

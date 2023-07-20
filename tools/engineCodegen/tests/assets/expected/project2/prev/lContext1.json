@@ -1,0 +1,35 @@
+{
+    "whoIAm": "Context",
+    "version": 1,
+    "data": [
+        {
+            "type": "object",
+            "dataType": "int32_t",
+            "name": "var1",
+            "initial": 1
+        },
+        {
+            "type": "object",
+            "dataType": "float",
+            "name": "var2",
+            "initial": 1.1
+        },
+        {
+            "type": "object",
+            "dataType": "CustomData1",
+            "name": "var3"
+        },
+        {
+            "type": "dbbuffer",
+            "dataType": "float",
+            "name": "dbvar1",
+            "capacity": 512
+        },
+        {
+            "type": "dbbuffer",
+            "dataType": "int64_t",
+            "name": "dbvar2",
+            "capacity": 1024
+        }
+    ]
+}

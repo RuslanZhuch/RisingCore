@@ -1,0 +1,78 @@
+{
+    "sharedContextsInstances": [
+        {
+            "contextName": "sContext1",
+            "instanceName": "sharedInst1"
+        },
+        {
+            "contextName": "sContext1",
+            "instanceName": "sharedInst2"
+        },
+        {
+            "contextName": "sContext2",
+            "instanceName": "sharedInst3"
+        },
+        {
+            "contextName": "sContext2",
+            "instanceName": "sharedInst4"
+        },
+        {
+            "contextName": "sContext3",
+            "instanceName": "sharedInst5"
+        }
+    ],
+    "sharedContextsInstancesToFlush": [
+        "sharedInst1",
+        "sharedInst2",
+        "sharedInst4"
+    ],
+    "sharedContextsUsage": [
+        {
+            "instanceName": "sharedInst1",
+            "executorName": "executor2",
+            "executorSharedName": "shared1"
+        },
+        {
+            "instanceName": "sharedInst2",
+            "executorName": "executor2",
+            "executorSharedName": "shared2"
+        },
+        {
+            "instanceName": "sharedInst3",
+            "executorName": "executor2",
+            "executorSharedName": "shared3"
+        },
+        {
+            "instanceName": "sharedInst4",
+            "executorName": "executor2",
+            "executorSharedName": "shared4"
+        },
+        {
+            "instanceName": "sharedInst1",
+            "executorName": "executor3",
+            "executorSharedName": "shared1_2"
+        },
+        {
+            "instanceName": "sharedInst3",
+            "executorName": "executor3",
+            "executorSharedName": "shared2_2"
+        }
+    ],
+    "sharedContextsMerge": [
+        {
+            "instanceName": "sharedInst1",
+            "executorName": "executor2",
+            "executorContextName": "target1"
+        },
+        {
+            "instanceName": "sharedInst1",
+            "executorName": "executor2",
+            "executorContextName": "target2"
+        },
+        {
+            "instanceName": "sharedInst3",
+            "executorName": "executor3",
+            "executorContextName": "shared3"
+        }
+    ]
+}

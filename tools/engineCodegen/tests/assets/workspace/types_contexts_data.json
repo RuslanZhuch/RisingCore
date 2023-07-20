@@ -1,0 +1,10 @@
+{
+    "whoIAm": "TypesDesc",
+    "version": 1,
+    "data":{
+        "float": "None",
+        "int32_t": "None",
+        "int64_t": "None",
+        "CustomData1": "Types/CustomData.h"
+    }
+}

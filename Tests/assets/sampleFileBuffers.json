@@ -1,0 +1,19 @@
+{
+  "whoIAm": "Context",
+  "version": 1,
+  "contextType": "Local",
+  "data": [
+    {
+      "type": "dbbuffer",
+      "dataType": "float",
+      "name": "buffer1",
+      "capacity": 41
+    },
+    {
+      "type": "dbbuffer",
+      "dataType": "int64_t",
+      "name": "buffer1",
+      "capacity": 81
+    }
+  ]
+}

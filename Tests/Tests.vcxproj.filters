@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="engineTests\MemPool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="engineTests\MemUtils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="engineTests\SharedContext.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="engineTests\String.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="engineTests\Algorithms.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="engineTests\Buffers.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="engineTests\BufferUtils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="engineTests\Contexts.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{0367df37-65df-41c2-8417-7caf72fb5488}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

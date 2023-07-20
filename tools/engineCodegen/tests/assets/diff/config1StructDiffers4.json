@@ -1,0 +1,12 @@
+{
+    "whoIAm": "Context",
+    "version": 1,
+    "data": [
+        {
+            "type": "dbbuffer",
+            "dataType_changed": "int32_t",
+            "name": "dbvar",
+            "capacity": 4096
+        }
+    ]
+}

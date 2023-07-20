@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{181eb985-5e86-4e86-a16c-70128adb213f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\dod">
+      <UniqueIdentifier>{598fd72d-4837-4551-af52-35351ace67fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\engine">
+      <UniqueIdentifier>{03ddfed5-3fcc-4cf8-a1f8-702168b90f80}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\dod\Algorithms.h">
+      <Filter>src\dod</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dod\Buffers.h">
+      <Filter>src\dod</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dod\BufferUtils.h">
+      <Filter>src\dod</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dod\ConditionTable.h">
+      <Filter>src\dod</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dod\MemPool.h">
+      <Filter>src\dod</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dod\MemTypes.h">
+      <Filter>src\dod</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dod\MemUtils.h">
+      <Filter>src\dod</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dod\SharedContext.h">
+      <Filter>src\dod</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine\contextUtils.h">
+      <Filter>src\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine\String.h">
+      <Filter>src\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine\StringUtils.h">
+      <Filter>src\engine</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\dod\MemPool.cpp">
+      <Filter>src\dod</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine\contextUtils.cpp">
+      <Filter>src\engine</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

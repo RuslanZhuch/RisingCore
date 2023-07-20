@@ -1,0 +1,12 @@
+{
+    "whoIAm": "Context",
+    "version": 1,
+    "data": [
+        {
+            "type": "dbbuffer",
+            "dataType": "double",
+            "name": "dbvar",
+            "capacity": 4096
+        }
+    ]
+}

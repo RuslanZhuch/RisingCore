@@ -1,0 +1,15 @@
+Game::ExecutionBlock::Executor1 executor1;
+executor1.loadContext();
+executor1.initiate();
+Game::ExecutionBlock::Executor2 executor2;
+executor2.loadContext();
+executor2.shared1Context = &sharedInst1Context;
+executor2.shared2Context = &sharedInst2Context;
+executor2.shared3Context = &sharedInst3Context;
+executor2.shared4Context = &sharedInst4Context;
+executor2.initiate();
+Game::ExecutionBlock::Executor3 executor3;
+executor3.loadContext();
+executor3.shared1_2Context = &sharedInst1Context;
+executor3.shared2_2Context = &sharedInst3Context;
+executor3.initiate();

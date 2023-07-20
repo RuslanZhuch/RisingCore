@@ -1,0 +1,20 @@
+{
+    "project_dest_folder": "dest/projects/project2",
+    "application_context_path": "ws_applicationContext.json",
+    "project_root_src_folder": "assets/project2",
+    "project_root_src_types": "assets/project2",
+    "project_contexts_src_folder": "assets/project2/contexts",
+    "project_executors_src_folder": "assets/project2/executors",
+    "types_paths": [
+        "types_default.json",
+        "types_contexts_data.json"
+    ],
+    "contexts_paths": [
+        "lContext1.json",
+        "lContext2.json"
+    ],
+    "executors_paths": [
+        "executor1.json",
+        "executor2.json"
+    ]
+}

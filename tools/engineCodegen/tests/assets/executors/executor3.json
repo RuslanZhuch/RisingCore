@@ -1,0 +1,19 @@
+{
+    "whoIAm": "Executor_3",
+    "version": 3,
+    "memory": 4096,
+    "contextsShared": [
+        {
+            "type": "sContext1",
+            "list": [
+                "shared1"
+            ]
+        },
+        {
+            "type": "sContext2",
+            "list": [
+                "shared3"
+            ]
+        }
+    ]
+}

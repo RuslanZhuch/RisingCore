@@ -1,0 +1,55 @@
+{
+    "whoIAm": "Executor",
+    "version": 1,
+    "memory": 2048,
+    "contextsLocal": [
+        {
+            "type": "type1",
+            "list": [
+                "local1"
+            ]
+        },
+        {
+            "type": "type2",
+            "list": [
+                "local2"
+            ]
+        },
+        {
+            "type": "type3",
+            "list": [
+                "local3",
+                "local4"
+            ]
+        }
+    ],
+    "contextsWriteTo": [
+        {
+            "type": "type4",
+            "list": [
+                "target1",
+                "target2",
+                "target3"
+            ]
+        }
+    ],
+    "contextsShared": [
+        {
+            "type": "type5",
+            "list": [
+                "shared1",
+                "shared2"
+            ]
+        },
+        {
+            "type": "type6",
+            "list": [
+                "shared3"
+            ]
+        }
+    ],
+    "contextsToFlush": [
+        "target1",
+        "target3"
+    ]
+}

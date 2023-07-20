@@ -1,0 +1,20 @@
+{
+    "whoIAm": "Executor_2",
+    "version": 2,
+    "memory": 4096,
+    "contextsWriteTo": [
+        {
+            "type": "lContext1",
+            "list": [
+                "target1"
+            ]
+        },
+        {
+            "type": "lContext3",
+            "list": [
+                "target2",
+                "target3"
+            ]
+        }
+    ]
+}

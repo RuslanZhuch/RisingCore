@@ -1,0 +1,30 @@
+{
+    "sharedContextsInstances": [
+        {
+            "contextName": "sContext1",
+            "instanceName": "sharedInst1"
+        },
+        {
+            "contextName": "sContext1",
+            "instanceName": "sharedInst2"
+        },
+        {
+            "contextName": "sContext2",
+            "instanceName": "sharedInst3"
+        },
+        {
+            "contextName": "sContext2",
+            "instanceName": "sharedInst4"
+        },
+        {
+            "contextName": "sContext3",
+            "instanceName": "sharedInst5"
+        }
+    ],
+    "sharedContextsInstancesToFlush": [
+    ],
+    "sharedContextsUsage": [
+    ],
+    "sharedContextsMerge": [
+    ]
+}
