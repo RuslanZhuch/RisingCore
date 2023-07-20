@@ -26,6 +26,7 @@ class TestDiff(unittest.TestCase):
     def test_check_file_changed(self):
         self.assertFalse(diff.check_files_equals("assets/diff/config4.json", "assets/diff/config4NotExist.json"))
         self.assertTrue(diff.check_files_equals("assets/diff/config4.json", "assets/diff/config4Same.json"))
+        shutil.copyfile("assets/diff/config4DiffInitial.json", "assets/diff/config4Diff.json")
         self.assertFalse(diff.check_files_equals("assets/diff/config4.json", "assets/diff/config4Diff.json"))
             
     def test_json_structure_diff_1(self):
@@ -164,6 +165,9 @@ class TestDiff(unittest.TestCase):
             "file2.json",
             "file3.json",
         ]
+        
+        if not os.path.exists(previous_files_folder):
+            os.makedirs(previous_files_folder)
                 
         shutil.copyfile(current_files_folder + "/file1.json", previous_files_folder + "/file1.json")
         shutil.copyfile(current_files_folder + "/file2Initial.json", previous_files_folder + "/file2.json")

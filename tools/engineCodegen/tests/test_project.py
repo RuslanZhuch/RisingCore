@@ -58,6 +58,7 @@ class TestProject(unittest.TestCase):
     def test_gen_project1(self):
         [f.unlink() for f in Path("assets/contexts/prev").glob("*") if f.is_file()] 
         [f.unlink() for f in Path("assets/executors/prev").glob("*") if f.is_file()] 
+        [f.unlink() for f in Path("assets/workspace/prev").glob("*") if f.is_file()] 
         
         project.generate("assets/workspace/project1.json")
         
