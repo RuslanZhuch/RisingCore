@@ -7,10 +7,19 @@
 
 #include <engine/StringUtils.h>
 
+#pragma warning(push)
+
+#pragma warning(disable : 4464)
+#pragma warning(disable : 4820)
+#pragma warning(disable : 4061)
+#pragma warning(disable : 4365)
+
 #include <rapidjson/document.h>
 
 #include <string_view>
 #include <optional>
+
+#pragma warning(pop)
 
 namespace Engine::ContextUtils
 {
@@ -18,7 +27,7 @@ namespace Engine::ContextUtils
 	[[nodiscard]] rapidjson::Document loadFileDataRoot(const std::string_view filename) noexcept;
 	[[nodiscard]] std::optional<rapidjson::GenericArray<true, rapidjson::Value>> gatherContextData(const rapidjson::Document& doc, size_t numOfExpectedElements) noexcept;
 	
-	[[nodiscard]] static void loadVariable(auto& dest, rapidjson::GenericArray<true, rapidjson::Value> src, size_t id) noexcept
+	[[nodiscard]] static void loadVariable(auto& dest, rapidjson::GenericArray<true, rapidjson::Value> src, rapidjson::SizeType id) noexcept
 	{
 
         using type_t = std::decay_t<decltype(dest)>;
@@ -42,7 +51,7 @@ namespace Engine::ContextUtils
     template <typename T>
     [[nodiscard]] static int32_t getBufferCapacityBytes(
         rapidjson::GenericArray<true, rapidjson::Value> buffer,
-        size_t id
+        rapidjson::SizeType id
     ) noexcept
     {
 
@@ -57,7 +66,7 @@ namespace Engine::ContextUtils
         const auto capacity{ dataObject["capacity"].GetInt() };
         const auto capacityBytes{ capacity * dataTypeSize };
 
-        return capacityBytes;
+        return static_cast<int32_t>(capacityBytes);
 
     }
 
