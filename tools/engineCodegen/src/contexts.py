@@ -27,7 +27,8 @@ def load_contexts(context_file_names : list[str]):
 class ContextData:
     MERGE_TYPE_NONE : int = 0
     MERGE_TYPE_ASSIGN : int = 1
-    MERGE_TYPE_ADD : int = 2        
+    MERGE_TYPE_ADD : int = 2  
+    MERGE_TYPE_ASSIGN_NON_ZERO : int = 3  
     
     class ObjectDataElement:
         def __init__(self, name, data_type, initial, merge_type: int):
@@ -51,6 +52,8 @@ def _get_merge_type(merge_policy : str):
         return ContextData.MERGE_TYPE_ASSIGN
     elif merge_policy == "add":
         return ContextData.MERGE_TYPE_ADD
+    elif merge_policy == "simple_nz":
+        return ContextData.MERGE_TYPE_ASSIGN_NON_ZERO
     return ContextData.MERGE_TYPE_NONE
 
 def load_data(context_raw_data):
@@ -225,6 +228,10 @@ def generate_context_merge(handler, context_raw_data):
                     generator.generate_line(handler, "this->{0} = other.{0};".format(object_name))
                 elif object.merge_type == ContextData.MERGE_TYPE_ADD:
                     generator.generate_line(handler, "this->{0} += other.{0};".format(object_name))
+                elif object.merge_type == ContextData.MERGE_TYPE_ASSIGN_NON_ZERO:
+                    def body(handler):
+                        generator.generate_line(handler, "this->{0} = other.{0};".format(object_name))
+                    generator.generate_block(handler, "if (other.{0})".format(object_name), body)
             
             for buffer in context_data.buffers_data:
                 buffer_name = buffer.name

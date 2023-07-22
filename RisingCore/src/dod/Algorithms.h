@@ -70,7 +70,10 @@ namespace Dod::Algorithms
 		for (int32_t id{}; id < Dod::BufferUtils::getNumFilledElements(srcBuffer); ++id)
 			Dod::BufferUtils::populate(sortedIndices, id, true);
 
-		std::sort(sortedIndices.dataBegin + 1, sortedIndices.dataEnd, [&](int32_t leftId, int32_t rightId) -> bool {
+		const auto beginOffset{ 1 };
+		const auto endOffset{ 1 + Dod::BufferUtils::getNumFilledElements(sortedIndices) };
+
+		std::sort(sortedIndices.dataBegin + beginOffset, sortedIndices.dataBegin + endOffset, [&](int32_t leftId, int32_t rightId) -> bool {
 			return Dod::BufferUtils::get(srcBuffer, leftId) < Dod::BufferUtils::get(srcBuffer, rightId);
 		});
 

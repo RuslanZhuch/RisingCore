@@ -119,7 +119,7 @@ class TestContexts(unittest.TestCase):
         
         utils.assert_files(self, "dest/gen_lContext1_reset.cpp", "assets/expected/gen_lContext1_reset.cpp")
           
-    def test_gen_context2_reset(self):
+    def test_gen_context1_merge(self):
         file_path = "assets/contexts/lContext1.json"
         context_raw_data = loader.load_file_data(file_path)
         
@@ -130,6 +130,18 @@ class TestContexts(unittest.TestCase):
         handler.close()
         
         utils.assert_files(self, "dest/gen_lContext1_merge.cpp", "assets/expected/gen_lContext1_merge.cpp")
+          
+    def test_gen_context4_merge(self):
+        file_path = "assets/contexts/lContext4.json"
+        context_raw_data = loader.load_file_data(file_path)
+        
+        handler = generator.generate_file("dest", "gen_lContext4_merge.cpp")
+        self.assertIsNotNone(handler)
+        contexts.generate_context_merge(handler, context_raw_data)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_lContext4_merge.cpp", "assets/expected/gen_lContext4_merge.cpp")
           
     def test_gen_context1_impl(self):
         contexts.generate_context_impl("dest", "assets/contexts/lContext1.json")

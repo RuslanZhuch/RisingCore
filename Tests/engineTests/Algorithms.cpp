@@ -346,6 +346,35 @@ TEST(Algorithms, GetSortedIndices)
 
 }
 
+TEST(Algorithms, GetSortedIndicesRepeats)
+{
+
+	using type_t = int32_t;
+
+	auto values{ std::to_array<type_t>({0, 10, 1, 1, -5, 1, 4}) };
+
+	Dod::DBBuffer<type_t> buffer;
+	initDBuffer(buffer, values);
+
+	std::array<int32_t, values.size()> indices;
+	Dod::DBBuffer<int32_t> indicesBuffer;
+	Dod::BufferUtils::initFromArray(indicesBuffer, indices);
+
+	Dod::Algorithms::getSortedIndices(
+		indicesBuffer,
+		Dod::BufferUtils::createImFromBuffer(buffer)
+	);
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(indicesBuffer), Dod::BufferUtils::getNumFilledElements(buffer));
+	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 0), 3);
+	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 1), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 2), 2);
+	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 3), 4);
+	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 4), 5);
+	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 5), 0);
+
+}
+
 TEST(Algorithms, GetSortedIndicesOneEl)
 {
 
@@ -439,6 +468,36 @@ TEST(Algorithms, GetSortedIndicesEmptyTarget)
 	);
 
 	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(indicesBuffer), 0);
+
+}
+
+TEST(Algorithms, GetSortedIndicesLargeTarget)
+{
+
+	using type_t = int32_t;
+
+	auto values{ std::to_array<type_t>({0, 10, 1, 5, -5, 6, 4}) };
+
+	Dod::DBBuffer<type_t> buffer;
+	initDBuffer(buffer, values);
+
+	std::array<int32_t, 15> indices;
+	indices.fill(1);
+	Dod::DBBuffer<int32_t> indicesBuffer;
+	Dod::BufferUtils::initFromArray(indicesBuffer, indices);
+
+	Dod::Algorithms::getSortedIndices(
+		indicesBuffer,
+		Dod::BufferUtils::createImFromBuffer(buffer)
+	);
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(indicesBuffer), Dod::BufferUtils::getNumFilledElements(buffer));
+	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 0), 3);
+	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 1), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 2), 5);
+	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 3), 2);
+	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 4), 4);
+	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 5), 0);
 
 }
 
