@@ -60,4 +60,20 @@ namespace Dod::Algorithms
 
 	}
 
+	template <typename T>
+	static void getSortedIndices(DBBuffer<int32_t>& sortedIndices, ImBuffer<T> srcBuffer) noexcept
+	{
+
+		if (Dod::BufferUtils::getNumFilledElements(srcBuffer) == 0)
+			return;
+
+		for (int32_t id{}; id < Dod::BufferUtils::getNumFilledElements(srcBuffer); ++id)
+			Dod::BufferUtils::populate(sortedIndices, id, true);
+
+		std::sort(sortedIndices.dataBegin + 1, sortedIndices.dataEnd, [&](int32_t leftId, int32_t rightId) -> bool {
+			return Dod::BufferUtils::get(srcBuffer, leftId) < Dod::BufferUtils::get(srcBuffer, rightId);
+		});
+
+	}
+
 };
