@@ -50,7 +50,7 @@ class TestExecutors(unittest.TestCase):
         self.assertEqual(executors.get_name(executors_data[1]), "executor2")
         
     def test_load_shared_contexts_usage(self):
-        workspace_data = loader.load_application_context_data("assets/workspace/ws_applicationContext.json")
+        workspace_data = loader.load_runtime_data("assets/workspace/ws_runtime.json")
         
         usage = executors.load_shared_context_usage(workspace_data)
         self.assertEqual(len(usage), 2)
@@ -73,6 +73,36 @@ class TestExecutors(unittest.TestCase):
         self.assertEqual(usage["executor3"][1].shared_instance, "sharedInst3")
         self.assertEqual(usage["executor3"][1].executor_scontext, "shared2_2")
         
+    def test_load_pool_contexts_usage(self):
+        workspace_data = loader.load_runtime_data("assets/project3/ws_runtime.json")
+        
+        usage = executors.load_pool_context_usage(workspace_data)
+        self.assertEqual(len(usage), 4)
+        
+        self.assertIsNotNone(usage["executor3"])
+        self.assertEqual(len(usage["executor3"]), 1)
+        self.assertEqual(usage["executor3"][0].shared_instance, "poolInst1")
+        self.assertEqual(usage["executor3"][0].executor_scontext, "pool1")
+        
+        self.assertIsNotNone(usage["executor4"])
+        self.assertEqual(len(usage["executor4"]), 2)
+        self.assertEqual(usage["executor4"][0].shared_instance, "poolInst2")
+        self.assertEqual(usage["executor4"][0].executor_scontext, "pool2")
+        self.assertEqual(usage["executor4"][1].shared_instance, "poolInst3")
+        self.assertEqual(usage["executor4"][1].executor_scontext, "pool3")
+        
+        self.assertIsNotNone(usage["executor5"])
+        self.assertEqual(len(usage["executor5"]), 2)
+        self.assertEqual(usage["executor5"][0].shared_instance, "poolInst2")
+        self.assertEqual(usage["executor5"][0].executor_scontext, "pool2")
+        self.assertEqual(usage["executor5"][1].shared_instance, "poolInst3")
+        self.assertEqual(usage["executor5"][1].executor_scontext, "pool3")
+        
+        self.assertIsNotNone(usage["executor6"])
+        self.assertEqual(len(usage["executor6"]), 1)
+        self.assertEqual(usage["executor6"][0].shared_instance, "poolInst3")
+        self.assertEqual(usage["executor6"][0].executor_scontext, "pool3")
+        
     def test_gen_executor_1_shared_context_init(self):
         executors_data = load_executors()
         self.assertEqual(len(executors_data), EXPECT_NUM_OF_EXECUTORS)
@@ -80,7 +110,7 @@ class TestExecutors(unittest.TestCase):
         handler = generator.generate_file("dest", "gen_executor_1_shared_context_init.cpp")
         self.assertIsNotNone(handler)
         
-        workspace_data = loader.load_application_context_data("assets/workspace/ws_applicationContext.json")
+        workspace_data = loader.load_runtime_data("assets/workspace/ws_runtime.json")
         
         executors.gen_shared_context_init(handler, executors_data[0], workspace_data)
         handler.close()
@@ -96,7 +126,7 @@ class TestExecutors(unittest.TestCase):
         handler = generator.generate_file("dest", "gen_executor_2_shared_context_init.cpp")
         self.assertIsNotNone(handler)
         
-        workspace_data = loader.load_application_context_data("assets/workspace/ws_applicationContext.json")
+        workspace_data = loader.load_runtime_data("assets/workspace/ws_runtime.json")
         
         executors.gen_shared_context_init(handler, executors_data[1], workspace_data)
         handler.close()
@@ -123,12 +153,33 @@ class TestExecutors(unittest.TestCase):
         handler = create_target_file()
         self.assertIsNotNone(handler)
         
-        workspace_data = loader.load_application_context_data("assets/workspace/ws_applicationContext.json")
+        workspace_data = loader.load_runtime_data("assets/workspace/ws_runtime.json")
         executors.gen_inits(handler, executors_data, workspace_data)
         
         handler.close()
         
         utils.assert_files(self, "dest/runtime.cpp", "assets/expected/executorsGeneration.cpp")
+        
+    def test_gen_executor_init_with_pools(self):
+        executors_data = executors.load([
+            "assets/project3/executors/executor1.json",
+            "assets/project3/executors/executor2.json",
+            "assets/project3/executors/executor3.json",
+            "assets/project3/executors/executor4.json",
+            "assets/project3/executors/executor5.json",
+            "assets/project3/executors/executor6.json"
+        ])
+        self.assertEqual(len(executors_data), 6)
+        
+        handler = generator.generate_file("dest", "executorsGenerationWithPools.cpp")
+        self.assertIsNotNone(handler)
+        
+        workspace_data = loader.load_runtime_data("assets/project3/ws_runtime.json")
+        executors.gen_inits(handler, executors_data, workspace_data)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/executorsGenerationWithPools.cpp", "assets/expected/executorsGenerationWithPools.cpp")
         
     def test_gen_executor_update(self):
         executors_data = load_executors()
@@ -155,6 +206,26 @@ class TestExecutors(unittest.TestCase):
         handler.close()
         
         utils.assert_files(self, "dest/runtime.cpp", "assets/expected/executorsFlush.cpp")
+        
+#    def test_gen_executor_flush_with_pools(self):
+#        executors_data = executors.load([
+#            "assets/project3/executors/executor1.json",
+#            "assets/project3/executors/executor2.json",
+#            "assets/project3/executors/executor3.json",
+#            "assets/project3/executors/executor4.json",
+#            "assets/project3/executors/executor5.json",
+#            "assets/project3/executors/executor6.json"
+#        ])
+#        self.assertEqual(len(executors_data), 6)
+#        
+#        handler = generator.generate_file("dest", "gen_executor_flush_with_pools.cpp")
+#        self.assertIsNotNone(handler)
+#        
+#        executors.gen_flush(handler, executors_data)
+#        
+#        handler.close()
+#        
+#        utils.assert_files(self, "dest/gen_executor_flush_with_pools.cpp", "assets/expected/gen_executor_flush_with_pools.cpp")
         
     def test_gen_executor_1_body_flush(self):
         executors_data = load_executors()

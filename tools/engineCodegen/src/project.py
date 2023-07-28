@@ -12,7 +12,7 @@ from os import path
 class ProjectDesc:
     def __init__(self):
         self.project_dest_folder = ""
-        self.application_context_path = ""
+        self.application_runtime_path = ""
         self.types_paths = []
         self.contexts_paths = []
         self.executors_paths = []
@@ -77,7 +77,7 @@ def load(project_desc_file):
         return project_desc
     
     project_desc.project_dest_folder = _get_value(desc_file_data, "project_dest_folder")
-    project_desc.application_context_path = _get_value(desc_file_data, "application_context_path")
+    project_desc.application_runtime_path = _get_value(desc_file_data, "runtime_path")
     project_desc.types_paths = _get_array(desc_file_data, "types_paths")
     project_desc.contexts_paths = _get_array(desc_file_data, "contexts_paths")
     project_desc.executors_paths = _get_array(desc_file_data, "executors_paths")
@@ -112,7 +112,7 @@ def generate(project_path : str):
         
     contexts_diff_list = _generate_diff_for_contexts(project_desc.project_contexts_src_folder, project_desc.contexts_paths)
     executors_diff_list = _generate_diff_for_executors(project_desc.project_executors_src_folder, project_desc.executors_paths)
-    runtime_changed = _generate_diff_for_project_structure(project_desc.project_root_src_folder, project_desc.application_context_path)
+    runtime_changed = _generate_diff_for_project_structure(project_desc.project_root_src_folder, project_desc.application_runtime_path)
     project_structure_changed = _generate_diff_for_project_structure(project_desc.project_root_src_folder, path.basename(project_path))
     
     types_data = [loader.load_file_data(project_desc.project_root_src_types + "/" + types_path) for types_path in project_desc.types_paths]
@@ -148,7 +148,7 @@ def generate(project_path : str):
     if project_structure_changed is False and runtime_changed is False:
         return
         
-    application_context_path = project_desc.project_root_src_folder + "/" + project_desc.application_context_path
+    application_context_path = project_desc.project_root_src_folder + "/" + project_desc.application_runtime_path
     
     contexts_full_paths = [project_desc.project_contexts_src_folder + "/" + context_path for context_path in project_desc.contexts_paths]
     contexts_data = contexts.load_contexts(contexts_full_paths)

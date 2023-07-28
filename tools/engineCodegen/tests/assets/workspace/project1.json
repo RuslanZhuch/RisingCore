@@ -1,6 +1,6 @@
 {
     "project_dest_folder": "dest/projects/project1",
-    "application_context_path": "ws_applicationContext.json",
+    "runtime_path": "ws_runtime.json",
     "project_root_src_folder": "assets/workspace",
     "project_root_src_types": "assets/workspace",
     "project_contexts_src_folder": "assets/contexts",

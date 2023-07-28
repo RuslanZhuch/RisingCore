@@ -43,9 +43,35 @@ def _generate_contexts_includes(handler, shared_context_instances : list[context
     if len(unique_instances) > 0:
         handler.newline(1)
         
+def _generate_executors_update(handler, runtime_data : dict[any], executors_data: list):
+    pool_contexts_instances = runtime_data.get("poolContextsInstances")
+    
+    schema_data = runtime_data.get("schema")
+    if schema_data is None:
+        executors.gen_updates(handler, executors_data)
+        handler.newline(1)
+        return
+    
+    for block_id, block_data in enumerate(schema_data):
+        executors_in_block = block_data.get("executors")
+        if executors_in_block is None:
+            continue
+
+        contexts.generate_pools_merge(handler, runtime_data, block_id)
+        handler.newline(1)
+
+        executors_in_block_data = []
+        for executor_in_block in executors_in_block:
+            for executor_data in executors_data:
+                if executor_data["name"] == executor_in_block:
+                    executors_in_block_data.append(executor_data)
+                    break
+        executors.gen_updates(handler, executors_in_block_data)
+        handler.newline(1)
+
 def generate(target_path, executors_data, workspace_shared_contexts_file, loaded_contexts_data):
     
-    workspace_context_data = loader.load_application_context_data(workspace_shared_contexts_file)
+    workspace_context_data = loader.load_runtime_data(workspace_shared_contexts_file)
     handler = generate_runtime_file(target_path)
     
     validated_shared_context_instances = _get_validated_shared_context_instaces(workspace_shared_contexts_file, loaded_contexts_data)
@@ -69,9 +95,9 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
             generator.generate_line(handler, "const auto start{ std::chrono::high_resolution_clock::now() };")
             handler.newline(1)
             
-            executors.gen_updates(handler, executors_data)
-            handler.newline(1)
+            _generate_executors_update(handler, workspace_context_data, executors_data)
             
+            contexts.generate_pools_flush(handler, workspace_context_data)
             contexts.generate_shared_flush(handler, workspace_context_data)
             handler.newline(1)
             

@@ -37,7 +37,7 @@ class TestProject(unittest.TestCase):
         self.assertEqual(project_desc.project_contexts_src_folder, "assets/contexts")
         self.assertEqual(project_desc.project_executors_src_folder, "assets/executors")
         
-        self.assertEqual(project_desc.application_context_path, "ws_applicationContext.json")
+        self.assertEqual(project_desc.application_runtime_path, "ws_runtime.json")
         
         self.assertEqual(len(project_desc.types_paths), 2)
         self.assertEqual(project_desc.types_paths[0], "types_default.json")
@@ -162,7 +162,7 @@ class TestProject(unittest.TestCase):
         self.assertGreater(get_file_modification_time("dest/projects/project2/contexts/LContext1Context.cpp"), max_initial_modification_time)
         
         self.assertGreater(get_file_modification_time("dest/projects/project2/runtime.cpp"), max_initial_modification_time)
-        self.assertNotEqual(get_file_modification_time(prev_root_path + "/ws_applicationContext.json"), max_initial_modification_time)
+        self.assertNotEqual(get_file_modification_time(prev_root_path + "/ws_runtime.json"), max_initial_modification_time)
    
     def test_gen_project2_with_diff_2(self):
         if os.path.exists('dest/projects/project2'):
@@ -249,7 +249,7 @@ class TestProject(unittest.TestCase):
         self.assertEqual(get_file_modification_time("dest/projects/project2/contexts/LContext1Context.cpp"), prev_context1cpp_mod_time)
         
         self.assertGreater(get_file_modification_time("dest/projects/project2/runtime.cpp"), pre_generation_time)
-        self.assertNotEqual(get_file_modification_time(prev_root_path + "/ws_applicationContext.json"), pre_generation_time)
+        self.assertNotEqual(get_file_modification_time(prev_root_path + "/ws_runtime.json"), pre_generation_time)
 
     def test_gen_project2_with_diff_workspace_structure(self):
         if os.path.exists('dest/projects/project2'):
@@ -274,10 +274,10 @@ class TestProject(unittest.TestCase):
         if not os.path.exists("dest/projects/project2"):
             os.makedirs("dest/projects/project2")
             
-        shutil.copyfile("assets/expected/project2/prev/ws_applicationContext.json", prev_root_path + "/ws_applicationContext.json")
+        shutil.copyfile("assets/expected/project2/prev/ws_runtime.json", prev_root_path + "/ws_runtime.json")
         shutil.copyfile("assets/expected/project2/prev/project2.json", prev_root_path + "/project2.json")
         
-        prev_workspace_mod_time = get_file_modification_time(prev_root_path + "/ws_applicationContext.json")
+        prev_workspace_mod_time = get_file_modification_time(prev_root_path + "/ws_runtime.json")
         prev_project_mod_time = get_file_modification_time(prev_root_path + "/project2.json")
         prev_runtime_mod_time = get_file_modification_time("dest/projects/project2/runtime.cpp")
         
@@ -298,7 +298,7 @@ class TestProject(unittest.TestCase):
         
         utils.assert_files(self, "dest/projects/project2/runtime.cpp", "assets/expected/project2/runtime.cpp")
         
-        self.assertEqual(prev_workspace_mod_time, get_file_modification_time(prev_root_path + "/ws_applicationContext.json"))
+        self.assertEqual(prev_workspace_mod_time, get_file_modification_time(prev_root_path + "/ws_runtime.json"))
         self.assertEqual(prev_project_mod_time, get_file_modification_time(prev_root_path + "/project2.json"))
         
         self.assertEqual(prev_runtime_mod_time, get_file_modification_time("dest/projects/project2/runtime.cpp"))
@@ -351,7 +351,7 @@ class TestProject(unittest.TestCase):
         utils.assert_files(self, "dest/projects/project2/runtime.cpp", "assets/expected/project2/runtime.cpp")
         
         self.assertGreater(get_file_modification_time("dest/projects/project2/runtime.cpp"), pre_generation_time)
-        self.assertGreater(get_file_modification_time(prev_root_path + "/ws_applicationContext.json"), pre_generation_time)
+        self.assertGreater(get_file_modification_time(prev_root_path + "/ws_runtime.json"), pre_generation_time)
         self.assertEqual(prev_project_mod_time, get_file_modification_time(prev_root_path + "/project2.json"))
         
         self.assertGreater(get_file_modification_time("dest/projects/project2/executors/Executor1Executor.h"), pre_generation_time)
@@ -382,10 +382,10 @@ class TestProject(unittest.TestCase):
         if not os.path.exists(prev_root_path):
             os.makedirs(prev_root_path)
             
-        shutil.copyfile("assets/expected/project2/prev/ws_applicationContext.json", prev_root_path + "/ws_applicationContext.json")
+        shutil.copyfile("assets/expected/project2/prev/ws_runtime.json", prev_root_path + "/ws_runtime.json")
         shutil.copyfile("assets/expected/project2/prev/project2Initial.json", prev_root_path + "/project2.json")
         
-        prev_workspace_mod_time = get_file_modification_time(prev_root_path + "/ws_applicationContext.json")
+        prev_workspace_mod_time = get_file_modification_time(prev_root_path + "/ws_runtime.json")
         prev_project_mod_time = get_file_modification_time(prev_root_path + "/project2.json")
         prev_runtime_mod_time = get_file_modification_time("dest/projects/project2/runtime.cpp")
         
@@ -406,7 +406,7 @@ class TestProject(unittest.TestCase):
         
         utils.assert_files(self, "dest/projects/project2/runtime.cpp", "assets/expected/project2/runtime.cpp")
         
-        self.assertEqual(prev_workspace_mod_time, get_file_modification_time(prev_root_path + "/ws_applicationContext.json"))
+        self.assertEqual(prev_workspace_mod_time, get_file_modification_time(prev_root_path + "/ws_runtime.json"))
         self.assertGreater(get_file_modification_time(prev_root_path + "/project2.json"), prev_project_mod_time)
         
         self.assertGreater(get_file_modification_time("dest/projects/project2/runtime.cpp"), prev_runtime_mod_time)
@@ -419,3 +419,4 @@ class TestProject(unittest.TestCase):
         self.assertGreater(get_file_modification_time("dest/projects/project2/executors/Executor2Executor.cpp"), prev_runtime_mod_time)
         self.assertGreater(get_file_modification_time("dest/projects/project2/contexts/LContext1Context.h"), prev_runtime_mod_time)
         self.assertGreater(get_file_modification_time("dest/projects/project2/contexts/LContext1Context.cpp"), prev_runtime_mod_time)
+        

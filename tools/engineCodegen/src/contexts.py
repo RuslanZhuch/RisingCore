@@ -255,6 +255,10 @@ def load_shared_context_instances(file) -> list[ContextUsage]:
     usage_data = []
     for usage in content["sharedContextsInstances"]:
         usage_data.append(ContextUsage(usage["contextName"], usage["instanceName"]))
+    pool_contexts_instances = content.get("poolContextsInstances")
+    if pool_contexts_instances is not None:
+        for usage in pool_contexts_instances:
+            usage_data.append(ContextUsage(usage["contextName"], usage["instanceName"]))
     return usage_data
     
 def load_shared_context_to_flush(workspace_data):
@@ -262,6 +266,14 @@ def load_shared_context_to_flush(workspace_data):
     
 def generate_shared_flush(handler, workspace_data):
     flush_data = load_shared_context_to_flush(workspace_data)
+    for context in flush_data:
+        generator.generate_line(handler, "Dod::SharedContext::flush(&{}Context);".format(context))
+    
+def generate_pools_flush(handler, workspace_data):
+    pools = workspace_data.get("poolContextsInstances")
+    if pools is None:
+        return
+    flush_data = [pool["instanceName"] for pool in pools]
     for context in flush_data:
         generator.generate_line(handler, "Dod::SharedContext::flush(&{}Context);".format(context))
     
@@ -277,7 +289,24 @@ def load_shared_context_merge(workspace_data):
         shared_instance = element["instanceName"]
         executor_context = element["executorContextName"]
         if output.get(shared_instance) is None:
-            output[shared_instance] = []    
+            output[shared_instance] = []
+        output[shared_instance].append(SharedMerge(executor_name, executor_context))
+        
+    return output
+
+def load_pool_context_merge(workspace_data):    
+    output = dict()
+    
+    merge_data_full = workspace_data.get("poolContextsMerge")
+    if merge_data_full is None:
+        return output
+    
+    for element in merge_data_full:
+        executor_name = element["executorName"]
+        shared_instance = element["instanceName"]
+        executor_context = element["executorContextName"]
+        if output.get(shared_instance) is None:
+            output[shared_instance] = []
         output[shared_instance].append(SharedMerge(executor_name, executor_context))
         
     return output
@@ -307,5 +336,38 @@ def generate_shared_merge(handler, workspace_data):
         merge_context_full = merge_data[instance_name]
         for merge_context in merge_context_full:
             executor_name = merge_context.executor_name
+            executor_scontext = merge_context.executor_scontext
+            generator.generate_line(handler, "Dod::SharedContext::merge(&{}Context, {}.{}Context);".format(instance_name, executor_name, executor_scontext))
+    
+def generate_pools_merge(handler, workspace_data : dict[any], block_id : int):
+    merge_data = load_pool_context_merge(workspace_data)
+    if merge_data is None:
+        return
+    
+    schema = workspace_data.get("schema")
+    if schema is None:
+        return
+    
+    if len(schema) <= block_id or block_id < 0:
+        return
+    
+    block = schema[block_id]
+    wait_rules = block.get("waitPools")
+    if wait_rules is None:
+        return
+    
+    prev_block_executors = []
+    if block_id > 0:
+        prev_block = schema[block_id - 1]
+        prev_block_executors.extend(prev_block["executors"])
+    
+    for instance_name in wait_rules:
+        merge_context_full = merge_data.get(instance_name)
+        if merge_context_full is None:
+            continue
+        for merge_context in merge_context_full:
+            executor_name = merge_context.executor_name
+            if executor_name not in prev_block_executors:
+                continue
             executor_scontext = merge_context.executor_scontext
             generator.generate_line(handler, "Dod::SharedContext::merge(&{}Context, {}.{}Context);".format(instance_name, executor_name, executor_scontext))

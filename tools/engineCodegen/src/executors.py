@@ -28,7 +28,24 @@ def get_name(data):
 def load_shared_context_usage(workspace_data):
     output = dict()
     
-    usage = workspace_data["sharedContextsUsage"]
+    usage = workspace_data.get("sharedContextsUsage")
+    if usage is None:
+        return output
+    
+    for element in usage:
+        executor_name = element["executorName"]
+        shared_instance = element["instanceName"]
+        executor_scontext = element["executorSharedName"]
+        if output.get(executor_name) is None:
+            output[executor_name] = []    
+        output[executor_name].append(SharedUsage(shared_instance, executor_scontext))
+        
+    return output
+
+def load_pool_context_usage(workspace_data):
+    output = dict()
+    
+    usage = workspace_data.get("poolContextsUsage")
     if usage is None:
         return output
     
@@ -44,6 +61,9 @@ def load_shared_context_usage(workspace_data):
 
 def gen_shared_context_init(handler, executor_data, workspace_data):
     usage_full_data = load_shared_context_usage(workspace_data)
+    pool_context_usage = load_pool_context_usage(workspace_data)
+    if pool_context_usage is not None:
+        usage_full_data.update(pool_context_usage)
     
     executor_name = get_name(executor_data)
     

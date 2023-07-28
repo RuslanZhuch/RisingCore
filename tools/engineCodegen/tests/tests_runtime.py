@@ -12,8 +12,10 @@ sys.path.append(root_dir)
 import sys
 sys.path.append("../src")
 
+import os
 import runtime
 
+import shutil
 import utils
 import contexts
 import loader
@@ -28,7 +30,7 @@ class TestRuntime(unittest.TestCase):
         handler = runtime.generate_runtime_file("dest")
         self.assertIsNotNone(handler)
         descriptor_file = open("dest/runtime.cpp")
-        
+                
     def test_generate_runtime_function(self):        
         executors_data = executors.load([
             "assets/executors/executor1.json",
@@ -42,6 +44,29 @@ class TestRuntime(unittest.TestCase):
         
         contexts_data = contexts.load_contexts(contexts_file_list)
         
-        runtime.generate("dest", executors_data, "assets/workspace/ws_applicationContext.json", contexts_data)
+        runtime.generate("dest", executors_data, "assets/workspace/ws_runtime.json", contexts_data)
         
         utils.assert_files(self, "dest/runtime.cpp", "assets/expected/runtime.cpp")
+                
+    def test_generate_runtime_with_pools(self):
+        if not os.path.exists('dest/project3'):
+            os.makedirs('dest/project3')
+             
+        executors_data = executors.load([
+            "assets/project3/executors/executor1.json",
+            "assets/project3/executors/executor2.json",
+            "assets/project3/executors/executor3.json",
+            "assets/project3/executors/executor4.json",
+            "assets/project3/executors/executor5.json",
+            "assets/project3/executors/executor6.json"
+        ])
+        contexts_file_list = [
+            "assets/project3/contexts/sContext1.json",
+            "assets/project3/contexts/sContext2.json"
+        ]
+        
+        contexts_data = contexts.load_contexts(contexts_file_list)
+        
+        runtime.generate("dest/project3", executors_data, "assets/project3/ws_runtime.json", contexts_data)
+        
+        utils.assert_files(self, "dest/project3/runtime.cpp", "assets/expected/project3/runtime.cpp")

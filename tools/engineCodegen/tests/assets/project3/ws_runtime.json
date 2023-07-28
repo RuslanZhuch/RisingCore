@@ -1,0 +1,106 @@
+{
+    "schema": [
+        {
+            "executors": [
+                "executor1",
+                "executor2"
+            ]
+        },
+        {
+            "waitPools": [
+                "poolInst1",
+                "poolInst2"
+            ],
+            "executors": [
+                "executor3",
+                "executor4"
+            ]
+        },
+        {
+            "waitPools": [
+                "poolInst2",
+                "poolInst3"
+            ],
+            "executors": [
+                "executor5",
+                "executor6"
+            ]
+        }
+    ],
+    "sharedContextsInstances": [
+    ],
+    "sharedContextsInstancesToFlush": [
+    ],
+    "poolContextsInstances": [
+        {
+            "contextName": "sContext1",
+            "instanceName": "poolInst1"
+        },
+        {
+            "contextName": "sContext1",
+            "instanceName": "poolInst2"
+        },
+        {
+            "contextName": "sContext2",
+            "instanceName": "poolInst3"
+        }
+    ],
+    "sharedContextsUsage": [
+    ],
+    "sharedContextsMerge": [
+    ],
+    "poolContextsUsage": [
+        {
+            "instanceName": "poolInst1",
+            "executorName": "executor3",
+            "executorSharedName": "pool1"
+        },
+        {
+            "instanceName": "poolInst2",
+            "executorName": "executor4",
+            "executorSharedName": "pool2"
+        },
+        {
+            "instanceName": "poolInst3",
+            "executorName": "executor4",
+            "executorSharedName": "pool3"
+        },
+        {
+            "instanceName": "poolInst2",
+            "executorName": "executor5",
+            "executorSharedName": "pool2"
+        },
+        {
+            "instanceName": "poolInst3",
+            "executorName": "executor5",
+            "executorSharedName": "pool3"
+        },
+        {
+            "instanceName": "poolInst3",
+            "executorName": "executor6",
+            "executorSharedName": "pool3"
+        }
+    ],
+    "poolContextsMerge": [
+        {
+            "instanceName": "poolInst1",
+            "executorName": "executor1",
+            "executorContextName": "pool1"
+        },
+        {
+            "instanceName": "poolInst2",
+            "executorName": "executor1",
+            "executorContextName": "pool2"
+        },
+        {
+            "instanceName": "poolInst2",
+            "executorName": "executor2",
+            "executorContextName": "pool2"
+        },
+        {
+            "instanceName": "poolInst3",
+            "executorName": "executor4",
+            "executorContextName": "pool3"
+        }
+    ]
+}
