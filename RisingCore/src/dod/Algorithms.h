@@ -79,4 +79,33 @@ namespace Dod::Algorithms
 
 	}
 
+	template <typename BufferType>
+	static void countUniques(DBBuffer<int32_t>& counters, BufferType srcSortedBuffer) noexcept requires requires(BufferType) {
+		std::is_const_v<decltype(BufferType::dataBegin)>;
+		std::is_const_v<decltype(BufferType::dataEnd)>;
+	}
+	{
+
+		if (Dod::BufferUtils::getNumFilledElements(srcSortedBuffer) == 0)
+			return;
+
+		using type_t = BufferType::type_t;
+
+		type_t prevValue{ Dod::BufferUtils::get(srcSortedBuffer, 0) };
+		int32_t counter{ 1 };
+		for (int32_t id{ 1 }; id < Dod::BufferUtils::getNumFilledElements(srcSortedBuffer); ++id)
+		{
+			const auto currValue{ Dod::BufferUtils::get(srcSortedBuffer, id) };
+			const auto bDiffers{ currValue != prevValue };
+			prevValue = currValue;
+			counter += !bDiffers;
+
+			Dod::BufferUtils::populate(counters, counter, bDiffers);
+			counter -= (counter - 1) * bDiffers;
+		}
+
+		Dod::BufferUtils::populate(counters, counter, counter > 0);
+
+	}
+
 };

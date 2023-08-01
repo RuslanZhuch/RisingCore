@@ -165,6 +165,15 @@ namespace Dod::BufferUtils
 		return buffer.dataBegin[elId];
 	}
 
+	template <typename BufferType>
+	[[nodiscard]] auto& get(const BufferType& buffer, int32_t elId) noexcept requires requires(BufferType buff) { 
+		buff.sortingDataBegin;
+		buff.sortingDataEnd;	
+	}
+	{
+		return buffer.dataBegin[buffer.sortingDataBegin[elId]];
+	}
+
 	template<typename T>
 	void remove(DBBuffer<T>& buffer, const ImBuffer<int32_t> indicesToRemove) noexcept
 	{
@@ -203,6 +212,25 @@ namespace Dod::BufferUtils
 		initFromBuffer(imBuffer, srcBuffer, 0, Dod::BufferUtils::getNumFilledElements(srcBuffer));
 
 		return imBuffer;
+
+	}	
+	
+	template <typename T>
+	[[nodiscard]] auto createSortedImBuffer(ImBuffer<T> srcBuffer, ImBuffer<int32_t> indices) noexcept
+	{
+	
+		const auto bCanCreate{ Dod::BufferUtils::getNumFilledElements(srcBuffer) == Dod::BufferUtils::getNumFilledElements(indices) };
+
+		Dod::SortedImBuffer<T> sortedBuffer;
+		if (!bCanCreate)
+			return sortedBuffer;
+
+		sortedBuffer.dataBegin = srcBuffer.dataBegin;
+		sortedBuffer.dataEnd = srcBuffer.dataEnd;
+		sortedBuffer.sortingDataBegin = indices.dataBegin;
+		sortedBuffer.sortingDataEnd = indices.dataEnd;
+		
+		return sortedBuffer;
 
 	}
 

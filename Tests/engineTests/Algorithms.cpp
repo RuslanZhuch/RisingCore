@@ -523,3 +523,211 @@ TEST(Algorithms, GetSortedIndicesEmptySrc)
 	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(indicesBuffer), 0);
 
 }
+
+TEST(Algorithms, CountUniques)
+{
+
+	using type_t = int32_t;
+
+	auto values{ std::to_array<type_t>({0, 0, 0, 1, 2, 2, 5, 7, 7, 7}) };
+
+	Dod::DBBuffer<type_t> buffer;
+	initDBuffer(buffer, values);
+
+	std::array<int32_t, values.size()> counters;
+	Dod::DBBuffer<int32_t> countersBuffer;
+	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+
+	Dod::Algorithms::countUniques(
+		countersBuffer,
+		Dod::BufferUtils::createImFromBuffer(buffer)
+	);
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 5);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 2);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 1), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 2), 2);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 3), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 4), 3);
+
+}
+
+TEST(Algorithms, CountUniquesOneElsOnSides)
+{
+
+	using type_t = int32_t;
+
+	auto values{ std::to_array<type_t>({0, 0, 1, 2, 2, 5, 7}) };
+
+	Dod::DBBuffer<type_t> buffer;
+	initDBuffer(buffer, values);
+
+	std::array<int32_t, values.size()> counters;
+	Dod::DBBuffer<int32_t> countersBuffer;
+	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+
+	Dod::Algorithms::countUniques(
+		countersBuffer,
+		Dod::BufferUtils::createImFromBuffer(buffer)
+	);
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 5);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 1), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 2), 2);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 3), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 4), 1);
+
+}
+
+TEST(Algorithms, CountUniquesOnlyMultiples)
+{
+
+	using type_t = int32_t;
+
+	auto values{ std::to_array<type_t>({0, 0, 0, 1, 1, 1, 2, 2, 5, 5, 7, 7, 7}) };
+
+	Dod::DBBuffer<type_t> buffer;
+	initDBuffer(buffer, values);
+
+	std::array<int32_t, values.size()> counters;
+	Dod::DBBuffer<int32_t> countersBuffer;
+	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+
+	Dod::Algorithms::countUniques(
+		countersBuffer,
+		Dod::BufferUtils::createImFromBuffer(buffer)
+	);
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 5);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 2);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 1), 3);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 2), 2);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 3), 2);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 4), 3);
+
+}
+
+TEST(Algorithms, CountUniquesOnlySingles)
+{
+
+	using type_t = int32_t;
+
+	auto values{ std::to_array<type_t>({0, 0, 1, 2, 5, 7}) };
+
+	Dod::DBBuffer<type_t> buffer;
+	initDBuffer(buffer, values);
+
+	std::array<int32_t, values.size()> counters;
+	Dod::DBBuffer<int32_t> countersBuffer;
+	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+
+	Dod::Algorithms::countUniques(
+		countersBuffer,
+		Dod::BufferUtils::createImFromBuffer(buffer)
+	);
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 5);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 1), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 2), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 3), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 4), 1);
+
+}
+
+TEST(Algorithms, CountUniquesOneMultiple)
+{
+
+	using type_t = int32_t;
+
+	auto values{ std::to_array<type_t>({0, 1, 1, 1}) };
+
+	Dod::DBBuffer<type_t> buffer;
+	initDBuffer(buffer, values);
+
+	std::array<int32_t, values.size()> counters;
+	Dod::DBBuffer<int32_t> countersBuffer;
+	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+
+	Dod::Algorithms::countUniques(
+		countersBuffer,
+		Dod::BufferUtils::createImFromBuffer(buffer)
+	);
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 3);
+
+}
+
+TEST(Algorithms, CountUniquesOneSingle)
+{
+
+	using type_t = int32_t;
+
+	auto values{ std::to_array<type_t>({0, 1}) };
+
+	Dod::DBBuffer<type_t> buffer;
+	initDBuffer(buffer, values);
+
+	std::array<int32_t, values.size()> counters;
+	Dod::DBBuffer<int32_t> countersBuffer;
+	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+
+	Dod::Algorithms::countUniques(
+		countersBuffer,
+		Dod::BufferUtils::createImFromBuffer(buffer)
+	);
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 1);
+
+}
+
+TEST(Algorithms, CountUniquesEmpty)
+{
+
+	using type_t = int32_t;
+
+	auto values{ std::to_array<type_t>({0}) };
+
+	Dod::DBBuffer<type_t> buffer;
+	initDBuffer(buffer, values);
+
+	std::array<int32_t, values.size()> counters;
+	Dod::DBBuffer<int32_t> countersBuffer;
+	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+
+	Dod::Algorithms::countUniques(
+		countersBuffer,
+		Dod::BufferUtils::createImFromBuffer(buffer)
+	);
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 0);
+
+}
+
+TEST(Algorithms, CountUniquesNotEnouthCounters)
+{
+
+	using type_t = int32_t;
+
+	auto values{ std::to_array<type_t>({0, 0, 0, 1, 2, 2, 5, 7, 7, 7}) };
+
+	Dod::DBBuffer<type_t> buffer;
+	initDBuffer(buffer, values);
+
+	std::array<int32_t, 3> counters;
+	Dod::DBBuffer<int32_t> countersBuffer;
+	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+
+	Dod::Algorithms::countUniques(
+		countersBuffer,
+		Dod::BufferUtils::createImFromBuffer(buffer)
+	);
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 2);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 2);
+	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 1), 1);
+
+}

@@ -683,6 +683,7 @@ TEST(BufferUtils, GetValue)
 	constexpr Dod::MemTypes::capacity_t endIndex{ totalBytes };
 	Dod::BufferUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
 
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 8);
 	EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), static_cast<type_t>(1));
 	EXPECT_EQ(Dod::BufferUtils::get(buffer, 1), static_cast<type_t>(2));
 	EXPECT_EQ(Dod::BufferUtils::get(buffer, 2), static_cast<type_t>(3));
@@ -692,6 +693,52 @@ TEST(BufferUtils, GetValue)
 	EXPECT_EQ(Dod::BufferUtils::get(buffer, 6), static_cast<type_t>(7));
 	EXPECT_EQ(Dod::BufferUtils::get(buffer, 7), static_cast<type_t>(8));
 			
+}
+
+TEST(BufferUtils, GetValueSorted)
+{
+
+	using type_t = int32_t;
+	std::array<type_t, 8> values{ {1, 2, 3, 4, 5, 6, 7, 8} };
+
+	Dod::ImBuffer<int32_t> buffer;
+	Dod::BufferUtils::initFromArray(buffer, values);
+
+	std::array<type_t, values.size()> indices{{7, 6, 5, 4, 3, 2, 1, 0}};
+	Dod::ImBuffer<int32_t> indicesBuffer;
+	Dod::BufferUtils::initFromArray(indicesBuffer, indices);
+
+	Dod::SortedImBuffer<int32_t> sortedBuffer{ Dod::BufferUtils::createSortedImBuffer(buffer, indicesBuffer) };
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(sortedBuffer), 8);
+	EXPECT_EQ(Dod::BufferUtils::get(sortedBuffer, 0), static_cast<type_t>(8));
+	EXPECT_EQ(Dod::BufferUtils::get(sortedBuffer, 1), static_cast<type_t>(7));
+	EXPECT_EQ(Dod::BufferUtils::get(sortedBuffer, 2), static_cast<type_t>(6));
+	EXPECT_EQ(Dod::BufferUtils::get(sortedBuffer, 3), static_cast<type_t>(5));
+	EXPECT_EQ(Dod::BufferUtils::get(sortedBuffer, 4), static_cast<type_t>(4));
+	EXPECT_EQ(Dod::BufferUtils::get(sortedBuffer, 5), static_cast<type_t>(3));
+	EXPECT_EQ(Dod::BufferUtils::get(sortedBuffer, 6), static_cast<type_t>(2));
+	EXPECT_EQ(Dod::BufferUtils::get(sortedBuffer, 7), static_cast<type_t>(1));
+
+}
+
+TEST(BufferUtils, CreateSortedImBufferFailed)
+{
+
+	using type_t = int32_t;
+	std::array<type_t, 8> values{ {1, 2, 3, 4, 5, 6, 7, 8} };
+
+	Dod::ImBuffer<int32_t> buffer;
+	Dod::BufferUtils::initFromArray(buffer, values);
+
+	std::array<type_t, 4> indices{ {7, 6, 5, 4} };
+	Dod::ImBuffer<int32_t> indicesBuffer;
+	Dod::BufferUtils::initFromArray(indicesBuffer, indices);
+
+	Dod::SortedImBuffer<int32_t> sortedBuffer{ Dod::BufferUtils::createSortedImBuffer(buffer, indicesBuffer) };
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(sortedBuffer), 0);
+
 }
 
 TEST(DBBufferUtils, GetLen)

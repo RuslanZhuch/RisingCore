@@ -43,3 +43,16 @@ TEST(Buffers, MutBuffer)
 	EXPECT_EQ(buffer.dataEnd, nullptr);
 
 }
+
+TEST(Buffers, SortedImBuffer)
+{
+
+	Dod::SortedImBuffer<int32_t> buffer;
+
+	EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 0);
+	EXPECT_EQ(buffer.dataBegin, nullptr);
+	EXPECT_EQ(buffer.dataEnd, nullptr);
+	EXPECT_EQ(buffer.sortingDataBegin, nullptr);
+	EXPECT_EQ(buffer.sortingDataEnd, nullptr);
+
+}

@@ -32,4 +32,14 @@ namespace Dod
 		T* dataEnd{ nullptr };
 	};
 
+	template <typename T>
+	struct SortedImBuffer
+	{
+		using type_t = typename T;
+		const T* dataBegin{ nullptr };
+		const T* dataEnd{ nullptr };
+		const int32_t* sortingDataBegin{ nullptr };
+		const int32_t* sortingDataEnd{ nullptr };
+	};
+
 };
