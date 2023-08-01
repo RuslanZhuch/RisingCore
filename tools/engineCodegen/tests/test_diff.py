@@ -107,31 +107,31 @@ class TestDiff(unittest.TestCase):
         self.assertFalse(diff.check_structure_is_same(data, data_structure_differs2))
                 
     def test_diff_list_generator(self):
-        current_files_folder = "assets/diff/current"
-        previous_files_folder = "assets/diff/prev"
-        files_list = [
-            "file1.json",
-            "file2.json",
-            "file3.json",
-            "file4.json",
+        current_files_folder = "assets/diff/current/"
+        previous_files_folder = "assets/diff/prev/"
+        current_files_list = [
+            current_files_folder + "file1.json",
+            current_files_folder + "file2.json",
+            current_files_folder + "file3.json",
+            current_files_folder + "file4.json",
         ]
-        diff_list = diff.generate_list(current_files_folder, previous_files_folder, files_list)
+        diff_list = diff.generate_list(current_files_list, previous_files_folder)
         
         self.assertEqual(diff_list, [
-            "file2.json",
-            "file4.json",
+            current_files_folder + "file2.json",
+            current_files_folder + "file4.json",
         ])
                 
-    def test_diff_list_generator(self):
-        current_files_folder = "assets/diff/current"
-        previous_files_folder = "assets/diff/prev"
-        files_list = [
-            "file1.json",
-            "file2.json",
-            "file3.json",
-            "file4.json",
+    def test_diff_list_generator_filtered(self):
+        current_files_folder = "assets/diff/current/"
+        previous_files_folder = "assets/diff/prev/"
+        curr_files_list = [
+            current_files_folder + "file1.json",
+            current_files_folder + "file2.json",
+            current_files_folder + "file3.json",
+            current_files_folder + "file4.json",
         ]
-        diff_list = diff.generate_list(current_files_folder, previous_files_folder, files_list, [
+        diff_list = diff.generate_list(curr_files_list, previous_files_folder, [
             "dataType",
             "name"
         ])
@@ -140,21 +140,21 @@ class TestDiff(unittest.TestCase):
         ])
         
     def test_diff_list_empty_generator(self):
-        current_files_folder = "assets/diff/current"
-        previous_files_folder = "assets/diff/prevEmpty"
-        files_list = [
-            "file1.json",
-            "file2.json",
-            "file3.json",
-            "file4.json",
+        current_files_folder = "assets/diff/current/"
+        previous_files_folder = "assets/diff/prevEmpty/"
+        curr_files_list = [
+            current_files_folder + "file1.json",
+            current_files_folder + "file2.json",
+            current_files_folder + "file3.json",
+            current_files_folder + "file4.json",
         ]
-        diff_list = diff.generate_list(current_files_folder, previous_files_folder, files_list)
+        diff_list = diff.generate_list(curr_files_list, previous_files_folder)
         
         self.assertEqual(diff_list, [
-            "file1.json",
-            "file2.json",
-            "file3.json",
-            "file4.json",
+            current_files_folder + "file1.json",
+            current_files_folder + "file2.json",
+            current_files_folder + "file3.json",
+            current_files_folder + "file4.json",
         ])
         
     def test_diff_replace_files(self):
@@ -162,8 +162,8 @@ class TestDiff(unittest.TestCase):
         current_files_folder = "assets/diff/current"
         previous_files_folder = "dest/diff/prev"
         files_to_replace = [
-            "file2.json",
-            "file3.json",
+            current_files_folder + "/file2.json",
+            current_files_folder + "/file3.json",
         ]
         
         if not os.path.exists(previous_files_folder):
@@ -179,7 +179,7 @@ class TestDiff(unittest.TestCase):
         utils.assert_files(self, current_files_folder + "/file3Initial.json", previous_files_folder + "/file3.json")
         utils.assert_files(self, current_files_folder + "/file4.json", previous_files_folder + "/file4.json")
         
-        diff.replace(current_files_folder, previous_files_folder, files_to_replace)
+        diff.replace(previous_files_folder, files_to_replace)
         
         utils.assert_files(self, current_files_folder + "/file1.json", previous_files_folder + "/file1.json")
         utils.assert_files(self, current_files_folder + "/file2.json", previous_files_folder + "/file2.json")

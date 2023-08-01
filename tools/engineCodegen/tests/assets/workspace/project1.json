@@ -1,24 +1,21 @@
 {
     "project_dest_folder": "dest/projects/project1",
-    "runtime_path": "ws_runtime.json",
-    "project_root_src_folder": "assets/workspace",
-    "project_root_src_types": "assets/workspace",
-    "project_contexts_src_folder": "assets/contexts",
-    "project_executors_src_folder": "assets/executors",
+    "runtime_path": "assets/workspace/ws_runtime.json",
+    "cache_folder": "dest/project/project1/prev",
     "types_paths": [
-        "types_default.json",
-        "types_contexts_data.json"
+        "assets/workspace/types_default.json",
+        "assets/workspace/types_contexts_data.json"
     ],
     "contexts_paths": [
-        "lContext1.json",
-        "lContext2.json",
-        "lContext3.json",
-        "sContext1.json",
-        "sContext2.json"
+        "assets/contexts/lContext1.json",
+        "assets/contexts/lContext2.json",
+        "assets/contexts/lContext3.json",
+        "assets/contexts/sContext1.json",
+        "assets/contexts/sContext2.json"
     ],
     "executors_paths": [
-        "executor1.json",
-        "executor2.json",
-        "executor3.json"
+        "assets/executors/executor1.json",
+        "assets/executors/executor2.json",
+        "assets/executors/executor3.json"
     ]
 }

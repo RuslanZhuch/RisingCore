@@ -77,11 +77,12 @@ def check_structure_is_same(left_data : dict, right_data : dict, filter : list[s
         
     return left_values == right_values
 
-def generate_list(curr_states_folder : list[str], prev_states_folder : list[str], files_list : list[str], filter : list[str] = []):
-    curr_file_paths = [curr_states_folder + "/" + file for file in files_list]
-    prev_file_paths = [prev_states_folder + "/" + file for file in files_list]
+def generate_list(curr_state_files : list[str], prev_states_folder : list[str], filter : list[str] = []):
+    filenames = [path.basename(curr_path) for curr_path in curr_state_files]
     
-    [curr_file_names, curr_file_paths] = _get_exist_filenames(curr_file_paths)
+    prev_file_paths = [prev_states_folder + "/" + file for file in filenames]
+    
+    [curr_file_names, curr_file_paths] = _get_exist_filenames(curr_state_files)
     [prev_file_names, prev_file_paths] = _get_exist_filenames(prev_file_paths)
     
     current_state_datas = [loader.load_file_data(file_name) for file_name in curr_file_paths]
@@ -91,12 +92,12 @@ def generate_list(curr_states_folder : list[str], prev_states_folder : list[str]
     for curr_file_index in range(0, len(current_state_datas)):
         prev_file_index = _find_element(prev_file_names, curr_file_names[curr_file_index])
         if prev_file_index == -1 or not check_structure_is_same(current_state_datas[curr_file_index], prev_state_datas[prev_file_index], filter):
-            diff_list.append(files_list[curr_file_index])
+            diff_list.append(curr_file_paths[curr_file_index])
         
     return diff_list
 
-def replace(curr_states_folder : list[str], prev_states_folder : list[str], files_list : list[str]):
-    
-    for file_name in files_list:
-        shutil.copyfile(curr_states_folder + "/" + file_name, prev_states_folder + "/" + file_name)
+def replace(cache_folder : list[str], files_list : list[str]):
+    for file_path in files_list:
+        file_name = path.basename(file_path)
+        shutil.copyfile(file_path, cache_folder + "/" + file_name)
         
