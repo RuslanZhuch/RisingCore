@@ -43,7 +43,7 @@ namespace Engine::ContextUtils
             dest = dataObject["initial"].GetUint();
         else if constexpr (std::is_same_v<type_t, float>)
             dest = dataObject["initial"].GetFloat();
-        else if constexpr (requires { dest.capacity; dest.data.data(); })
+        else if constexpr (requires { dest.capacity; dest.internalData.data(); })
             Engine::StringUtils::assign(dest, dataObject["initial"].GetString());
         
 	}

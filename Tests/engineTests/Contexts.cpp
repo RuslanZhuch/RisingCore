@@ -13,12 +13,12 @@ struct SampleStringType
 
 	[[nodiscard]] std::string_view operator*() const noexcept
 	{
-		return std::string_view(data.data());
+		return std::string_view(internalData.data());
 	}
 
 	static constexpr int32_t capacity{ 64 };
 
-	std::array<char, capacity> data{};
+	std::array<char, capacity> internalData{};
 
 };
 

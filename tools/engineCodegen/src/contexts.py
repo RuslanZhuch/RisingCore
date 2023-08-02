@@ -28,7 +28,7 @@ class ContextData:
     MERGE_TYPE_NONE : int = 0
     MERGE_TYPE_ASSIGN : int = 1
     MERGE_TYPE_ADD : int = 2  
-    MERGE_TYPE_ASSIGN_NON_ZERO : int = 3  
+    MERGE_TYPE_ASSIGN_NON_ZERO : int = 3
     
     class ObjectDataElement:
         def __init__(self, name, data_type, initial, merge_type: int):
@@ -38,16 +38,17 @@ class ContextData:
              self.merge_type = merge_type
              
     class BufferDataElement:
-        def __init__(self, name, data_type, capacity):
+        def __init__(self, name, data_type, capacity, merge_type: int):
              self.name = name
              self.data_type = data_type
              self.capacity = capacity
+             self.merge_type = merge_type
              
     def __init__(self, objects_data, buffers_data):
         self.objects_data = objects_data
         self.buffers_data = buffers_data
 
-def _get_merge_type(merge_policy : str):
+def _get_merge_type_for_objects(merge_policy : str):
     if merge_policy == "simple":
         return ContextData.MERGE_TYPE_ASSIGN
     elif merge_policy == "add":
@@ -55,6 +56,11 @@ def _get_merge_type(merge_policy : str):
     elif merge_policy == "simple_nz":
         return ContextData.MERGE_TYPE_ASSIGN_NON_ZERO
     return ContextData.MERGE_TYPE_NONE
+
+def _get_merge_type_for_buffers(merge_policy : str):
+    if merge_policy == "disabled":
+        return ContextData.MERGE_TYPE_NONE
+    return ContextData.MERGE_TYPE_ASSIGN
 
 def load_data(context_raw_data):
     objects_data = []
@@ -66,11 +72,13 @@ def load_data(context_raw_data):
         if type == "object":
             initial = variable.get("initial")
             merge_policy = variable.get("merge")
-            merge_type = _get_merge_type(merge_policy if merge_policy is not None else "") 
+            merge_type = _get_merge_type_for_objects(merge_policy if merge_policy is not None else "") 
             objects_data.append(ContextData.ObjectDataElement(name, data_type, initial, merge_type))
         elif type == "dbbuffer":
             capacity = variable["capacity"]
-            buffers_data.append(ContextData.BufferDataElement(name, data_type, capacity))
+            merge_policy = variable.get("merge")
+            merge_type = _get_merge_type_for_buffers(merge_policy if merge_policy is not None else "") 
+            buffers_data.append(ContextData.BufferDataElement(name, data_type, capacity, merge_type))
     
     return ContextData(objects_data, buffers_data)
 
@@ -234,6 +242,8 @@ def generate_context_merge(handler, context_raw_data):
                     generator.generate_block(handler, "if (other.{0})".format(object_name), body)
             
             for buffer in context_data.buffers_data:
+                if buffer.merge_type == ContextData.MERGE_TYPE_NONE:
+                    continue
                 buffer_name = buffer.name
                 generator.generate_line(handler, "Dod::BufferUtils::append(this->{0}, Dod::BufferUtils::createImFromBuffer(other.{0}));".format(buffer_name))
 

@@ -8,7 +8,7 @@ namespace Engine
 	struct String
 	{
 		constexpr static int32_t capacity{ 64 };
-		std::array<char, capacity> data{};
+		std::array<char, capacity> internalData{};
 	};
 
 }

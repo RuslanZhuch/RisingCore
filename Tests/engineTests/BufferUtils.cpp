@@ -513,6 +513,110 @@ TEST(DBBufferUtils, ConstructBackCopy)
 	}
 }
 
+TEST(DBBufferUtils, EmplaceBack)
+{
+
+	class Type
+	{
+	public:
+		Type()
+			:
+			value(42),
+			buffer({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 })
+		{}
+
+		Type(int32_t v, const std::vector<float> buff)
+			:
+			value(v),
+			buffer(std::move(buff))
+		{}
+
+		Type(const Type&) = delete;
+		Type& operator=(const Type&) = delete;
+
+		Type(Type&&) = default;
+		Type& operator=(Type&&) = default;
+
+		std::vector<float> buffer;
+		int32_t value{};
+
+		[[nodiscard]] auto operator<=>(const Type& other) const = default;
+
+	};
+	using type_t = Type;
+
+	std::array<Dod::MemTypes::data_t, sizeof(type_t) * 5> memory{};
+	Dod::DBBuffer<type_t> buffer;
+
+	Dod::BufferUtils::initFromArray(buffer, memory);
+
+	const std::vector<float> srcBuffer1{ {11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25} };
+	const std::vector<float> srcBuffer2{ {31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45} };
+	const std::vector<float> srcBuffer3{ {51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65} };
+	const std::vector<float> srcBuffer4{ {71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85} };
+	const std::vector<float> srcBuffer5;
+
+	const Type typeReal1(123, srcBuffer1);
+	const Type typeReal2(456, srcBuffer2);
+	const Type typeReal3(789, srcBuffer3);
+	const Type typeReal4(753, srcBuffer4);
+	const Type typeEmpty(0, srcBuffer5);
+
+	const auto moveReal1 = [&]() { return Type(123, srcBuffer1); };
+	const auto moveReal2 = [&]() { return Type(456, srcBuffer2); };
+	const auto moveReal3 = [&]() { return Type(789, srcBuffer3); };
+	const auto moveReal4 = [&]() { return Type(753, srcBuffer4); };
+
+	{
+		Dod::BufferUtils::emplaceBack(buffer, moveReal1(), true);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), typeReal1);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 1), typeEmpty);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 2), typeEmpty);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 3), typeEmpty);
+		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 1);
+	}
+	{
+		Dod::BufferUtils::emplaceBack(buffer, moveReal2(), true);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), typeReal1);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 1), typeReal2);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 2), typeEmpty);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 3), typeEmpty);
+		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 2);
+	}
+	{
+		Dod::BufferUtils::emplaceBack(buffer, moveReal3(), true);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), typeReal1);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 1), typeReal2);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 2), typeReal3);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 3), typeEmpty);
+		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 3);
+	}
+	{
+		Dod::BufferUtils::emplaceBack(buffer, moveReal4(), false);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), typeReal1);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 1), typeReal2);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 2), typeReal3);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 3), typeEmpty);
+		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 3);
+	}
+	{
+		Dod::BufferUtils::emplaceBack(buffer, moveReal4(), true);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), typeReal1);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 1), typeReal2);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 2), typeReal3);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 3), typeReal4);
+		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 4);
+	}
+	{
+		Dod::BufferUtils::emplaceBack(buffer, moveReal4(), true);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), typeReal1);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 1), typeReal2);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 2), typeReal3);
+		EXPECT_EQ(Dod::BufferUtils::get(buffer, 3), typeReal4);
+		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 4);
+	}
+}
+
 TEST(BufferUtils, DBBufferBound)
 {
 

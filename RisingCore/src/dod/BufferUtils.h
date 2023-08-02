@@ -128,6 +128,18 @@ namespace Dod::BufferUtils
 	}
 
 	template<typename T>
+	void emplaceBack(DBBuffer<T>& buffer, T&& element, bool strobe = true) noexcept
+	{
+
+		const auto capacity{ buffer.dataEnd - buffer.dataBegin };
+		const auto bCanAddValue{ (Dod::BufferUtils::getNumFilledElements(buffer) + 1 < capacity) && strobe };
+
+		buffer.numOfFilledEls += size_t(1) * bCanAddValue;
+		buffer.dataBegin[Dod::BufferUtils::getNumFilledElements(buffer) * bCanAddValue] = std::move(element);
+
+	}
+
+	template<typename T>
 	void populate(DBBuffer<T>& buffer, T value, bool strobe) noexcept 
 		requires requires() { requires std::is_trivially_constructible_v<T>; }
 	{
