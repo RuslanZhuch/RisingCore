@@ -27,25 +27,50 @@ namespace Engine::ContextUtils
 	[[nodiscard]] rapidjson::Document loadFileDataRoot(const std::string_view filename) noexcept;
 	[[nodiscard]] std::optional<rapidjson::GenericArray<true, rapidjson::Value>> gatherContextData(const rapidjson::Document& doc, size_t numOfExpectedElements) noexcept;
 	
-	[[nodiscard]] static void loadVariable(auto& dest, rapidjson::GenericArray<true, rapidjson::Value> src, rapidjson::SizeType id) noexcept
-	{
+    void assignToVariable(auto& dest, const rapidjson::Value& src)
+    {
 
         using type_t = std::decay_t<decltype(dest)>;
+
+        if (src.IsObject()) 
+        {
+
+            const auto& mapVariable{ src.GetObject() };
+            if constexpr (requires(decltype(dest) d) { 
+                {d.setValueByName(std::declval<std::string_view>(), std::declval<rapidjson::Value>())} -> std::convertible_to<void>;
+            })
+            {
+                for (const auto& variable : mapVariable)
+                {
+                    dest.setValueByName(variable.name.GetString(), variable.value);
+                }
+            }
+
+        }
+        else
+        {
+            if constexpr (std::is_same_v<type_t, int32_t>)
+                dest = src.GetInt();
+            else if constexpr (std::is_same_v<type_t, uint32_t>)
+                dest = src.GetUint();
+            else if constexpr (std::is_same_v<type_t, float>)
+                dest = src.GetFloat();
+            else if constexpr (requires { dest.capacity; dest.internalData.data(); })
+                Engine::StringUtils::assign(dest, src.GetString());
+        }
+
+    }
+
+	[[nodiscard]] static void loadVariable(auto& dest, rapidjson::GenericArray<true, rapidjson::Value> src, rapidjson::SizeType id) noexcept
+	{
 
         if (!src[id].IsObject())
             return;
 
         const auto& dataObject{ src[id].GetObject() };
 
-        if constexpr (std::is_same_v<type_t, int32_t>)
-            dest = dataObject["initial"].GetInt();
-        else if constexpr (std::is_same_v<type_t, uint32_t>)
-            dest = dataObject["initial"].GetUint();
-        else if constexpr (std::is_same_v<type_t, float>)
-            dest = dataObject["initial"].GetFloat();
-        else if constexpr (requires { dest.capacity; dest.internalData.data(); })
-            Engine::StringUtils::assign(dest, dataObject["initial"].GetString());
-        
+        assignToVariable(dest, dataObject["initial"]);
+
 	}
 
     template <typename T>

@@ -92,6 +92,50 @@ TEST(Context, LoadDataFailed)
 
 }
 
+TEST(Context, AssignToVariable)
+{
+
+	const auto doc{ Engine::ContextUtils::loadFileDataRoot("assets/sampleFile.json") };
+	const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 4) };
+	ASSERT_TRUE(inputDataOpt.has_value());
+
+	const auto& data{ inputDataOpt.value() };
+	ASSERT_EQ(data.Size(), 4);
+
+	{
+		float dst{};
+		ASSERT_TRUE(data[0].IsObject());
+		const auto& obj{ data[0].GetObject() };
+		Engine::ContextUtils::assignToVariable(dst, obj["initial"]);
+		EXPECT_EQ(dst, 50.f);
+	}
+
+	{
+		int32_t dst{};
+		ASSERT_TRUE(data[1].IsObject());
+		const auto& obj{ data[1].GetObject() };
+		Engine::ContextUtils::assignToVariable(dst, obj["initial"]);
+		EXPECT_EQ(dst, 25);
+	}
+
+	{
+		uint32_t dst{};
+		ASSERT_TRUE(data[2].IsObject());
+		const auto& obj{ data[2].GetObject() };
+		Engine::ContextUtils::assignToVariable(dst, obj["initial"]);
+		EXPECT_EQ(dst, 134217728U);
+	}
+
+	{
+		SampleStringType dst;
+		ASSERT_TRUE(data[3].IsObject());
+		const auto& obj{ data[3].GetObject() };
+		Engine::ContextUtils::assignToVariable(dst, obj["initial"]);
+		EXPECT_EQ(*dst, "Title text");
+	}
+
+}
+
 TEST(Context, LoadVariable)
 {
 

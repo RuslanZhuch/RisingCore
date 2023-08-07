@@ -26,6 +26,9 @@
     <ClCompile Include="engineTests\Contexts.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="engineTests\Types.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -34,5 +37,8 @@
     <Filter Include="src">
       <UniqueIdentifier>{0367df37-65df-41c2-8417-7caf72fb5488}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
