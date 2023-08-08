@@ -34,7 +34,6 @@ namespace Engine::ContextUtils
 
         if (src.IsObject()) 
         {
-
             const auto& mapVariable{ src.GetObject() };
             if constexpr (requires(decltype(dest) d) { 
                 {d.setValueByName(std::declval<std::string_view>(), std::declval<rapidjson::Value>())} -> std::convertible_to<void>;
@@ -45,7 +44,6 @@ namespace Engine::ContextUtils
                     dest.setValueByName(variable.name.GetString(), variable.value);
                 }
             }
-
         }
         else
         {

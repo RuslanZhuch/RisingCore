@@ -4,7 +4,7 @@
 #include <dod/BufferUtils.h>
 #include <engine/contextUtils.cpp>
 
-#include <rapidjson/document.h>
+#include "utils/TypeUtils.h"
 
 #include <array>
 
@@ -59,12 +59,12 @@ TEST(Context, LoadData)
 {
 
 	const auto doc{ Engine::ContextUtils::loadFileDataRoot("assets/sampleFile.json") };
-	const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 4) };
+	const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 5) };
 
 	ASSERT_TRUE(inputDataOpt.has_value());
 
 	const auto& data{ inputDataOpt.value() };
-	EXPECT_EQ(data.Size(), 4);
+	EXPECT_EQ(data.Size(), 5);
 
 }
 
@@ -73,65 +73,21 @@ TEST(Context, LoadDataFailed)
 
 	{
 		const auto doc{ Engine::ContextUtils::loadFileDataRoot("assets/sampleFile.json") };
-		const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 5) };
+		const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 6) };
 
 		EXPECT_FALSE(inputDataOpt.has_value());
 	}
 	{
 		const auto doc{ Engine::ContextUtils::loadFileDataRoot("assets/sampleFile.json") };
-		const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 3) };
+		const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 4) };
 
 		EXPECT_FALSE(inputDataOpt.has_value());
 	}
 	{
 		const auto doc{ Engine::ContextUtils::loadFileDataRoot("assets/sampleFileNotExist.json") };
-		const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 2) };
+		const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 4) };
 
 		EXPECT_FALSE(inputDataOpt.has_value());
-	}
-
-}
-
-TEST(Context, AssignToVariable)
-{
-
-	const auto doc{ Engine::ContextUtils::loadFileDataRoot("assets/sampleFile.json") };
-	const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 4) };
-	ASSERT_TRUE(inputDataOpt.has_value());
-
-	const auto& data{ inputDataOpt.value() };
-	ASSERT_EQ(data.Size(), 4);
-
-	{
-		float dst{};
-		ASSERT_TRUE(data[0].IsObject());
-		const auto& obj{ data[0].GetObject() };
-		Engine::ContextUtils::assignToVariable(dst, obj["initial"]);
-		EXPECT_EQ(dst, 50.f);
-	}
-
-	{
-		int32_t dst{};
-		ASSERT_TRUE(data[1].IsObject());
-		const auto& obj{ data[1].GetObject() };
-		Engine::ContextUtils::assignToVariable(dst, obj["initial"]);
-		EXPECT_EQ(dst, 25);
-	}
-
-	{
-		uint32_t dst{};
-		ASSERT_TRUE(data[2].IsObject());
-		const auto& obj{ data[2].GetObject() };
-		Engine::ContextUtils::assignToVariable(dst, obj["initial"]);
-		EXPECT_EQ(dst, 134217728U);
-	}
-
-	{
-		SampleStringType dst;
-		ASSERT_TRUE(data[3].IsObject());
-		const auto& obj{ data[3].GetObject() };
-		Engine::ContextUtils::assignToVariable(dst, obj["initial"]);
-		EXPECT_EQ(*dst, "Title text");
 	}
 
 }
@@ -140,11 +96,11 @@ TEST(Context, LoadVariable)
 {
 
 	const auto doc{ Engine::ContextUtils::loadFileDataRoot("assets/sampleFile.json") };
-	const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 4) };
+	const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 5) };
 	ASSERT_TRUE(inputDataOpt.has_value());
 
 	const auto& data{ inputDataOpt.value() };
-	ASSERT_EQ(data.Size(), 4);
+	ASSERT_EQ(data.Size(), 5);
 
 	{
 		float dst{};
@@ -168,6 +124,16 @@ TEST(Context, LoadVariable)
 		SampleStringType dst;
 		Engine::ContextUtils::loadVariable(dst, data, 3);
 		EXPECT_EQ(*dst, "Title text");
+	}
+
+	{
+		TypeComplex1 dst;
+		Engine::ContextUtils::loadVariable(dst, data, 4);
+		EXPECT_EQ(dst.int1, 1);
+		EXPECT_EQ(dst.float1, 2.f);
+		EXPECT_STREQ(dst.string1.internalData.data(), "Some string 3");
+		EXPECT_EQ(dst.inner.x, 4.f);
+		EXPECT_EQ(dst.inner.y, 5.f);
 	}
 
 }

@@ -29,13 +29,22 @@
     <ClCompile Include="engineTests\Types.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="engineTests\utils\TypesDesImpl.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="engineTests\utils\TypeUtils.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
       <UniqueIdentifier>{0367df37-65df-41c2-8417-7caf72fb5488}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\utils">
+      <UniqueIdentifier>{fff927b6-23b1-4c90-885a-63ff3df5a4bf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
