@@ -1,3 +1,4 @@
+import re
 
 class ScopeData:
     def __init__(self):
@@ -8,27 +9,29 @@ class ScopeData:
         self.openIndices.insert(0, openIndex)
         self.closeIndices.insert(0, closeIndex)
         
-class TypeObject:
-    def __init__(self, scope_entry_index : int):
-        self.type_objects : list[TypeObject] = []
+class FeatureLink:
+    def __init__(self, scope_entry_index : int, feature_name : str):
         self.scope_entry_index : int = scope_entry_index
+        self.name = feature_name
         
-    def set_type_objects(self, new_type_objects):
-        self.type_objects = new_type_objects
-        
-class NamespaceObject:
-    def __init__(self, scope_entry_index : int):
-        self.namespace_objects : list[NamespaceObject] = []
-        self.type_objects : list[TypeObject] = []
-        self.scope_entry_index : int = scope_entry_index
-        
-    def set_type_objects(self, new_type_objects):
-        self.type_objects = new_type_objects
+class NamespaceLink(FeatureLink):
+    pass
+
+class TypeLink(FeatureLink):
+    pass
+
+class VariableData:
+    def __init__(self, type_name : str, name : str):
+        self.type_name = type_name
+        self.name = name
         
 class ScopeTreeNode:
     def __init__(self, scope_entry_id : int):
         self.entry = scope_entry_id
+        self.feature : FeatureLink = None
+        self.variables : list[VariableData] = []
         self.scopes : list[ScopeTreeNode] = []
+
 
 def get_namespace_entries(data : str) -> list[int]:
     
@@ -56,6 +59,21 @@ def get_types_entries(data : str) -> list[int]:
         
     return entries
 
+def get_namespace_name(data : str, namespace_entry : int):
+    name_end = data.find("\n", namespace_entry)
+    if name_end == -1:
+        name_end = data.find("{", namespace_entry)
+    if name_end == -1:
+        return ""
+    data_to_process = data[namespace_entry:name_end]
+    keys = data_to_process.split()
+    if len(keys) >= 2:
+        return keys[1]
+    return ""
+
+def get_type_name(data : str, type_entry : int):
+    return get_namespace_name(data, type_entry)
+
 def get_scopes_data(data : str) -> ScopeData:
     
     entries = ScopeData()
@@ -68,16 +86,15 @@ def get_scopes_data(data : str) -> ScopeData:
         elif symbol == "}":
             open_scope_index = opened_brackets.pop()
             close_scope_index = id
-            #print("open_scope_index creation", open_scope_index)
             entries.append(open_scope_index, close_scope_index)
            
     return entries
 
-def create_namespace_objects(namespace_entries : list[int], scrope_entries : ScopeData) -> list[NamespaceObject]:
+def create_namespace_links(namespace_entries : list[int], namespace_names : list[str], scrope_entries : ScopeData) -> list[NamespaceLink]:
     
-    namespace_scope_indices = []
+    objects : list[NamespaceLink] = []
     
-    for namespace_entry in namespace_entries:
+    for el_id, namespace_entry in enumerate(namespace_entries):
         min_scope_entry_id = -1
         min_distance = -1
         for id, scope_entry in enumerate(scrope_entries.openIndices):
@@ -91,24 +108,19 @@ def create_namespace_objects(namespace_entries : list[int], scrope_entries : Sco
             if distance <= min_distance:
                 min_distance = distance
                 min_scope_entry_id = id
-            
-        namespace_scope_indices.append(min_scope_entry_id)
-        
-    objects : list[NamespaceObject] = []
-    
-    for namespace_scope_index in namespace_scope_indices:
-        if namespace_scope_index == -1:
+                
+        if min_scope_entry_id == -1:
             continue
         
-        objects.append(NamespaceObject(namespace_scope_index))
-
+        objects.append(NamespaceLink(min_scope_entry_id, namespace_names[el_id]))
+        
     return objects
 
-def create_type_objects(type_entries : list[int], scrope_entries : ScopeData) -> list[TypeObject]:
+def create_type_links(type_entries : list[int], type_names : list[str], scrope_entries : ScopeData) -> list[TypeLink]:
     
-    type_scope_indices = []
+    objects : list[TypeLink] = []
     
-    for type_entry in type_entries:
+    for el_id, type_entry in enumerate(type_entries):
         min_scope_entry_id = -1
         min_distance = -1
         for id, scope_entry in enumerate(scrope_entries.openIndices):
@@ -123,17 +135,33 @@ def create_type_objects(type_entries : list[int], scrope_entries : ScopeData) ->
                 min_distance = distance
                 min_scope_entry_id = id
             
-        type_scope_indices.append(min_scope_entry_id)
-        
-    objects : list[TypeObject] = []
-    
-    for namespace_scope_index in type_scope_indices:
-        if namespace_scope_index == -1:
+        if min_scope_entry_id == -1:
             continue
         
-        objects.append(TypeObject(namespace_scope_index))
-
+        objects.append(TypeLink(min_scope_entry_id, type_names[el_id]))
+        
     return objects
+
+def find_variables_in_scope(data : str, scope_entry_id : int, scrope_entries : ScopeData) -> list[VariableData]:
+    variables : list[VariableData] = []
+    
+    scope_open = scrope_entries.openIndices[scope_entry_id]
+    scope_close = scrope_entries.closeIndices[scope_entry_id]
+    
+    scope_data = data[scope_open + 1:scope_close]
+    
+    fields = scope_data.split(";")
+    
+    for field in fields:
+        if "(" in field or ")" in field:
+            continue
+        keys = [s.strip() for s in re.split("{|}| ", field)]
+        keys = list(filter(lambda key : key != "", keys))
+        if len(keys) < 2:
+            continue
+        variables.append(VariableData(keys[0], keys[1]))
+    
+    return variables
 
 def create_scopes_tree(scrope_entries : ScopeData) -> ScopeTreeNode: 
     root = ScopeTreeNode(-1)
@@ -146,35 +174,91 @@ def create_scopes_tree(scrope_entries : ScopeData) -> ScopeTreeNode:
     for scope_index in range(0, num_of_entries):
         nodes.append(ScopeTreeNode(scope_index))
     
-    inner_nodes = set()
-    
     for scope_index in range(0, num_of_entries):
         scope_open_index = scrope_entries.openIndices[scope_index]
         scope_close_index = scrope_entries.closeIndices[scope_index]
         
-        refs : list[int] = []
+        owners : list[int] = []
         node = nodes[scope_index]
         
-        for inner_scope_index in range(0, num_of_entries):
-            if inner_scope_index == scope_index:
+        for outer_scope_index in range(0, num_of_entries):
+            if outer_scope_index == scope_index:
                 continue
-            inner_scope_open_index = scrope_entries.openIndices[inner_scope_index]
-            if inner_scope_open_index < scope_open_index or inner_scope_open_index > scope_close_index:
-                continue
-            
-            inner_scope_close_index = scrope_entries.closeIndices[inner_scope_index]
-            if inner_scope_close_index > scope_close_index:
+            outer_scope_open_index = scrope_entries.openIndices[outer_scope_index]
+            if outer_scope_open_index > scope_open_index or outer_scope_open_index > scope_close_index:
                 continue
             
-            refs.append(inner_scope_index)
-            node.scopes.append(nodes[inner_scope_index])
-            inner_nodes.add(inner_scope_index)
+            outer_scope_close_index = scrope_entries.closeIndices[outer_scope_index]
+            if outer_scope_close_index < scope_close_index:
+                continue
             
-        scopes_refs.append(refs)
+            owners.append(outer_scope_index)
+        
+        if len(owners) >= 1:
+            owners_dist = [scope_index - owner for owner in owners]
+            min_dist = min(owners_dist)
+            owner_id = owners_dist.index(min_dist)
+            nodes[owner_id].scopes.append(node)
+        else:
+            root.scopes.append(node)
     
-    for scope_index in range(0, num_of_entries):
-        if scope_index not in inner_nodes:
-            root.scopes.append(nodes[scope_index])
-            
     return root
+
+def populate_scopes_tree(scope_tree : ScopeTreeNode, namespace_links : list[NamespaceLink], type_links : list[TypeLink], variables : list[list[VariableData]]):
     
+    def populate(scope_tree_node : ScopeTreeNode):
+        scope_entry_id = scope_tree_node.entry
+        for feature in namespace_links:
+            if feature.scope_entry_index == scope_entry_id:
+                scope_tree_node.feature = feature
+                break
+        for el_id, feature in enumerate(type_links):
+            if feature.scope_entry_index == scope_entry_id:
+                scope_tree_node.feature = feature
+                scope_tree_node.variables = variables[el_id]
+                break
+            
+        for node in scope_tree_node.scopes:
+            populate(node)
+            
+    populate(scope_tree)
+
+def create_structure(scope_tree : ScopeTreeNode) -> dict:
+    
+    structure = dict()
+    
+    def populate(scope_tree_node : ScopeTreeNode) -> dict:
+        structure_node = dict()
+        
+        namespaces = []
+        types = []
+        
+        if scope_tree_node.feature is not None:
+            structure_node["name"] = scope_tree_node.feature.name
+            
+            variables = []
+            for variable in scope_tree_node.variables:
+                variables.append({
+                    "name": variable.name,
+                    "dataType": variable.type_name
+                })
+                
+            if len(variables) > 0:
+                structure_node["variables"] = variables
+        
+        for node in scope_tree_node.scopes:
+            if type(node.feature) == NamespaceLink:
+                namespaces.append(populate(node))
+            elif type(node.feature) == TypeLink:
+                types.append(populate(node))
+                
+        if len(namespaces) > 0:
+            structure_node["namespaces"] = namespaces
+        if len(types) > 0:
+            structure_node["types"] = types
+
+        return structure_node
+    
+    structure = populate(scope_tree)
+    
+    return structure

@@ -20,11 +20,26 @@ class TestParse(unittest.TestCase):
         super().__init__(methodName)
         self.maxDiff = None
     
-    def test_deser_group_1(self):
+    def test_parse_group_1(self):
         deser_data = parser.parse("assets/headers/group1.h")
         
         expected_file = open("assets/expected/group1Deser.json")
         expected_data = json.load(expected_file)
         
         self.assertEqual(deser_data, expected_data)
+        
+    def test_parse_multiple_files(self):
+        files_list = [
+            "assets/headers/group1.h"
+        ]
+        
+        parser.parse_to_folder(files_list, "dest/parsed_1")
+        
+        parsed_file = open("dest/parsed_1/group1.json")
+        parsed_data = json.load(parsed_file)
+        
+        expected_file = open("assets/expected/group1Deser.json")
+        expected_data = json.load(expected_file)
+        
+        self.assertEqual(parsed_data, expected_data)
         
