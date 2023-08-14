@@ -1,0 +1,23 @@
+
+{
+    "namespaces": [
+        {
+            "name": "Types::Group1",
+            "types": [
+                {
+                    "name": "Type1",
+                    "variables": [
+                        {
+                            "dataType": "int",
+                            "name": "x"
+                        },
+                        {
+                            "dataType": "float",
+                            "name": "y"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

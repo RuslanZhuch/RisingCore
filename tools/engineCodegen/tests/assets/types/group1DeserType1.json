@@ -1,0 +1,14 @@
+
+{
+    "name": "Type1",
+    "variables": [
+        {
+            "dataType": "int",
+            "name": "x"
+        },
+        {
+            "dataType": "float",
+            "name": "y"
+        }
+    ]
+}

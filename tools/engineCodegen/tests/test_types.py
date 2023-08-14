@@ -14,6 +14,7 @@ import utils
 import generator
 import loader
 import types_manager
+import types_generator
 
 class TestTyoes(unittest.TestCase):
     def __init__(self, methodName: str = "runTest") -> None:
@@ -47,3 +48,32 @@ class TestTyoes(unittest.TestCase):
         handler.close()
         
         utils.assert_files(self, "dest/gen_types_includes1.cpp", "assets/expected/gen_types_includes1.cpp")
+
+    def test_get_list_of_types(self):
+        
+        type_schema_data = loader.load_file_data("assets/types/group1Deser.json")
+        types = types_generator.get_list_of_types(type_schema_data)
+        self.assertEqual(len(types), 1)
+        self.assertEqual(types[0].name, "Types::Group1::Type1")
+        self.assertEqual(len(types[0].variables), 2)
+        self.assertEqual(types[0].variables[0], "x")
+        self.assertEqual(types[0].variables[1], "y")
+        
+    def test_get_list_of_variables(self):
+        
+        type_schema_data = loader.load_file_data("assets/types/group1DeserType1.json")
+        variables = types_generator.get_list_of_variables(type_schema_data)
+        self.assertEqual(len(variables), 2)
+        self.assertEqual(variables[0], "x")
+        self.assertEqual(variables[1], "y")
+
+    def test_gen_type_impl(self):
+        
+        types_file_data = loader.load_file_data("assets/types/types_generated.json")
+        types_cache = types_manager.cache_types([types_file_data])
+        
+        type_schema_data = loader.load_file_data("assets/types/group1Deser.json")
+        types_generator.generate_impls("dest/types/group1Deser.cpp", type_schema_data, types_cache)
+        
+        utils.assert_files(self, "dest/types/group1Deser.cpp", "assets/expected/types/group1Deser.cpp")
+        
