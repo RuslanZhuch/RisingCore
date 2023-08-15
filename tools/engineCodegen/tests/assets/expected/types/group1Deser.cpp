@@ -16,3 +16,13 @@ void Types::Group1::Type1::setValueByName(std::string_view name, const rapidjson
         return;
     }
 }
+
+void Types::Group1::Type2::setValueByName(std::string_view name, const rapidjson::Value& value) noexcept
+{
+    if (name == "vel")
+    {
+        Engine::ContextUtils::assignToVariable(this->vel, value);
+        return;
+    }
+}
+

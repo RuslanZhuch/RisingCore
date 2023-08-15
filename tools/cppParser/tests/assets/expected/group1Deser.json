@@ -5,6 +5,15 @@
             "name": "Types::Group1",
             "types": [
                 {
+                    "name": "Type2",
+                    "variables": [
+                        {
+                            "dataType": "double",
+                            "name": "vel"
+                        }
+                    ]
+                },
+                {
                     "name": "Type1",
                     "variables": [
                         {

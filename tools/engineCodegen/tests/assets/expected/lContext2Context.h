@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assets/types/cpp/cats/Crying.h>
 #include <dod/Buffers.h>
 #include <dod/MemPool.h>
 
@@ -12,6 +13,7 @@ namespace Game::Context::LContext2
         void merge(const Data& other) noexcept;
 
         int32_t var1{};
+        Types::Cats::CryingCat cat;
         float var2{};
         Dod::MemPool memory;
         Dod::DBBuffer<float> dbvar0;

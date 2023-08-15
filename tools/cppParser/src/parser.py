@@ -27,15 +27,21 @@ def parse(file_name : str):
 
     return parser_internal.create_structure(scopes_tree)
 
-def parse_to_folder(file_pathes : list[str], output_folder : str):
+def parse_to_folder(file_pathes : list[str], output_folder : str) -> list[str]:
+    parsed_pathes = []
+    
     for file_path in file_pathes:
         parsed_data = parse(file_path)
         
         file_name = Path(file_path).stem
         
-        output_file = output_folder + "/" + file_name + ".json"
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-        with open(output_folder + "/" + file_name + ".json", "w") as outfile:
+            
+        output_file = output_folder + "/" + file_name + ".json"
+        with open(output_file, "w") as outfile:
             json.dump(parsed_data, outfile)
+            parsed_pathes.append(output_file)
+            
+    return parsed_pathes
             

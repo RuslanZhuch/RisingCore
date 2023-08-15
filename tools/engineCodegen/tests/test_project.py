@@ -21,7 +21,7 @@ def get_file_modification_time(filename : str):
     return path.getmtime(filename)
     
 def _prepare_project2():
-    cache_path = "dest/project2/prev"
+    cache_path = "dest/projects/project2/prev"
     
     if os.path.exists(cache_path):
         [f.unlink() for f in Path(cache_path).glob("*") if f.is_file()]   
@@ -37,18 +37,18 @@ class TestProject(unittest.TestCase):
         self.maxDiff = None
     
     def test_decode_project1_file(self):
-        project_desc = project.load("assets/workspace/project1.json")
+        project_desc = project.load("assets/project1/project1.json")
         
         self.assertIsNotNone(project_desc)
         
         self.assertEqual(project_desc.project_dest_folder, "dest/projects/project1")
         
-        self.assertEqual(project_desc.cache_folder, "dest/project/project1/prev")
-        self.assertEqual(project_desc.application_runtime_path, "assets/workspace/ws_runtime.json")
+        self.assertEqual(project_desc.cache_folder, "dest/projects/project1/prev")
+        self.assertEqual(project_desc.application_runtime_path, "assets/project1/ws_runtime.json")
         
         self.assertEqual(len(project_desc.types_paths), 2)
-        self.assertEqual(project_desc.types_paths[0], "assets/workspace/types_default.json")
-        self.assertEqual(project_desc.types_paths[1], "assets/workspace/types_contexts_data.json")
+        self.assertEqual(project_desc.types_paths[0], "assets/project1/types_default.json")
+        self.assertEqual(project_desc.types_paths[1], "assets/project1/types_contexts_data.json")
         
         self.assertEqual(len(project_desc.contexts_paths), 5)
         self.assertEqual(project_desc.contexts_paths[0], "assets/contexts/lContext1.json")
@@ -66,7 +66,7 @@ class TestProject(unittest.TestCase):
         if os.path.exists('dest/projects/project1'):
             shutil.rmtree('dest/projects/project1')
         
-        project.generate("assets/workspace/project1.json")
+        project.generate("assets/project1/project1.json")
         
         utils.assert_files(self, "dest/projects/project1/contexts/LContext1Context.h", "assets/expected/lContext1Context.h")
         utils.assert_files(self, "dest/projects/project1/contexts/LContext1Context.cpp", "assets/expected/lContext1Context.cpp")
@@ -89,6 +89,9 @@ class TestProject(unittest.TestCase):
         utils.assert_files(self, "dest/projects/project1/executors/Executor1ExecutorImpl.cpp", "assets/expected/Executor1ExecutorImpl.cpp")
         utils.assert_files(self, "dest/projects/project1/executors/Executor2ExecutorImpl.cpp", "assets/expected/Executor2ExecutorImpl.cpp")
         utils.assert_files(self, "dest/projects/project1/executors/Executor3ExecutorImpl.cpp", "assets/expected/Executor3ExecutorImpl.cpp")
+        
+        utils.assert_files(self, "dest/projects/project1/generated_types/CustomData.cpp", "assets/expected/types/CustomData.cpp")
+        utils.assert_files(self, "dest/projects/project1/generated_types/Crying.cpp", "assets/expected/types/cats/Crying.cpp")
         
         utils.assert_files(self, "dest/projects/project1/runtime.cpp", "assets/expected/runtime.cpp")
 

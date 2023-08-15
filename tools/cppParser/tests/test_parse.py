@@ -33,7 +33,10 @@ class TestParse(unittest.TestCase):
             "assets/headers/group1.h"
         ]
         
-        parser.parse_to_folder(files_list, "dest/parsed_1")
+        parsed_filenames = parser.parse_to_folder(files_list, "dest/parsed_1")
+        
+        self.assertEqual(len(parsed_filenames), 1)
+        self.assertEqual(parsed_filenames[0], "dest/parsed_1/group1.json")
         
         parsed_file = open("dest/parsed_1/group1.json")
         parsed_data = json.load(parsed_file)

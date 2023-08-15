@@ -22,29 +22,43 @@ class TestTyoes(unittest.TestCase):
         self.maxDiff = None
     
     def test_load_types_data(self):
-        types_default_file_data = loader.load_file_data("assets/workspace/types_default.json")
-        types_additional_file_data = loader.load_file_data("assets/workspace/types_additional.json")
+        types_default_file_data = loader.load_file_data("assets/project1/types_default.json")
+        types_additional_file_data = loader.load_file_data("assets/project1/types_additional.json")
         
         types_cache = types_manager.cache_types([types_default_file_data, types_additional_file_data])
-        self.assertEqual(len(types_cache.type_names), 6)
-        self.assertEqual(len(types_cache.paths), 6)
+        self.assertEqual(len(types_cache.type_names), 8)
+        self.assertEqual(len(types_cache.paths), 8)
         
         self.assertEqual(types_cache.get_path("int32_t"), "None")
         self.assertEqual(types_cache.get_path("float"), "None")
         self.assertEqual(types_cache.get_path("int64_t"), "None")
         self.assertEqual(types_cache.get_path("Engine::String"), "engine/String.h")
         self.assertEqual(types_cache.get_path("bool"), "None")
-        self.assertEqual(types_cache.get_path("CryingCat"), "cats/Crying.h")
+        self.assertEqual(types_cache.get_path("Types::Cats::CryingCat"), "assets/types/cpp/cats/Crying.h")
+        self.assertEqual(types_cache.get_path("double"), "None")
+        self.assertEqual(types_cache.get_path("Types::Cats::CryingCat2"), "assets/types/cpp/cats/Crying.h")
         
+    def test_get_types_includes_list(self):
+        
+        types_default_file_data = loader.load_file_data("assets/project1/types_default.json")
+        types_additional_file_data = loader.load_file_data("assets/project1/types_additional.json")
+        types_cache = types_manager.cache_types([types_default_file_data, types_additional_file_data])
+        
+        includes_list = types_manager.get_includes_list(types_cache, ["float", "float", "bool", "Types::Cats::CryingCat", "Engine::String", "int32_t", "Types::Cats::CryingCat", "double", "Types::Cats::CryingCat2"])
+
+        self.assertEqual(len(includes_list), 2)
+        self.assertEqual(includes_list[0], "engine/String.h")
+        self.assertEqual(includes_list[1], "assets/types/cpp/cats/Crying.h")
+
     def test_gen_types_includes(self):
         
-        types_default_file_data = loader.load_file_data("assets/workspace/types_default.json")
-        types_additional_file_data = loader.load_file_data("assets/workspace/types_additional.json")
+        types_default_file_data = loader.load_file_data("assets/project1/types_default.json")
+        types_additional_file_data = loader.load_file_data("assets/project1/types_additional.json")
         types_cache = types_manager.cache_types([types_default_file_data, types_additional_file_data])
         
         handler = generator.generate_file("dest", "gen_types_includes1.cpp")
         self.assertIsNotNone(handler)
-        types_manager.gen_includes(handler, types_cache, ["float", "float", "bool", "CryingCat", "Engine::String", "int32_t", "CryingCat"])
+        types_manager.gen_includes(handler, types_cache, ["float", "float", "bool", "Types::Cats::CryingCat", "Engine::String", "int32_t", "Types::Cats::CryingCat", "double", "Types::Cats::CryingCat2"])
         handler.close()
         
         utils.assert_files(self, "dest/gen_types_includes1.cpp", "assets/expected/gen_types_includes1.cpp")
@@ -53,11 +67,14 @@ class TestTyoes(unittest.TestCase):
         
         type_schema_data = loader.load_file_data("assets/types/group1Deser.json")
         types = types_generator.get_list_of_types(type_schema_data)
-        self.assertEqual(len(types), 1)
+        self.assertEqual(len(types), 2)
         self.assertEqual(types[0].name, "Types::Group1::Type1")
         self.assertEqual(len(types[0].variables), 2)
         self.assertEqual(types[0].variables[0], "x")
         self.assertEqual(types[0].variables[1], "y")
+        self.assertEqual(types[1].name, "Types::Group1::Type2")
+        self.assertEqual(len(types[1].variables), 1)
+        self.assertEqual(types[1].variables[0], "vel")
         
     def test_get_list_of_variables(self):
         

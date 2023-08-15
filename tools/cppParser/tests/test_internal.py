@@ -55,8 +55,9 @@ class TestInternal(unittest.TestCase):
         working_file.close()
         
         entries = parser_internal.get_types_entries(working_data)
-        self.assertEqual(len(entries), 1)
+        self.assertEqual(len(entries), 2)
         self.assertEqual(entries[0], 72)
+        self.assertEqual(entries[1], 173)
         
     def test_scopes_group_1(self):
         working_file = open("assets/headers/group1.h")
@@ -64,18 +65,18 @@ class TestInternal(unittest.TestCase):
         working_file.close()
         
         entries = parser_internal.get_scopes_data(working_data)
-        self.assertEqual(len(entries.openIndices), 4)
-        self.assertEqual(len(entries.closeIndices), 4)
+        self.assertEqual(len(entries.openIndices), 6)
+        self.assertEqual(len(entries.closeIndices), 6)
         self.assertEqual(entries.openIndices[0], 65)
         self.assertGreater(entries.openIndices[1], entries.openIndices[0])
         self.assertGreater(entries.openIndices[2], entries.openIndices[1])
-        self.assertGreater(entries.openIndices[2], entries.openIndices[3])
         self.assertGreater(entries.closeIndices[0], entries.closeIndices[1])
         self.assertGreater(entries.closeIndices[1], entries.closeIndices[2])
-        self.assertGreater(entries.closeIndices[2], entries.closeIndices[3])
+        self.assertGreater(entries.closeIndices[4], entries.closeIndices[5])
         
         self.assertEqual(entries.closeIndices[2] - entries.openIndices[2], 1)
-        self.assertEqual(entries.closeIndices[3] - entries.openIndices[3], 1)
+        self.assertEqual(entries.closeIndices[4] - entries.openIndices[4], 1)
+        self.assertEqual(entries.closeIndices[5] - entries.openIndices[5], 1)
         
     def test_outer_namespace_links_group_1(self):
         working_file = open("assets/headers/group1.h")
@@ -103,9 +104,11 @@ class TestInternal(unittest.TestCase):
         type_names = [parser_internal.get_type_name(working_data, type_entry) for type_entry in type_entries]
         
         type_links = parser_internal.create_type_links(type_entries, type_names, scope_entries)
-        self.assertEqual(len(type_links), 1)
-        self.assertEqual(type_links[0].scope_entry_index, 1)
+        self.assertEqual(len(type_links), 2)
+        self.assertEqual(type_links[0].scope_entry_index, 3)
         self.assertEqual(type_links[0].name, "Type1")
+        self.assertEqual(type_links[1].scope_entry_index, 1)
+        self.assertEqual(type_links[1].name, "Type2")
         
     def test_find_varibles_in_scope_group_1(self):
         working_file = open("assets/headers/group1.h")
@@ -114,13 +117,19 @@ class TestInternal(unittest.TestCase):
         
         scope_entries = parser_internal.get_scopes_data(working_data)
         
-        variables_in_type = parser_internal.find_variables_in_scope(working_data, 1, scope_entries)
+        variables_in_type = parser_internal.find_variables_in_scope(working_data, 3, scope_entries)
         
         self.assertEqual(len(variables_in_type), 2)
         self.assertEqual(variables_in_type[0].type_name, "int")
         self.assertEqual(variables_in_type[0].name, "x")
         self.assertEqual(variables_in_type[1].type_name, "float")
         self.assertEqual(variables_in_type[1].name, "y")
+        
+        variables_in_type = parser_internal.find_variables_in_scope(working_data, 1, scope_entries)
+        
+        self.assertEqual(len(variables_in_type), 1)
+        self.assertEqual(variables_in_type[0].type_name, "double")
+        self.assertEqual(variables_in_type[0].name, "vel")
 
     def test_create_scropes_tree_group_1(self):
         working_file = open("assets/headers/group1.h")
@@ -134,20 +143,28 @@ class TestInternal(unittest.TestCase):
         self.assertEqual(scopes_tree.entry, -1) 
         
         namespace_scope = scopes_tree.scopes[0]
-        self.assertEqual(len(namespace_scope.scopes), 1)
+        self.assertEqual(len(namespace_scope.scopes), 2)
         self.assertEqual(namespace_scope.entry, 0)
         
-        type_scope = namespace_scope.scopes[0]
-        self.assertEqual(len(type_scope.scopes), 2)
-        self.assertEqual(type_scope.entry, 1)
+        type_scope_type_2 = namespace_scope.scopes[0]
+        self.assertEqual(len(type_scope_type_2.scopes), 1)
+        self.assertEqual(type_scope_type_2.entry, 1)
         
-        var1_scope = type_scope.scopes[0]
+        vel_scope = type_scope_type_2.scopes[0]
+        self.assertEqual(len(vel_scope.scopes), 0)
+        self.assertEqual(vel_scope.entry, 2)
+        
+        type_scope_type_1 = namespace_scope.scopes[1]
+        self.assertEqual(len(type_scope_type_1.scopes), 2)
+        self.assertEqual(type_scope_type_1.entry, 3)
+        
+        var1_scope = type_scope_type_1.scopes[0]
         self.assertEqual(len(var1_scope.scopes), 0)
-        self.assertEqual(var1_scope.entry, 2)
+        self.assertEqual(var1_scope.entry, 4)
         
-        var2_scope = type_scope.scopes[1]
+        var2_scope = type_scope_type_1.scopes[1]
         self.assertEqual(len(var2_scope.scopes), 0)
-        self.assertEqual(var2_scope.entry, 3)
+        self.assertEqual(var2_scope.entry, 5)
 
     def test_populate_scope_tree_group_1(self):
         working_file = open("assets/headers/group1.h")
@@ -173,27 +190,39 @@ class TestInternal(unittest.TestCase):
         self.assertEqual(scopes_tree.entry, -1) 
         
         namespace_scope = scopes_tree.scopes[0]
-        self.assertEqual(len(namespace_scope.scopes), 1)
+        self.assertEqual(len(namespace_scope.scopes), 2)
         self.assertEqual(namespace_scope.entry, 0)
         self.assertEqual(namespace_scope.feature, namespace_links[0])
         
-        type_scope = namespace_scope.scopes[0]
-        self.assertEqual(len(type_scope.scopes), 2)
-        self.assertEqual(type_scope.entry, 1)
-        self.assertEqual(type_scope.feature, type_links[0])
-        self.assertEqual(len(type_scope.variables), 2)
-        self.assertEqual(type_scope.variables[0].name, "x")
-        self.assertEqual(type_scope.variables[0].type_name, "int")
-        self.assertEqual(type_scope.variables[1].name, "y")
-        self.assertEqual(type_scope.variables[1].type_name, "float")
+        type_scope_type_2 = namespace_scope.scopes[0]
+        self.assertEqual(len(type_scope_type_2.scopes), 1)
+        self.assertEqual(type_scope_type_2.entry, 1)
+        self.assertEqual(type_scope_type_2.feature, type_links[1])
+        self.assertEqual(len(type_scope_type_2.variables), 1)
+        self.assertEqual(type_scope_type_2.variables[0].name, "vel")
+        self.assertEqual(type_scope_type_2.variables[0].type_name, "double")
         
-        var1_scope = type_scope.scopes[0]
+        vel_scope = type_scope_type_2.scopes[0]
+        self.assertEqual(len(vel_scope.scopes), 0)
+        self.assertEqual(vel_scope.entry, 2)
+        
+        type_scope_type_1 = namespace_scope.scopes[1]
+        self.assertEqual(len(type_scope_type_1.scopes), 2)
+        self.assertEqual(type_scope_type_1.entry, 3)
+        self.assertEqual(type_scope_type_1.feature, type_links[0])
+        self.assertEqual(len(type_scope_type_1.variables), 2)
+        self.assertEqual(type_scope_type_1.variables[0].name, "x")
+        self.assertEqual(type_scope_type_1.variables[0].type_name, "int")
+        self.assertEqual(type_scope_type_1.variables[1].name, "y")
+        self.assertEqual(type_scope_type_1.variables[1].type_name, "float")
+        
+        var1_scope = type_scope_type_1.scopes[0]
         self.assertEqual(len(var1_scope.scopes), 0)
-        self.assertEqual(var1_scope.entry, 2)
+        self.assertEqual(var1_scope.entry, 4)
         
-        var2_scope = type_scope.scopes[1]
+        var2_scope = type_scope_type_1.scopes[1]
         self.assertEqual(len(var2_scope.scopes), 0)
-        self.assertEqual(var2_scope.entry, 3)
+        self.assertEqual(var2_scope.entry, 5)
 
     def test_create_structure_group_1(self):
         working_file = open("assets/headers/group1.h")
@@ -223,18 +252,24 @@ class TestInternal(unittest.TestCase):
         self.assertIsNotNone(structure["namespaces"][0].get("name"))
         self.assertEquals(structure["namespaces"][0]["name"], "Types::Group1")
         self.assertIsNotNone(structure["namespaces"][0].get("types"))
-        self.assertEquals(len(structure["namespaces"][0]["types"]), 1)
+        self.assertEquals(len(structure["namespaces"][0]["types"]), 2)
         
         self.assertIsNotNone(structure["namespaces"][0]["types"][0].get("name"))
-        self.assertEquals(structure["namespaces"][0]["types"][0]["name"], "Type1")
+        self.assertEquals(structure["namespaces"][0]["types"][0]["name"], "Type2")
         self.assertIsNotNone(structure["namespaces"][0]["types"][0].get("variables"))
         self.assertIsNotNone(structure["namespaces"][0]["types"][0]["variables"][0].get("dataType"))
-        self.assertEquals(structure["namespaces"][0]["types"][0]["variables"][0]["dataType"], "int")
-        self.assertIsNotNone(structure["namespaces"][0]["types"][0]["variables"][0].get("name"))
-        self.assertEquals(structure["namespaces"][0]["types"][0]["variables"][0]["name"], "x")
+        self.assertEquals(structure["namespaces"][0]["types"][0]["variables"][0]["dataType"], "double")
+                
+        self.assertIsNotNone(structure["namespaces"][0]["types"][1].get("name"))
+        self.assertEquals(structure["namespaces"][0]["types"][1]["name"], "Type1")
+        self.assertIsNotNone(structure["namespaces"][0]["types"][1].get("variables"))
+        self.assertIsNotNone(structure["namespaces"][0]["types"][1]["variables"][0].get("dataType"))
+        self.assertEquals(structure["namespaces"][0]["types"][1]["variables"][0]["dataType"], "int")
+        self.assertIsNotNone(structure["namespaces"][0]["types"][1]["variables"][0].get("name"))
+        self.assertEquals(structure["namespaces"][0]["types"][1]["variables"][0]["name"], "x")
         
-        self.assertIsNotNone(structure["namespaces"][0]["types"][0]["variables"][1].get("dataType"))
-        self.assertEquals(structure["namespaces"][0]["types"][0]["variables"][1]["dataType"], "float")
-        self.assertIsNotNone(structure["namespaces"][0]["types"][0]["variables"][1].get("name"))
-        self.assertEquals(structure["namespaces"][0]["types"][0]["variables"][1]["name"], "y")
+        self.assertIsNotNone(structure["namespaces"][0]["types"][1]["variables"][1].get("dataType"))
+        self.assertEquals(structure["namespaces"][0]["types"][1]["variables"][1]["dataType"], "float")
+        self.assertIsNotNone(structure["namespaces"][0]["types"][1]["variables"][1].get("name"))
+        self.assertEquals(structure["namespaces"][0]["types"][1]["variables"][1]["name"], "y")
         

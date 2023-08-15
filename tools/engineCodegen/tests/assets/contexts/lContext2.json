@@ -10,6 +10,11 @@
         },
         {
             "type": "object",
+            "dataType": "Types::Cats::CryingCat",
+            "name": "cat"
+        },
+        {
+            "type": "object",
             "dataType": "float",
             "name": "var2",
             "initial": 1.1

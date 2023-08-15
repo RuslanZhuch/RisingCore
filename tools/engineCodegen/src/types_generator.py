@@ -107,3 +107,4 @@ def generate_impls(output_file_path : str, file_schema : dict, cache : types_man
                 generator.generate_block(block_handler, "if (name == \"{}\")".format(variable), variable_block)
         
         generator.generate_block(handler, function_signature, block)
+        generator.generate_empty(handler)

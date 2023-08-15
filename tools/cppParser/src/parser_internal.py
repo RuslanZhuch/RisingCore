@@ -197,7 +197,7 @@ def create_scopes_tree(scrope_entries : ScopeData) -> ScopeTreeNode:
         if len(owners) >= 1:
             owners_dist = [scope_index - owner for owner in owners]
             min_dist = min(owners_dist)
-            owner_id = owners_dist.index(min_dist)
+            owner_id = owners[owners_dist.index(min_dist)]
             nodes[owner_id].scopes.append(node)
         else:
             root.scopes.append(node)

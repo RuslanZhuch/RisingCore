@@ -1,10 +1,10 @@
 {
     "project_dest_folder": "dest/projects/project1",
-    "runtime_path": "assets/workspace/ws_runtime.json",
-    "cache_folder": "dest/project/project1/prev",
+    "runtime_path": "assets/project1/ws_runtime.json",
+    "cache_folder": "dest/projects/project1/prev",
     "types_paths": [
-        "assets/workspace/types_default.json",
-        "assets/workspace/types_contexts_data.json"
+        "assets/project1/types_default.json",
+        "assets/project1/types_contexts_data.json"
     ],
     "contexts_paths": [
         "assets/contexts/lContext1.json",

@@ -16,6 +16,15 @@
                             "name": "y"
                         }
                     ]
+                },
+                {
+                    "name": "Type2",
+                    "variables": [
+                        {
+                            "dataType": "double",
+                            "name": "vel"
+                        }
+                    ]
                 }
             ]
         }

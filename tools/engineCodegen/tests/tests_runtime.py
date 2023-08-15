@@ -44,13 +44,13 @@ class TestRuntime(unittest.TestCase):
         
         contexts_data = contexts.load_contexts(contexts_file_list)
         
-        runtime.generate("dest", executors_data, "assets/workspace/ws_runtime.json", contexts_data)
+        runtime.generate("dest", executors_data, "assets/project1/ws_runtime.json", contexts_data)
         
         utils.assert_files(self, "dest/runtime.cpp", "assets/expected/runtime.cpp")
                 
     def test_generate_runtime_with_pools(self):
-        if not os.path.exists('dest/project3'):
-            os.makedirs('dest/project3')
+        if not os.path.exists('dest/projects/project3'):
+            os.makedirs('dest/projects/project3')
              
         executors_data = executors.load([
             "assets/project3/executors/executor1.json",
@@ -67,6 +67,6 @@ class TestRuntime(unittest.TestCase):
         
         contexts_data = contexts.load_contexts(contexts_file_list)
         
-        runtime.generate("dest/project3", executors_data, "assets/project3/ws_runtime.json", contexts_data)
+        runtime.generate("dest/projects/project3", executors_data, "assets/project3/ws_runtime.json", contexts_data)
         
-        utils.assert_files(self, "dest/project3/runtime.cpp", "assets/expected/project3/runtime.cpp")
+        utils.assert_files(self, "dest/projects/project3/runtime.cpp", "assets/expected/project3/runtime.cpp")

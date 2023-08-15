@@ -16,7 +16,7 @@
         },
         {
             "type": "object",
-            "dataType": "CustomData1",
+            "dataType": "Types::Data::CustomData1",
             "name": "var3"
         },
         {

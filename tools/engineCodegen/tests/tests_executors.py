@@ -50,7 +50,7 @@ class TestExecutors(unittest.TestCase):
         self.assertEqual(executors.get_name(executors_data[1]), "executor2")
         
     def test_load_shared_contexts_usage(self):
-        workspace_data = loader.load_runtime_data("assets/workspace/ws_runtime.json")
+        workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
         
         usage = executors.load_shared_context_usage(workspace_data)
         self.assertEqual(len(usage), 2)
@@ -110,7 +110,7 @@ class TestExecutors(unittest.TestCase):
         handler = generator.generate_file("dest", "gen_executor_1_shared_context_init.cpp")
         self.assertIsNotNone(handler)
         
-        workspace_data = loader.load_runtime_data("assets/workspace/ws_runtime.json")
+        workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
         
         executors.gen_shared_context_init(handler, executors_data[0], workspace_data)
         handler.close()
@@ -126,7 +126,7 @@ class TestExecutors(unittest.TestCase):
         handler = generator.generate_file("dest", "gen_executor_2_shared_context_init.cpp")
         self.assertIsNotNone(handler)
         
-        workspace_data = loader.load_runtime_data("assets/workspace/ws_runtime.json")
+        workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
         
         executors.gen_shared_context_init(handler, executors_data[1], workspace_data)
         handler.close()
@@ -153,7 +153,7 @@ class TestExecutors(unittest.TestCase):
         handler = create_target_file()
         self.assertIsNotNone(handler)
         
-        workspace_data = loader.load_runtime_data("assets/workspace/ws_runtime.json")
+        workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
         executors.gen_inits(handler, executors_data, workspace_data)
         
         handler.close()

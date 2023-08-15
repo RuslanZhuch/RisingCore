@@ -1,5 +1,6 @@
 import loader
 import types_manager
+import types_generator
 
 import os
 import contexts
@@ -8,6 +9,11 @@ import diff
 import runtime
 
 from os import path
+
+import sys
+sys.path.append("../../cppParser/src")
+
+import parser
 
 class ProjectDesc:
     def __init__(self):
@@ -61,6 +67,24 @@ def _generate_diff_for_project_structure(cache_folder : str, file_path : str):
 
     return False
 
+def _generate_types_impls(types_cache : types_manager.TypesCache, project_dir : str):
+    include_list = types_manager.get_includes_list(types_cache, types_cache.type_names)
+    
+    pathes_to_parse = []
+    for path in include_list:
+        if not os.path.exists(path):
+            continue
+        pathes_to_parse.append(path)
+        
+    parsed_files = parser.parse_to_folder(pathes_to_parse, project_dir + "/parsed_types/")
+    
+    for parsed_file_path in parsed_files:
+        parsed_data = loader.load_file_data(parsed_file_path)
+        file_name = os.path.basename(parsed_file_path)
+        file_name_stripped = file_name.split(".")[0]
+        output_path = "{}/generated_types/{}.cpp".format(project_dir, file_name_stripped)
+        types_generator.generate_impls(output_path, parsed_data, types_cache)
+
 def load(project_desc_file):
     desc_file_data = loader.load_file_data(project_desc_file)
     
@@ -109,6 +133,8 @@ def generate(project_path : str):
     
     types_data = [loader.load_file_data(types_path) for types_path in project_desc.types_paths]
     types_cache = types_manager.cache_types(types_data)
+    
+    _generate_types_impls(types_cache, project_desc.project_dest_folder)
     
     for context_file in project_desc.contexts_paths:
         if context_file not in contexts_diff_list:

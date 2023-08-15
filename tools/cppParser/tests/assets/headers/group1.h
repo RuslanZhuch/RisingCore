@@ -13,4 +13,11 @@ namespace Types::Group1
         float y{};
     }
 
+    struct Type2
+    {
+        ENGINE_TYPES_DESERIALIZE;
+
+        double vel{};
+    }
+
 }
