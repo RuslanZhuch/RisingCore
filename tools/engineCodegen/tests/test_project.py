@@ -62,6 +62,8 @@ class TestProject(unittest.TestCase):
         self.assertEqual(project_desc.executors_paths[1], "assets/executors/executor2.json")
         self.assertEqual(project_desc.executors_paths[2], "assets/executors/executor3.json")
         
+        self.assertEqual(project_desc.types_src_path, "")
+        
     def test_gen_project1(self):
         if os.path.exists('dest/projects/project1'):
             shutil.rmtree('dest/projects/project1')
@@ -90,8 +92,8 @@ class TestProject(unittest.TestCase):
         utils.assert_files(self, "dest/projects/project1/executors/Executor2ExecutorImpl.cpp", "assets/expected/Executor2ExecutorImpl.cpp")
         utils.assert_files(self, "dest/projects/project1/executors/Executor3ExecutorImpl.cpp", "assets/expected/Executor3ExecutorImpl.cpp")
         
-        utils.assert_files(self, "dest/projects/project1/generated_types/CustomData.cpp", "assets/expected/types/CustomData.cpp")
-        utils.assert_files(self, "dest/projects/project1/generated_types/Crying.cpp", "assets/expected/types/cats/Crying.cpp")
+        utils.assert_files(self, "dest/projects/project1/generated_types/CustomDataGen.cpp", "assets/expected/types/CustomData.cpp")
+        utils.assert_files(self, "dest/projects/project1/generated_types/CryingGen.cpp", "assets/expected/types/cats/Crying.cpp")
         
         utils.assert_files(self, "dest/projects/project1/runtime.cpp", "assets/expected/runtime.cpp")
 

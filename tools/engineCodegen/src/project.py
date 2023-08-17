@@ -19,7 +19,8 @@ class ProjectDesc:
     def __init__(self):
         self.project_dest_folder = ""
         self.application_runtime_path = ""
-        self.cache_folder = ""
+        self.cache_folder = "",
+        self.types_src_path = "",
         self.types_paths = []
         self.contexts_paths = []
         self.executors_paths = []
@@ -67,14 +68,15 @@ def _generate_diff_for_project_structure(cache_folder : str, file_path : str):
 
     return False
 
-def _generate_types_impls(types_cache : types_manager.TypesCache, project_dir : str):
+def _generate_types_impls(types_cache : types_manager.TypesCache, project_dir : str, types_src_path : str):
     include_list = types_manager.get_includes_list(types_cache, types_cache.type_names)
     
     pathes_to_parse = []
     for path in include_list:
-        if not os.path.exists(path):
+        full_path = types_src_path + path
+        if not os.path.exists(full_path):
             continue
-        pathes_to_parse.append(path)
+        pathes_to_parse.append(full_path)
         
     parsed_files = parser.parse_to_folder(pathes_to_parse, project_dir + "/parsed_types/")
     
@@ -82,7 +84,7 @@ def _generate_types_impls(types_cache : types_manager.TypesCache, project_dir : 
         parsed_data = loader.load_file_data(parsed_file_path)
         file_name = os.path.basename(parsed_file_path)
         file_name_stripped = file_name.split(".")[0]
-        output_path = "{}/generated_types/{}.cpp".format(project_dir, file_name_stripped)
+        output_path = "{}/generated_types/{}Gen.cpp".format(project_dir, file_name_stripped)
         types_generator.generate_impls(output_path, parsed_data, types_cache)
 
 def load(project_desc_file):
@@ -98,6 +100,7 @@ def load(project_desc_file):
     project_desc.types_paths = _get_array(desc_file_data, "types_paths")
     project_desc.contexts_paths = _get_array(desc_file_data, "contexts_paths")
     project_desc.executors_paths = _get_array(desc_file_data, "executors_paths")
+    project_desc.types_src_path = _get_value(desc_file_data, "types_src_path")
     
     return project_desc
     
@@ -134,7 +137,7 @@ def generate(project_path : str):
     types_data = [loader.load_file_data(types_path) for types_path in project_desc.types_paths]
     types_cache = types_manager.cache_types(types_data)
     
-    _generate_types_impls(types_cache, project_desc.project_dest_folder)
+    _generate_types_impls(types_cache, project_desc.project_dest_folder, project_desc.types_src_path)
     
     for context_file in project_desc.contexts_paths:
         if context_file not in contexts_diff_list:

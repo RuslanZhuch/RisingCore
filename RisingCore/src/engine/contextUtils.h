@@ -67,9 +67,22 @@ namespace Engine::ContextUtils
 
         const auto& dataObject{ src[id].GetObject() };
 
+        if (dataObject.FindMember("initial") == dataObject.end())
+            return;
+
         assignToVariable(dest, dataObject["initial"]);
 
 	}
+
+    [[nodiscard]] static void loadVariableFromList(auto& dest, rapidjson::GenericArray<true, rapidjson::Value> src, rapidjson::SizeType id) noexcept
+    {
+
+        if (!src[id].IsObject())
+            return;
+
+        assignToVariable(dest, src[id].GetObject());
+
+    }
 
     template <typename T>
     [[nodiscard]] static int32_t getBufferCapacityBytes(
@@ -94,7 +107,7 @@ namespace Engine::ContextUtils
     }
 
     template <typename T>
-    [[nodiscard]] static void loadBuffer(
+    [[nodiscard]] static void initBuffer(
         Dod::DBBuffer<T>& dest,
         int32_t capacityBytes,
         Dod::MemPool& pool, 
@@ -103,6 +116,37 @@ namespace Engine::ContextUtils
     {
 
         Dod::BufferUtils::initFromMemory(dest, Dod::MemUtils::stackAquire(pool, capacityBytes, header));
+
+    }
+
+    template <typename T>
+    [[nodiscard]] static void loadBufferContent(
+        Dod::DBBuffer<T>& dest,
+        rapidjson::GenericArray<true, rapidjson::Value> src, 
+        rapidjson::SizeType id
+    ) noexcept
+    {
+
+        if (!src[id].IsObject())
+            return;
+        const auto& dataObject{ src[id].GetObject() };
+
+        const auto initialField{ dataObject.FindMember("initial") };
+        if (initialField == dataObject.end())
+            return;
+
+        const auto initialData{ initialField->value.GetArray() };
+
+        const auto numOfElementsToLoad{ static_cast<int32_t>(initialData.Size()) };
+        const auto bufferSize{ Dod::BufferUtils::getCapacity(dest) };
+
+        const auto totalElements{ std::min(numOfElementsToLoad, bufferSize) };
+
+        for (int32_t elId{}; elId < totalElements; ++elId)
+        {
+            Dod::BufferUtils::constructBack(dest);
+            loadVariableFromList(Dod::BufferUtils::get(dest, elId), initialData, elId);
+        }
 
     }
 

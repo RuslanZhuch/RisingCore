@@ -6,6 +6,11 @@
     {
       "type": "object",
       "dataType": "float",
+      "name": "width"
+    },
+    {
+      "type": "object",
+      "dataType": "float",
       "name": "width",
       "initial": 50
     },

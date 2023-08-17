@@ -6,6 +6,7 @@
         "assets/project1/types_default.json",
         "assets/project1/types_contexts_data.json"
     ],
+    "types_src_path": "",
     "contexts_paths": [
         "assets/contexts/lContext1.json",
         "assets/contexts/lContext2.json",

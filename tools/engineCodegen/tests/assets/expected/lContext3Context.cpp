@@ -28,7 +28,8 @@ namespace Game::Context::LContext3
         this->memory.allocate(needBytes);
         int32_t header{};
 
-        Engine::ContextUtils::loadBuffer(this->dbvar, dbvarCapacityBytes, this->memory, header);
+        Engine::ContextUtils::initBuffer(this->dbvar, dbvarCapacityBytes, this->memory, header);
+        Engine::ContextUtils::loadBufferContent(this->dbvar, loadingDataArray, 0);
 
     }
 

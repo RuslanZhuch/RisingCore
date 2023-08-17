@@ -33,8 +33,10 @@ namespace Game::Context::LContext1
         this->memory.allocate(needBytes);
         int32_t header{};
 
-        Engine::ContextUtils::loadBuffer(this->dbvar1, dbvar1CapacityBytes, this->memory, header);
-        Engine::ContextUtils::loadBuffer(this->dbvar2, dbvar2CapacityBytes, this->memory, header);
+        Engine::ContextUtils::initBuffer(this->dbvar1, dbvar1CapacityBytes, this->memory, header);
+        Engine::ContextUtils::loadBufferContent(this->dbvar1, loadingDataArray, 3);
+        Engine::ContextUtils::initBuffer(this->dbvar2, dbvar2CapacityBytes, this->memory, header);
+        Engine::ContextUtils::loadBufferContent(this->dbvar2, loadingDataArray, 4);
 
     }
 
