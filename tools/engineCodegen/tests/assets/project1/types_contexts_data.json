@@ -1,0 +1,12 @@
+{
+    "whoIAm": "TypesDesc",
+    "version": 1,
+    "data":{
+        "float": "None",
+        "int32_t": "None",
+        "int64_t": "None",
+        "Types::Data::CustomData1": "assets/types/cpp/CustomData.h",
+        "Types::Cats::CryingCat": "assets/types/cpp/cats/Crying.h",
+        "Types::Cats::CryingCat2": "assets/types/cpp/cats/Crying.h"
+    }
+}

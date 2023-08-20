@@ -1,0 +1,11 @@
+{
+    "whoIAm": "TypesDesc",
+    "version": 1,
+    "data":{
+        "bool": "None",
+        "float": "None",
+        "Types::Cats::CryingCat": "assets/types/cpp/cats/Crying.h",
+        "double": "None",
+        "Types::Cats::CryingCat2": "assets/types/cpp/cats/Crying.h"
+    }
+}

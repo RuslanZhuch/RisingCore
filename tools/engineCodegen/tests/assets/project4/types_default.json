@@ -2,9 +2,10 @@
     "whoIAm": "TypesDesc",
     "version": 1,
     "data":{
-        "float": "None",
         "int32_t": "None",
+        "float": "None",
         "int64_t": "None",
-        "CustomData1": "Types/CustomData.h"
+        "Engine::String": "engine/String.h",
+        "External::Type1": "Type1.h"
     }
 }

@@ -1,0 +1,7 @@
+{
+    "whoIAm": "TypesDesc",
+    "version": 1,
+    "data":{
+        "Types::Group1::Type1": "types/group1Types.h"
+    }
+}

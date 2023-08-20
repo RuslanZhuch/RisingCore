@@ -4,6 +4,6 @@
     "data":{
         "bool": "None",
         "float": "None",
-        "CryingCat": "cats/Crying.h"
+        "Types::Cats::CryingCat": "assets/types/cpp/cats/Crying.h"
     }
 }

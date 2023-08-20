@@ -10,7 +10,7 @@ namespace Game::Context::LContext2
     {
 
         const auto doc{ Engine::ContextUtils::loadFileDataRoot("assets/contexts/lContext2.json") };
-        const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 4) };
+        const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 5) };
 
         if (!inputDataOpt.has_value())
         {
@@ -20,10 +20,11 @@ namespace Game::Context::LContext2
         const auto& loadingDataArray{ inputDataOpt.value() };
 
         Engine::ContextUtils::loadVariable(this->var1, loadingDataArray, 0);
-        Engine::ContextUtils::loadVariable(this->var2, loadingDataArray, 1);
+        Engine::ContextUtils::loadVariable(this->cat, loadingDataArray, 1);
+        Engine::ContextUtils::loadVariable(this->var2, loadingDataArray, 2);
 
-        const auto dbvar0CapacityBytes{ Engine::ContextUtils::getBufferCapacityBytes<float>(loadingDataArray, 2) };
-        const auto dbvar1CapacityBytes{ Engine::ContextUtils::getBufferCapacityBytes<int64_t>(loadingDataArray, 3) };
+        const auto dbvar0CapacityBytes{ Engine::ContextUtils::getBufferCapacityBytes<float>(loadingDataArray, 3) };
+        const auto dbvar1CapacityBytes{ Engine::ContextUtils::getBufferCapacityBytes<int64_t>(loadingDataArray, 4) };
 
         int32_t needBytes{};
         needBytes += dbvar0CapacityBytes;
@@ -32,8 +33,10 @@ namespace Game::Context::LContext2
         this->memory.allocate(needBytes);
         int32_t header{};
 
-        Engine::ContextUtils::loadBuffer(this->dbvar0, dbvar0CapacityBytes, this->memory, header);
-        Engine::ContextUtils::loadBuffer(this->dbvar1, dbvar1CapacityBytes, this->memory, header);
+        Engine::ContextUtils::initBuffer(this->dbvar0, dbvar0CapacityBytes, this->memory, header);
+        Engine::ContextUtils::loadBufferContent(this->dbvar0, loadingDataArray, 3);
+        Engine::ContextUtils::initBuffer(this->dbvar1, dbvar1CapacityBytes, this->memory, header);
+        Engine::ContextUtils::loadBufferContent(this->dbvar1, loadingDataArray, 4);
 
     }
 

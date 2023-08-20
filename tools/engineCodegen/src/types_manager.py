@@ -29,11 +29,24 @@ def cache_types(types_data):
     
     return TypesCache(type_names, paths)
 
-def gen_includes(handler, cached_types, types_to_include):
+def get_includes_list(cached_types : TypesCache, types_to_include : list[str]) -> list[str]:
+    includes_list = []
+    
     unique_types = list(set(types_to_include))
     unique_types.sort()
+    created_includes = set() 
     for type_to_include in unique_types:
         path = cached_types.get_path(type_to_include)
-        if path == "None":
+        if path == "None" or path in created_includes:
             continue
+        created_includes.add(path)
+        includes_list.append(path)
+        
+    return includes_list
+
+def gen_includes(handler, cached_types : list[TypesCache], types_to_include : list[str]):
+    includes_list = get_includes_list(cached_types, types_to_include)
+    
+    for path in includes_list:
         generator.generate_line(handler, "#include <{}>".format(path))
+    

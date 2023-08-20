@@ -45,6 +45,9 @@
     <ClInclude Include="src\engine\StringUtils.h">
       <Filter>src\engine</Filter>
     </ClInclude>
+    <ClInclude Include="src\engine\types.h">
+      <Filter>src\engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dod\MemPool.cpp">

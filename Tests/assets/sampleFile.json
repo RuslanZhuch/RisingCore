@@ -6,6 +6,11 @@
     {
       "type": "object",
       "dataType": "float",
+      "name": "width"
+    },
+    {
+      "type": "object",
+      "dataType": "float",
       "name": "width",
       "initial": 50
     },
@@ -26,6 +31,20 @@
       "dataType": "string",
       "name": "title",
       "initial": "Title text"
+    },
+    {
+      "type": "object",
+      "dataType": "string",
+      "name": "title",
+      "initial": {
+        "int1": 1,
+        "float1": 2.0,
+        "string1": "Some string 3",
+        "inner": {
+            "x": 4.0,
+            "y": 5.0
+        }
+      }
     }
   ]
 }

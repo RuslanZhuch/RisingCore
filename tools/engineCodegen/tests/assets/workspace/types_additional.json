@@ -1,9 +1,0 @@
-{
-    "whoIAm": "TypesDesc",
-    "version": 1,
-    "data":{
-        "bool": "None",
-        "float": "None",
-        "CryingCat": "cats/Crying.h"
-    }
-}

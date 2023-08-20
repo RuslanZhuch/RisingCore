@@ -5,6 +5,6 @@
         "float": "None",
         "int32_t": "None",
         "int64_t": "None",
-        "CustomData1": "Types/CustomData.h"
+        "Types::Data::CustomData1": "assets/types/cpp/CustomData.h"
     }
 }
