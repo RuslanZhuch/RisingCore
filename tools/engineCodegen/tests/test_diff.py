@@ -105,7 +105,27 @@ class TestDiff(unittest.TestCase):
                 
         data_structure_differs2 = loader.load_file_data("assets/diff/config5StructDiffers2.json")
         self.assertFalse(diff.check_structure_is_same(data, data_structure_differs2))
-                
+             
+    def test_json_structure_diff_6(self):
+        data = loader.load_file_data("assets/diff/config6.json")
+        dataSame = loader.load_file_data("assets/diff/config6SameArray.json")
+        self.assertTrue(diff.check_structure_is_same(data, dataSame, ["initial"]))
+
+        data_structure_same_array_complex = loader.load_file_data("assets/diff/config6SameArrayComplex.json")
+        self.assertTrue(diff.check_structure_is_same(data, data_structure_same_array_complex, ["initial"]))
+
+        data_structure_same_complex = loader.load_file_data("assets/diff/config6SameComplex.json")
+        self.assertTrue(diff.check_structure_is_same(data, data_structure_same_complex, ["someData"]))
+
+        data_structure_differs_array_complex = loader.load_file_data("assets/diff/config6StructureDiffersArrayComplex.json")
+        self.assertTrue(diff.check_structure_is_same(data, data_structure_differs_array_complex, ["initial"]))
+        
+        data_structure_differs_array_trivial = loader.load_file_data("assets/diff/config6StructureDiffersArrayTrivial.json")
+        self.assertTrue(diff.check_structure_is_same(data, data_structure_differs_array_trivial, ["initial"]))
+        
+        data_structure_differs_complex = loader.load_file_data("assets/diff/config6StructureDiffersComplex.json")
+        self.assertTrue(diff.check_structure_is_same(data, data_structure_differs_complex, ["someData"]))
+        
     def test_diff_list_generator(self):
         current_files_folder = "assets/diff/current/"
         previous_files_folder = "assets/diff/prev/"

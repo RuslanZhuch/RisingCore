@@ -6,19 +6,21 @@ import shutil
 
 import filecmp
 
-def _get_dict_keys(dict_data : any):
+def _get_dict_keys(dict_data : any, filter : list[str]):
     keys = []
     if not isinstance(dict_data, dict):
         return keys
         
     for key in dict_data.keys():
+        if filter.count(key) > 0:
+            continue
         keys.append(key)
         value = dict_data[key]
         if isinstance(value, dict):
-            keys.append(_get_dict_keys(value))
+            keys.append(_get_dict_keys(value, filter))
         elif isinstance(value, list):
             for el in value:
-                keys.append(_get_dict_keys(el))
+                keys.append(_get_dict_keys(el, filter))
                 
     return keys
 
@@ -30,12 +32,14 @@ def _get_dict_values(dict_data : dict, filter : list[str]):
     
     for key in dict_data.keys():
         value = dict_data[key]
+        if filter.count(key) > 0:
+            continue
         if isinstance(value, dict):
             values.extend(_get_dict_values(value, filter))
         elif isinstance(value, list):
             for el in value:
                 values.extend(_get_dict_values(el, filter))
-        elif filter.count(key) <= 0:
+        else:
             values.append(value)
             
     return values
@@ -65,8 +69,8 @@ def check_files_equals(file_path_left : str, file_path_right : str):
     return filecmp.cmp(file_path_left, file_path_right)
 
 def check_structure_is_same(left_data : dict, right_data : dict, filter : list[str] = []):
-    left_keys = _get_dict_keys(left_data)
-    right_keys = _get_dict_keys(right_data)
+    left_keys = _get_dict_keys(left_data, filter)
+    right_keys = _get_dict_keys(right_data, filter)
     
     is_keys_struct_same = left_keys == right_keys
     if not is_keys_struct_same:

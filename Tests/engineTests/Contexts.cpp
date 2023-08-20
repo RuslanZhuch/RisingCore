@@ -219,6 +219,7 @@ struct BufferType1
 
 };
 
+template <typename DataType>
 class ContextTest : public ::testing::Test {
 
 protected:
@@ -242,7 +243,7 @@ protected:
 		int32_t header{};
 
 		const auto destCapacity{ numOfDestElements + 1 };
-		Engine::ContextUtils::initBuffer(this->dst, sizeof(BufferType1) * destCapacity, this->memory, header);
+		Engine::ContextUtils::initBuffer(this->dst, sizeof(DataType) * destCapacity, this->memory, header);
 		ASSERT_EQ(Dod::BufferUtils::getCapacity(this->dst), numOfDestElements);
 
 		Engine::ContextUtils::loadBufferContent(this->dst, data.GetArray(), dataId);
@@ -251,11 +252,14 @@ protected:
 
 	Dod::MemPool memory;
 	rapidjson::Document doc;
-	Dod::DBBuffer<BufferType1> dst;
+	Dod::DBBuffer<DataType> dst;
 
 };
 
-TEST_F(ContextTest, LoadBufferContent)
+using ContextTestComplex = ContextTest<BufferType1>;
+using ContextTestTrivial = ContextTest<int32_t>;
+
+TEST_F(ContextTestComplex, LoadBufferContent)
 {
 
 	this->run(4, 0);
@@ -273,7 +277,7 @@ TEST_F(ContextTest, LoadBufferContent)
 
 }
 
-TEST_F(ContextTest, LoadBufferContentDestIsLarger)
+TEST_F(ContextTestComplex, LoadBufferContentDestIsLarger)
 {
 
 	this->run(6, 0);
@@ -291,7 +295,7 @@ TEST_F(ContextTest, LoadBufferContentDestIsLarger)
 
 }
 
-TEST_F(ContextTest, LoadBufferContentDestIsSmaller)
+TEST_F(ContextTestComplex, LoadBufferContentDestIsSmaller)
 {
 
 	this->run(3, 0);
@@ -307,7 +311,7 @@ TEST_F(ContextTest, LoadBufferContentDestIsSmaller)
 
 }
 
-TEST_F(ContextTest, LoadBufferContentDestIsEmpty)
+TEST_F(ContextTestComplex, LoadBufferContentDestIsEmpty)
 {
 
 	this->run(0, 0);
@@ -316,7 +320,7 @@ TEST_F(ContextTest, LoadBufferContentDestIsEmpty)
 
 }
 
-TEST_F(ContextTest, LoadBufferContentDataIsEmpty)
+TEST_F(ContextTestComplex, LoadBufferContentDataIsEmpty)
 {
 
 	this->run(4, 1);
@@ -325,7 +329,7 @@ TEST_F(ContextTest, LoadBufferContentDataIsEmpty)
 
 }
 
-TEST_F(ContextTest, LoadBufferContentDataNoField)
+TEST_F(ContextTestComplex, LoadBufferContentDataNoField)
 {
 
 	this->run(4, 3);
@@ -334,7 +338,7 @@ TEST_F(ContextTest, LoadBufferContentDataNoField)
 
 }
 
-TEST_F(ContextTest, LoadBufferContentMappingIsWrong)
+TEST_F(ContextTestComplex, LoadBufferContentMappingIsWrong)
 {
 
 	this->run(4, 2);
@@ -349,5 +353,19 @@ TEST_F(ContextTest, LoadBufferContentMappingIsWrong)
 	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 2).y, 0);
 	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 3).x, 0.f);
 	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 3).y, 0);
+
+}
+
+TEST_F(ContextTestTrivial, LoadBufferContentDataIsTrivial)
+{
+
+	this->run(4, 4);
+
+	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(this->dst), 4);
+
+	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 0), 1);
+	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 1), 2);
+	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 2), 3);
+	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 3), 4);
 
 }

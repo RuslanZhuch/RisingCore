@@ -77,10 +77,7 @@ namespace Engine::ContextUtils
     [[nodiscard]] static void loadVariableFromList(auto& dest, rapidjson::GenericArray<true, rapidjson::Value> src, int32_t id) noexcept
     {
 
-        if (!src[static_cast<rapidjson::SizeType>(id)].IsObject())
-            return;
-
-        assignToVariable(dest, src[static_cast<rapidjson::SizeType>(id)].GetObject());
+        assignToVariable(dest, src[static_cast<rapidjson::SizeType>(id)]);
 
     }
 
