@@ -17,8 +17,8 @@ namespace Dod::CondTable
 
 	struct Table
 	{
-		const ImBuffer<uint32_t> xOrMasks;
-		const ImBuffer<uint32_t> ignoreMasks;
+		ImBuffer<uint32_t> xOrMasks;
+		ImBuffer<uint32_t> ignoreMasks;
 	};
 
 	[[nodiscard]] static Table generate(const auto& tableSrc, const std::span<uint32_t> xOrMasksMem, const std::span<uint32_t> ignoreMasksMem) noexcept
@@ -29,18 +29,21 @@ namespace Dod::CondTable
 		Dod::DBBuffer<uint32_t> ignoreMasks;
 		Dod::BufferUtils::initFromArray(ignoreMasks, ignoreMasksMem);
 
-		for (int32_t rowId{}; rowId < tableSrc.size(); ++rowId)
+		const auto tableSize{ static_cast<uint32_t>(tableSrc.size()) };
+
+		for (uint32_t rowId{}; rowId < tableSize; ++rowId)
 		{
 			uint32_t xOr{};
 			uint32_t ignore{};
-			for (int32_t colId{}; colId < tableSrc[rowId].size(); ++colId)
+			const auto rawSize{ static_cast<uint32_t>(tableSrc[static_cast<size_t>(rowId)].size()) };
+			for (uint32_t colId{}; colId < rawSize; ++colId)
 			{
 				if (tableSrc[rowId][colId] == TriState::FALSE)
 					xOr |= (1 << colId);
 				if (tableSrc[rowId][colId] == TriState::SKIP)
 					ignore |= (1 << colId);
 			}
-			for (size_t colId{ tableSrc[rowId].size() }; colId < 32; ++colId)
+			for (uint32_t colId{ rawSize }; colId < 32; ++colId)
 				ignore |= (1 << colId);
 
 			Dod::BufferUtils::populate(xOrMasks, xOr, true);
@@ -74,7 +77,7 @@ namespace Dod::CondTable
 		for (int32_t id{ 0 }; id < Dod::BufferUtils::getNumFilledElements(query); ++id)
 		{
 			const auto outputId{ Dod::BufferUtils::get(query, id) };
-			target = outputs[outputId];
+			target = outputs[static_cast<size_t>(outputId)];
 		}
 
 	}

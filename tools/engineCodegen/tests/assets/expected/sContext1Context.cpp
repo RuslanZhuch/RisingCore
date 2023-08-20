@@ -21,19 +21,13 @@ namespace Game::Context::SContext1
 
 
 
-        int32_t needBytes{};
-
-        this->memory.allocate(needBytes);
-        int32_t header{};
-
-
     }
 
     void Data::reset() noexcept
     {
     }
 
-    void Data::merge(const Data& other) noexcept
+    void Data::merge([[maybe_unused]] const Data& other) noexcept
     {
     }
 

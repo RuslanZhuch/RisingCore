@@ -7,14 +7,14 @@
 
 #include <engine/StringUtils.h>
 
+#include <engine/jsonParser.h>
+
 #pragma warning(push)
 
 #pragma warning(disable : 4464)
 #pragma warning(disable : 4820)
 #pragma warning(disable : 4061)
 #pragma warning(disable : 4365)
-
-#include <rapidjson/document.h>
 
 #include <string_view>
 #include <optional>
@@ -74,13 +74,13 @@ namespace Engine::ContextUtils
 
 	}
 
-    [[nodiscard]] static void loadVariableFromList(auto& dest, rapidjson::GenericArray<true, rapidjson::Value> src, rapidjson::SizeType id) noexcept
+    [[nodiscard]] static void loadVariableFromList(auto& dest, rapidjson::GenericArray<true, rapidjson::Value> src, int32_t id) noexcept
     {
 
-        if (!src[id].IsObject())
+        if (!src[static_cast<rapidjson::SizeType>(id)].IsObject())
             return;
 
-        assignToVariable(dest, src[id].GetObject());
+        assignToVariable(dest, src[static_cast<rapidjson::SizeType>(id)].GetObject());
 
     }
 
@@ -123,13 +123,13 @@ namespace Engine::ContextUtils
     [[nodiscard]] static void loadBufferContent(
         Dod::DBBuffer<T>& dest,
         rapidjson::GenericArray<true, rapidjson::Value> src, 
-        rapidjson::SizeType id
+        int32_t id
     ) noexcept
     {
 
-        if (!src[id].IsObject())
+        if (!src[static_cast<rapidjson::SizeType>(id)].IsObject())
             return;
-        const auto& dataObject{ src[id].GetObject() };
+        const auto& dataObject{ src[static_cast<rapidjson::SizeType>(id)].GetObject() };
 
         const auto initialField{ dataObject.FindMember("initial") };
         if (initialField == dataObject.end())

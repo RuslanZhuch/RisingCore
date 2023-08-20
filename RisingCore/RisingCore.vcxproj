@@ -155,6 +155,7 @@
     <ClInclude Include="src\dod\MemUtils.h" />
     <ClInclude Include="src\dod\SharedContext.h" />
     <ClInclude Include="src\engine\contextUtils.h" />
+    <ClInclude Include="src\engine\jsonParser.h" />
     <ClInclude Include="src\engine\String.h" />
     <ClInclude Include="src\engine\StringUtils.h" />
     <ClInclude Include="src\engine\types.h" />

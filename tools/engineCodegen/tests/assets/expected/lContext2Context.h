@@ -4,6 +4,11 @@
 #include <dod/Buffers.h>
 #include <dod/MemPool.h>
 
+#pragma warning(push)
+#pragma warning(disable : 4625)
+#pragma warning(disable : 4626)
+#pragma warning(disable : 4820)
+
 namespace Game::Context::LContext2
 {
     struct Data
@@ -20,3 +25,5 @@ namespace Game::Context::LContext2
         Dod::DBBuffer<int64_t> dbvar1;
     };
 }
+
+#pragma warning(pop)

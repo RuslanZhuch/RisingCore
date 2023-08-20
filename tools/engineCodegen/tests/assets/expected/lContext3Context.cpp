@@ -38,7 +38,7 @@ namespace Game::Context::LContext3
         Dod::BufferUtils::flush(this->dbvar);
     }
 
-    void Data::merge(const Data& other) noexcept
+    void Data::merge([[maybe_unused]] const Data& other) noexcept
     {
         Dod::BufferUtils::append(this->dbvar, Dod::BufferUtils::createImFromBuffer(other.dbvar));
     }

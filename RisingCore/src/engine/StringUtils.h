@@ -1,6 +1,11 @@
 #pragma once
 
+#pragma warning(push)
+
+#pragma warning(disable : 4365)
 #include <string_view>
+
+#pragma warning(pop)
 
 namespace Engine::StringUtils
 {

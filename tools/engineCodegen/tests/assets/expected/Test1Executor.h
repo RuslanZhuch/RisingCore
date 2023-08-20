@@ -10,6 +10,10 @@
 #include <dod/MemPool.h>
 #include <dod/SharedContext.h>
 
+#pragma warning(push)
+#pragma warning(disable : 4625)
+#pragma warning(disable : 4626)
+
 namespace Game::ExecutionBlock
 {
     class Test1
@@ -38,3 +42,5 @@ namespace Game::ExecutionBlock
         const Dod::SharedContext::Controller<Context::Type6::Data>* shared3Context{ nullptr };
     };
 }
+
+#pragma warning(pop)

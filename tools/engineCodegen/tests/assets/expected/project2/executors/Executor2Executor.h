@@ -9,6 +9,10 @@
 #include <dod/MemPool.h>
 #include <dod/SharedContext.h>
 
+#pragma warning(push)
+#pragma warning(disable : 4625)
+#pragma warning(disable : 4626)
+
 namespace Game::ExecutionBlock
 {
     class Executor2
@@ -37,3 +41,5 @@ namespace Game::ExecutionBlock
         const Dod::SharedContext::Controller<Context::SContext2::Data>* shared4Context{ nullptr };
     };
 }
+
+#pragma warning(pop)

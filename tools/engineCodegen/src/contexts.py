@@ -127,9 +127,18 @@ def generate_context_def(dest_path, context_file_path, types_cache):
     generator.generate_line(handler, "#include <dod/MemPool.h>")
     generator.generate_empty(handler)
     
+    generator.generate_line(handler, "#pragma warning(push)")
+    generator.generate_line(handler, "#pragma warning(disable : 4625)")
+    generator.generate_line(handler, "#pragma warning(disable : 4626)")
+    generator.generate_line(handler, "#pragma warning(disable : 4820)")
+    generator.generate_empty(handler)
+    
     def namespace_body(namespace_handler):
         generate_context_data(namespace_handler, context_raw_data)
     generator.generate_block(handler, "namespace Game::Context::{}".format(context_name), namespace_body)
+    
+    generator.generate_empty(handler)
+    generator.generate_line(handler, "#pragma warning(pop)")
     
 def generate_context_impl(dest_path, context_file_path):
     context_raw_data = loader.load_file_data(context_file_path)
@@ -187,6 +196,9 @@ def generate_context_load(handler, context_raw_data, context_file_path):
                 buffer_id += 1
             generator.generate_empty(handler)                
                 
+            if len(context_data.buffers_data) == 0:
+                return
+            
             buffer_id = element_id
             generator.generate_line(handler, "int32_t needBytes{};")
             for buffer in context_data.buffers_data:
@@ -194,7 +206,7 @@ def generate_context_load(handler, context_raw_data, context_file_path):
                 generator.generate_line(handler, "needBytes += {}CapacityBytes;".format(buffer_name))
                 buffer_id += 1
             generator.generate_empty(handler)
-            
+                        
             generator.generate_line(handler, "this->memory.allocate(needBytes);")
             generator.generate_line(handler, "int32_t header{};")
             generator.generate_empty(handler)
@@ -248,7 +260,7 @@ def generate_context_merge(handler, context_raw_data):
                 buffer_name = buffer.name
                 generator.generate_line(handler, "Dod::BufferUtils::append(this->{0}, Dod::BufferUtils::createImFromBuffer(other.{0}));".format(buffer_name))
 
-        generator.generate_struct_method(struct_handler, "merge", "void", ["const Data& other"], False, load_body)
+        generator.generate_struct_method(struct_handler, "merge", "void", ["[[maybe_unused]] const Data& other"], False, load_body)
 
     generator.generate_struct_impl(handler, "Data", struct_data)
     

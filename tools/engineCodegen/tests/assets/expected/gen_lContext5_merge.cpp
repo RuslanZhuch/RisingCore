@@ -1,5 +1,5 @@
 
-void Data::merge(const Data& other) noexcept
+void Data::merge([[maybe_unused]] const Data& other) noexcept
 {
     this->var1 += other.var1;
     if (other.var2)

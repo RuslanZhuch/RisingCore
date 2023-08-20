@@ -203,7 +203,15 @@ def gen_header(folder, executor_data):
                                     
         generator.generate_class(handler, class_name, class_data)
         
+    generator.generate_line(handler, "#pragma warning(push)")
+    generator.generate_line(handler, "#pragma warning(disable : 4625)")
+    generator.generate_line(handler, "#pragma warning(disable : 4626)")
+    generator.generate_empty(handler)
+    
     generator.generate_block(handler, "namespace Game::ExecutionBlock", namespace_block_data)
+    
+    generator.generate_empty(handler)
+    generator.generate_line(handler, "#pragma warning(pop)")
     
 def gen_source(folder, executor_data):
     executor_name = get_name(executor_data)
@@ -256,7 +264,7 @@ def gen_implementation(folder, executor_data):
     def namespace_block_data(handler):
         def class_data(class_handler):
             generator.generate_class_public_method(class_handler, "initImpl", "void", [], False)
-            generator.generate_class_public_method(class_handler, "updateImpl", "void", ['float dt'], False)
+            generator.generate_class_public_method(class_handler, "updateImpl", "void", ['[[maybe_unused]] float dt'], False)
        
         generator.generate_class_impl(handler, class_name, class_data)
         generator.generate_empty(handler)

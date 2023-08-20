@@ -48,6 +48,9 @@
     <ClInclude Include="src\engine\types.h">
       <Filter>src\engine</Filter>
     </ClInclude>
+    <ClInclude Include="src\engine\jsonParser.h">
+      <Filter>src\engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dod\MemPool.cpp">

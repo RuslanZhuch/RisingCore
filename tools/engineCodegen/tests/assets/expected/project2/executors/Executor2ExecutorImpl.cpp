@@ -8,7 +8,7 @@ namespace Game::ExecutionBlock
 
     }
 
-    void Executor2::updateImpl(float dt) noexcept
+    void Executor2::updateImpl([[maybe_unused]] float dt) noexcept
     {
 
     }

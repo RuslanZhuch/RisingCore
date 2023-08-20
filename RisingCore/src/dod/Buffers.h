@@ -1,7 +1,11 @@
 #pragma once
 
 #include "MemTypes.h"
+
+#pragma warning(push)
+#pragma warning(disable : 4365)
 #include <vector>
+#pragma warning(pop)
 
 namespace Dod
 {
