@@ -398,3 +398,4 @@ FodyWeavers.xsd
 *.sln.iml
 tools/engineCodegen/tests/dest
 tools/cppParser/tests/dest
+tools/engineCodegen/tests/externalTypes/Type1.h

@@ -20,14 +20,41 @@ import project
 def get_file_modification_time(filename : str):
     return path.getmtime(filename)
     
+def _clear_cache_folder(folder_path : str):
+    if os.path.exists(folder_path):
+        [f.unlink() for f in Path(folder_path).glob("*") if f.is_file()]
+    
 def _prepare_project2():
     cache_path = "dest/projects/project2/prev"
+    cache_path_contexts = cache_path + "/contexts"
+    cache_path_executors = cache_path + "/executors"
     
-    if os.path.exists(cache_path):
-        [f.unlink() for f in Path(cache_path).glob("*") if f.is_file()]   
+    _clear_cache_folder(cache_path_contexts)
+    _clear_cache_folder(cache_path_executors)
+    _clear_cache_folder(cache_path)
+        
     project.generate("assets/project2/project2.json")
-    if os.path.exists(cache_path):
-        [f.unlink() for f in Path(cache_path).glob("*") if f.is_file()]   
+    
+    _clear_cache_folder(cache_path_contexts)
+    _clear_cache_folder(cache_path_executors)
+    _clear_cache_folder(cache_path)
+        
+    return cache_path
+    
+def _prepare_project4():
+    cache_path = "dest/projects/project4/prev"
+    cache_path_contexts = cache_path + "/contexts"
+    cache_path_executors = cache_path + "/executors"
+    
+    _clear_cache_folder(cache_path_contexts)
+    _clear_cache_folder(cache_path_executors)
+    _clear_cache_folder(cache_path)
+    
+    project.generate("assets/project4/project4.json")
+    
+    _clear_cache_folder(cache_path_contexts)
+    _clear_cache_folder(cache_path_executors)
+    _clear_cache_folder(cache_path) 
         
     return cache_path
     
@@ -102,11 +129,11 @@ class TestProject(unittest.TestCase):
             shutil.rmtree('dest/projects/project2')
         cache_path = _prepare_project2()
 
-        shutil.copyfile("assets/expected/project2/prev/lcontext2.json", cache_path + "/lcontext2.json")
-        shutil.copyfile("assets/expected/project2/prev/executor1.json", cache_path + "/executor1.json")
+        shutil.copyfile("assets/expected/project2/prev/lcontext2.json", cache_path + "/contexts/lcontext2.json")
+        shutil.copyfile("assets/expected/project2/prev/executor1.json", cache_path + "/executors/executor1.json")
         
-        prev_context_mod_time = get_file_modification_time(cache_path + "/lcontext2.json")
-        prev_executor_mod_time = get_file_modification_time(cache_path + "/executor1.json")
+        prev_context_mod_time = get_file_modification_time(cache_path + "/contexts/lcontext2.json")
+        prev_executor_mod_time = get_file_modification_time(cache_path + "/executors/executor1.json")
         
         prev_executor1h_mod_time = get_file_modification_time("dest/projects/project2/executors/Executor1Executor.h")
         prev_executor1cpp_mod_time = get_file_modification_time("dest/projects/project2/executors/Executor1Executor.cpp")
@@ -131,10 +158,10 @@ class TestProject(unittest.TestCase):
         
         utils.assert_files(self, "dest/projects/project2/runtime.cpp", "assets/expected/project2/runtime.cpp")
         
-        self.assertEqual(prev_context_mod_time, get_file_modification_time(cache_path + "/lcontext2.json"))
-        self.assertEqual(prev_executor_mod_time, get_file_modification_time(cache_path + "/executor1.json"))
-        self.assertNotEqual(prev_context_mod_time, get_file_modification_time(cache_path + "/lcontext1.json"))
-        self.assertNotEqual(prev_executor_mod_time, get_file_modification_time(cache_path + "/executor2.json"))
+        self.assertEqual(prev_context_mod_time, get_file_modification_time(cache_path + "/contexts/lcontext2.json"))
+        self.assertEqual(prev_executor_mod_time, get_file_modification_time(cache_path + "/executors/executor1.json"))
+        self.assertNotEqual(prev_context_mod_time, get_file_modification_time(cache_path + "/contexts/lcontext1.json"))
+        self.assertNotEqual(prev_executor_mod_time, get_file_modification_time(cache_path + "/executors/executor2.json"))
         
         self.assertEqual(prev_executor1h_mod_time, get_file_modification_time("dest/projects/project2/executors/Executor1Executor.h"))
         self.assertEqual(prev_executor1cpp_mod_time, get_file_modification_time("dest/projects/project2/executors/Executor1Executor.cpp"))
@@ -162,10 +189,10 @@ class TestProject(unittest.TestCase):
         
         cache_path = _prepare_project2() 
                 
-        shutil.copyfile("assets/expected/project2/prev/lcontext1.json", cache_path + "/lcontext1.json")
-        shutil.copyfile("assets/expected/project2/prev/lContext2_modified.json", cache_path + "/lContext2.json")
-        shutil.copyfile("assets/expected/project2/prev/executor1.json", cache_path + "/executor1.json")
-        shutil.copyfile("assets/expected/project2/prev/executor2.json", cache_path + "/executor2.json")
+        shutil.copyfile("assets/expected/project2/prev/lcontext1.json", cache_path + "/contexts/lcontext1.json")
+        shutil.copyfile("assets/expected/project2/prev/lContext2_modified.json", cache_path + "/contexts/lContext2.json")
+        shutil.copyfile("assets/expected/project2/prev/executor1.json", cache_path + "/executors/executor1.json")
+        shutil.copyfile("assets/expected/project2/prev/executor2.json", cache_path + "/executors/executor2.json")
         
         shutil.copyfile("assets/expected/project2/contexts/lContext1Context.h", "dest/projects/project2/contexts/LContext1Context.h")
         shutil.copyfile("assets/expected/project2/contexts/lContext1Context.cpp", "dest/projects/project2/contexts/LContext1Context.cpp")
@@ -176,10 +203,10 @@ class TestProject(unittest.TestCase):
         shutil.copyfile("assets/expected/project2/executors/Executor2Executor.h", "dest/projects/project2/executors/Executor2Executor.h")
         shutil.copyfile("assets/expected/project2/executors/Executor2Executor.cpp", "dest/projects/project2/executors/Executor2Executor.cpp")
         
-        prev_context1_mod_time = get_file_modification_time(cache_path + "/lcontext1.json")
-        prev_context2_mod_time = get_file_modification_time(cache_path + "/lcontext2.json")
-        prev_executor1_mod_time = get_file_modification_time(cache_path + "/executor1.json")
-        prev_executor2_mod_time = get_file_modification_time(cache_path + "/executor2.json")
+        prev_context1_mod_time = get_file_modification_time(cache_path + "/contexts/lcontext1.json")
+        prev_context2_mod_time = get_file_modification_time(cache_path + "/contexts/lcontext2.json")
+        prev_executor1_mod_time = get_file_modification_time(cache_path + "/executors/executor1.json")
+        prev_executor2_mod_time = get_file_modification_time(cache_path + "/executors/executor2.json")
         
         prev_executor1h_mod_time = get_file_modification_time("dest/projects/project2/executors/Executor1Executor.h")
         prev_executor1cpp_mod_time = get_file_modification_time("dest/projects/project2/executors/Executor1Executor.cpp")
@@ -209,10 +236,10 @@ class TestProject(unittest.TestCase):
         
         utils.assert_files(self, "dest/projects/project2/runtime.cpp", "assets/expected/project2/runtime.cpp")
         
-        self.assertEqual(prev_executor1_mod_time, get_file_modification_time(cache_path + "/executor1.json"))
-        self.assertEqual(prev_executor2_mod_time, get_file_modification_time(cache_path + "/executor2.json"))
-        self.assertEqual(prev_context1_mod_time, get_file_modification_time(cache_path + "/lcontext1.json"))
-        self.assertEqual(prev_context2_mod_time, get_file_modification_time(cache_path + "/lcontext2.json"))
+        self.assertEqual(prev_executor1_mod_time, get_file_modification_time(cache_path + "/executors/executor1.json"))
+        self.assertEqual(prev_executor2_mod_time, get_file_modification_time(cache_path + "/executors/executor2.json"))
+        self.assertEqual(prev_context1_mod_time, get_file_modification_time(cache_path + "/contexts/lcontext1.json"))
+        self.assertEqual(prev_context2_mod_time, get_file_modification_time(cache_path + "/contexts/lcontext2.json"))
         
         self.assertEqual(prev_executor1h_mod_time, get_file_modification_time("dest/projects/project2/executors/Executor1Executor.h"))
         self.assertEqual(prev_executor1cpp_mod_time, get_file_modification_time("dest/projects/project2/executors/Executor1Executor.cpp"))
@@ -313,7 +340,8 @@ class TestProject(unittest.TestCase):
         self.assertGreater(get_file_modification_time("dest/projects/project2/contexts/LContext1Context.cpp"), pre_generation_time)
 
     def test_gen_project2_with_diff_project_structure(self):
-        shutil.rmtree('dest/projects/project2')
+        if os.path.exists('dest/projects/project2'):
+            shutil.rmtree('dest/projects/project2')
         
         cache_path = _prepare_project2()
    
@@ -355,3 +383,26 @@ class TestProject(unittest.TestCase):
         self.assertGreater(get_file_modification_time("dest/projects/project2/contexts/LContext1Context.h"), prev_runtime_mod_time)
         self.assertGreater(get_file_modification_time("dest/projects/project2/contexts/LContext1Context.cpp"), prev_runtime_mod_time)
         
+    def test_gen_project4(self):
+        if os.path.exists('dest/projects/project4'):
+            shutil.rmtree('dest/projects/project4')
+        
+        shutil.copyfile("externalTypes/version1/Type1.h", "externalTypes/Type1.h")
+        
+        cache_path = _prepare_project4()
+        
+        project.generate("assets/project4/project4.json")
+        
+        utils.assert_files(self, "dest/projects/project4/generated_types/Type1Gen.cpp", "assets/expected/types/Type1.cpp")
+        utils.assert_files(self, "dest/projects/project4/runtime.cpp", "assets/expected/project4/runtime.cpp")
+
+        prev_type_1_modification_time = get_file_modification_time("dest/projects/project4/generated_types/Type1Gen.cpp")
+        project.generate("assets/project4/project4.json")
+        
+        self.assertEqual(prev_type_1_modification_time, get_file_modification_time("dest/projects/project4/generated_types/Type1Gen.cpp"))
+
+        shutil.copyfile("externalTypes/version2/Type1.h", "externalTypes/Type1.h")
+
+        project.generate("assets/project4/project4.json")
+        
+        self.assertLess(prev_type_1_modification_time, get_file_modification_time("dest/projects/project4/generated_types/Type1Gen.cpp"))

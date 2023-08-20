@@ -68,7 +68,7 @@ def _generate_diff_for_project_structure(cache_folder : str, file_path : str):
 
     return False
 
-def _generate_types_impls(types_cache : types_manager.TypesCache, project_dir : str, types_src_path : str):
+def _generate_types_impls(types_cache : types_manager.TypesCache, cache_folder : str, project_dir : str, types_src_path : str):
     include_list = types_manager.get_includes_list(types_cache, types_cache.type_names)
     
     pathes_to_parse = []
@@ -80,7 +80,10 @@ def _generate_types_impls(types_cache : types_manager.TypesCache, project_dir : 
         
     parsed_files = parser.parse_to_folder(pathes_to_parse, project_dir + "/parsed_types/")
     
-    for parsed_file_path in parsed_files:
+    changed_types = diff.generate_list(parsed_files, cache_folder)
+    diff.replace(cache_folder, changed_types)
+    
+    for parsed_file_path in changed_types:
         parsed_data = loader.load_file_data(parsed_file_path)
         file_name = os.path.basename(parsed_file_path)
         file_name_stripped = file_name.split(".")[0]
@@ -114,7 +117,6 @@ def generate(project_path : str):
     if target_path == "":
         return
     
-    #os.mkdir(target_path)
     if not os.path.exists(target_path):
         os.makedirs(target_path)
     
@@ -125,19 +127,29 @@ def generate(project_path : str):
     executors_target_path = target_path + "/executors"
     if not os.path.exists(executors_target_path):
         os.makedirs(executors_target_path)
+    
+    cache_folder_contexts = project_desc.cache_folder + "/contexts"
+    cache_folder_executors = project_desc.cache_folder + "/executors"
+    cache_folder_types = project_desc.cache_folder + "/types"
+    
+    if not os.path.exists(cache_folder_contexts):
+        os.makedirs(cache_folder_contexts)
+    
+    if not os.path.exists(cache_folder_executors):
+        os.makedirs(cache_folder_executors)
         
-    if not os.path.exists(project_desc.cache_folder):
-        os.makedirs(project_desc.cache_folder)
+    if not os.path.exists(cache_folder_types):
+        os.makedirs(cache_folder_types)
         
-    contexts_diff_list = _generate_diff_for_contexts(project_desc.cache_folder, project_desc.contexts_paths)
-    executors_diff_list = _generate_diff_for_executors(project_desc.cache_folder, project_desc.executors_paths)
+    contexts_diff_list = _generate_diff_for_contexts(cache_folder_contexts, project_desc.contexts_paths)
+    executors_diff_list = _generate_diff_for_executors(cache_folder_executors, project_desc.executors_paths)
     runtime_changed = _generate_diff_for_project_structure(project_desc.cache_folder, project_desc.application_runtime_path)
     project_structure_changed = _generate_diff_for_project_structure(project_desc.cache_folder, project_path)
     
     types_data = [loader.load_file_data(types_path) for types_path in project_desc.types_paths]
     types_cache = types_manager.cache_types(types_data)
     
-    _generate_types_impls(types_cache, project_desc.project_dest_folder, project_desc.types_src_path)
+    _generate_types_impls(types_cache, cache_folder_types, project_desc.project_dest_folder, project_desc.types_src_path)
     
     for context_file in project_desc.contexts_paths:
         if context_file not in contexts_diff_list:

@@ -1,0 +1,13 @@
+{
+    "project_dest_folder": "dest/projects/project4",
+    "runtime_path": "assets/project4/ws_runtime.json",
+    "cache_folder": "dest/projects/project4/prev",
+    "types_src_path": "externalTypes/",
+    "types_paths": [
+        "assets/project4/types_default.json"
+    ],
+    "contexts_paths": [
+    ],
+    "executors_paths": [
+    ]
+}
