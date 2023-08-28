@@ -18,9 +18,6 @@
     <ClInclude Include="src\dod\Buffers.h">
       <Filter>src\dod</Filter>
     </ClInclude>
-    <ClInclude Include="src\dod\BufferUtils.h">
-      <Filter>src\dod</Filter>
-    </ClInclude>
     <ClInclude Include="src\dod\ConditionTable.h">
       <Filter>src\dod</Filter>
     </ClInclude>
@@ -50,6 +47,15 @@
     </ClInclude>
     <ClInclude Include="src\engine\jsonParser.h">
       <Filter>src\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dod\Tables.h">
+      <Filter>src\dod</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dod\CommonData.h">
+      <Filter>src\dod</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dod\DataUtils.h">
+      <Filter>src\dod</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

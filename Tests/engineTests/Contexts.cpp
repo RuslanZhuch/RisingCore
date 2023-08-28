@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include <dod/Buffers.h>
-#include <dod/BufferUtils.h>
+#include <dod/DataUtils.h>
 #include <engine/contextUtils.cpp>
 
 #include "utils/TypeUtils.h"
@@ -184,7 +184,7 @@ TEST(Context, InitBuffer)
 
 		Dod::DBBuffer<float> dst;
 		Engine::ContextUtils::initBuffer(dst, sizeof(float) * 41, memory, header);
-		EXPECT_EQ(Dod::BufferUtils::getCapacity(dst), 40);
+		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 40);
 	}
 	{
 		Dod::MemPool memory;
@@ -193,7 +193,7 @@ TEST(Context, InitBuffer)
 
 		Dod::DBBuffer<int64_t> dst;
 		Engine::ContextUtils::initBuffer(dst, sizeof(int64_t) * 81, memory, header);
-		EXPECT_EQ(Dod::BufferUtils::getCapacity(dst), 80);
+		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 80);
 	}
 
 }
@@ -244,7 +244,7 @@ protected:
 
 		const auto destCapacity{ numOfDestElements + 1 };
 		Engine::ContextUtils::initBuffer(this->dst, sizeof(DataType) * destCapacity, this->memory, header);
-		ASSERT_EQ(Dod::BufferUtils::getCapacity(this->dst), numOfDestElements);
+		ASSERT_EQ(Dod::DataUtils::getCapacity(this->dst), numOfDestElements);
 
 		Engine::ContextUtils::loadBufferContent(this->dst, data.GetArray(), dataId);
 	
@@ -264,16 +264,16 @@ TEST_F(ContextTestComplex, LoadBufferContent)
 
 	this->run(4, 0);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(this->dst), 4);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 4);
 	
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 0).x, 1.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 0).y, 2);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 1).x, 3.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 1).y, 4);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 2).x, 5.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 2).y, 6);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 3).x, 7.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 3).y, 8);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 0).x, 1.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 0).y, 2);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1).x, 3.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1).y, 4);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2).x, 5.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2).y, 6);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 3).x, 7.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 3).y, 8);
 
 }
 
@@ -282,16 +282,16 @@ TEST_F(ContextTestComplex, LoadBufferContentDestIsLarger)
 
 	this->run(6, 0);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(this->dst), 4);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 4);
 
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 0).x, 1.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 0).y, 2);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 1).x, 3.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 1).y, 4);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 2).x, 5.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 2).y, 6);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 3).x, 7.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 3).y, 8);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 0).x, 1.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 0).y, 2);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1).x, 3.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1).y, 4);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2).x, 5.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2).y, 6);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 3).x, 7.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 3).y, 8);
 
 }
 
@@ -300,14 +300,14 @@ TEST_F(ContextTestComplex, LoadBufferContentDestIsSmaller)
 
 	this->run(3, 0);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(this->dst), 3);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 3);
 
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 0).x, 1.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 0).y, 2);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 1).x, 3.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 1).y, 4);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 2).x, 5.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 2).y, 6);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 0).x, 1.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 0).y, 2);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1).x, 3.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1).y, 4);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2).x, 5.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2).y, 6);
 
 }
 
@@ -316,7 +316,7 @@ TEST_F(ContextTestComplex, LoadBufferContentDestIsEmpty)
 
 	this->run(0, 0);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(this->dst), 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 0);
 
 }
 
@@ -325,7 +325,7 @@ TEST_F(ContextTestComplex, LoadBufferContentDataIsEmpty)
 
 	this->run(4, 1);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(this->dst), 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 0);
 
 }
 
@@ -334,7 +334,7 @@ TEST_F(ContextTestComplex, LoadBufferContentDataNoField)
 
 	this->run(4, 3);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(this->dst), 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 0);
 
 }
 
@@ -343,16 +343,16 @@ TEST_F(ContextTestComplex, LoadBufferContentMappingIsWrong)
 
 	this->run(4, 2);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(this->dst), 4);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 4);
 
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 0).x, 1.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 0).y, 2);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 1).x, 3.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 1).y, 4);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 2).x, 5.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 2).y, 0);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 3).x, 0.f);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 3).y, 0);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 0).x, 1.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 0).y, 2);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1).x, 3.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1).y, 4);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2).x, 5.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2).y, 0);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 3).x, 0.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 3).y, 0);
 
 }
 
@@ -361,11 +361,11 @@ TEST_F(ContextTestTrivial, LoadBufferContentDataIsTrivial)
 
 	this->run(4, 4);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(this->dst), 4);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 4);
 
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 0), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 1), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 2), 3);
-	EXPECT_EQ(Dod::BufferUtils::get(this->dst, 3), 4);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 0), 1);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1), 2);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2), 3);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 3), 4);
 
 }

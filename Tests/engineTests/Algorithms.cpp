@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include <dod/Buffers.h>
-#include <dod/BufferUtils.h>
+#include <dod/DataUtils.h>
 #include <dod/Algorithms.h>
 
 
@@ -29,7 +29,7 @@ static void initDBuffer(Dod::DBBuffer<T>& dest, auto& src)
 		Dod::MemTypes::dataPoint_t dataEnd{};
 	};
 	MemorySpan memSpan(reinterpret_cast<Dod::MemTypes::dataPoint_t>(src.data()), Dod::MemTypes::dataPoint_t(src.data() + src.size()));
-	Dod::BufferUtils::initFromMemory(dest, memSpan, beginIndex, endIndex);
+	Dod::DataUtils::initFromMemory(dest, memSpan, beginIndex, endIndex);
 	dest.numOfFilledEls = static_cast<int32_t>(totalElements) - 1;
 
 }
@@ -47,11 +47,11 @@ TEST(Algorithms, LeftUniques)
 
 		Dod::Algorithms::leftUniques(buffer);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 4);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), 1);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 1), 2);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 2), 3);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 3), 4);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 4);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 0), 1);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 1), 2);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 2), 3);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 3), 4);
 	}
 
 	{
@@ -62,8 +62,8 @@ TEST(Algorithms, LeftUniques)
 
 		Dod::Algorithms::leftUniques(buffer);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 1);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), 1);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 1);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 0), 1);
 	}
 
 	{
@@ -74,9 +74,9 @@ TEST(Algorithms, LeftUniques)
 
 		Dod::Algorithms::leftUniques(buffer);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 2);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), 1);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 1), 2);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 2);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 0), 1);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 1), 2);
 	}
 
 	{
@@ -87,9 +87,9 @@ TEST(Algorithms, LeftUniques)
 
 		Dod::Algorithms::leftUniques(buffer);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 2);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), 2);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 1), 1);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 2);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 0), 2);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 1), 1);
 	}
 
 	{
@@ -100,10 +100,10 @@ TEST(Algorithms, LeftUniques)
 
 		Dod::Algorithms::leftUniques(buffer);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 3);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), 1);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 1), 2);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 2), 3);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 3);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 0), 1);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 1), 2);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 2), 3);
 	}
 
 	{
@@ -114,7 +114,7 @@ TEST(Algorithms, LeftUniques)
 
 		Dod::Algorithms::leftUniques(buffer);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 0);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 0);
 	}
 
 	{
@@ -125,8 +125,8 @@ TEST(Algorithms, LeftUniques)
 
 		Dod::Algorithms::leftUniques(buffer);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(buffer), 1);
-		EXPECT_EQ(Dod::BufferUtils::get(buffer, 0), 1);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 1);
+		EXPECT_EQ(Dod::DataUtils::get(buffer, 0), 1);
 	}
 
 }
@@ -152,14 +152,14 @@ TEST(Algorithms, GetIntersections)
 
 		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
 		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::BufferUtils::initFromArray(resultBuffer, resultMemory);
+		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(resultBuffer), 3);
-		EXPECT_EQ(Dod::BufferUtils::get(resultBuffer, 0), 1);
-		EXPECT_EQ(Dod::BufferUtils::get(resultBuffer, 1), 2);
-		EXPECT_EQ(Dod::BufferUtils::get(resultBuffer, 2), 3);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 3);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 0), 1);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 1), 2);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 2), 3);
 	}
 
 	{
@@ -173,13 +173,13 @@ TEST(Algorithms, GetIntersections)
 
 		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
 		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::BufferUtils::initFromArray(resultBuffer, resultMemory);
+		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(resultBuffer), 2);
-		EXPECT_EQ(Dod::BufferUtils::get(resultBuffer, 0), 1);
-		EXPECT_EQ(Dod::BufferUtils::get(resultBuffer, 1), 2);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 2);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 0), 1);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 1), 2);
 	}
 
 	{
@@ -193,13 +193,13 @@ TEST(Algorithms, GetIntersections)
 
 		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
 		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::BufferUtils::initFromArray(resultBuffer, resultMemory);
+		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(resultBuffer), 2);
-		EXPECT_EQ(Dod::BufferUtils::get(resultBuffer, 0), 1);
-		EXPECT_EQ(Dod::BufferUtils::get(resultBuffer, 1), 2);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 2);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 0), 1);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 1), 2);
 	}
 
 	{
@@ -213,15 +213,15 @@ TEST(Algorithms, GetIntersections)
 
 		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
 		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::BufferUtils::initFromArray(resultBuffer, resultMemory);
+		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(resultBuffer), 4);
-		EXPECT_EQ(Dod::BufferUtils::get(resultBuffer, 0), 1);
-		EXPECT_EQ(Dod::BufferUtils::get(resultBuffer, 1), 1);
-		EXPECT_EQ(Dod::BufferUtils::get(resultBuffer, 2), 2);
-		EXPECT_EQ(Dod::BufferUtils::get(resultBuffer, 3), 3);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 4);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 0), 1);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 1), 1);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 2), 2);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 3), 3);
 	}
 
 	{
@@ -235,11 +235,11 @@ TEST(Algorithms, GetIntersections)
 
 		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
 		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::BufferUtils::initFromArray(resultBuffer, resultMemory);
+		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(resultBuffer), 0);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 0);
 	}
 
 	{
@@ -253,11 +253,11 @@ TEST(Algorithms, GetIntersections)
 
 		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
 		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::BufferUtils::initFromArray(resultBuffer, resultMemory);
+		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(resultBuffer), 0);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 0);
 	}
 
 	{
@@ -271,11 +271,11 @@ TEST(Algorithms, GetIntersections)
 
 		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
 		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::BufferUtils::initFromArray(resultBuffer, resultMemory);
+		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(resultBuffer), 0);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 0);
 	}
 
 	{
@@ -289,11 +289,11 @@ TEST(Algorithms, GetIntersections)
 
 		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
 		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::BufferUtils::initFromArray(resultBuffer, resultMemory);
+		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(resultBuffer), 0);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 0);
 	}
 
 	{
@@ -307,12 +307,12 @@ TEST(Algorithms, GetIntersections)
 
 		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
 		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::BufferUtils::initFromArray(resultBuffer, resultMemory);
+		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
-		EXPECT_EQ(Dod::BufferUtils::getNumFilledElements(resultBuffer), 1);
-		EXPECT_EQ(Dod::BufferUtils::get(resultBuffer, 0), 1);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 1);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 0), 1);
 	}
 
 }
@@ -329,20 +329,20 @@ TEST(Algorithms, GetSortedIndices)
 
 	std::array<int32_t, values.size()> indices;
 	Dod::DBBuffer<int32_t> indicesBuffer;
-	Dod::BufferUtils::initFromArray(indicesBuffer, indices);
+	Dod::DataUtils::initFromArray(indicesBuffer, indices);
 
 	Dod::Algorithms::getSortedIndices(
 		indicesBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(indicesBuffer), Dod::BufferUtils::getNumFilledElements(buffer));
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 0), 3);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 1), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 2), 5);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 3), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 4), 4);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 5), 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(indicesBuffer), Dod::DataUtils::getNumFilledElements(buffer));
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 0), 3);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 1), 1);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 2), 5);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 3), 2);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 4), 4);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 5), 0);
 
 }
 
@@ -358,20 +358,20 @@ TEST(Algorithms, GetSortedIndicesRepeats)
 
 	std::array<int32_t, values.size()> indices;
 	Dod::DBBuffer<int32_t> indicesBuffer;
-	Dod::BufferUtils::initFromArray(indicesBuffer, indices);
+	Dod::DataUtils::initFromArray(indicesBuffer, indices);
 
 	Dod::Algorithms::getSortedIndices(
 		indicesBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(indicesBuffer), Dod::BufferUtils::getNumFilledElements(buffer));
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 0), 3);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 1), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 2), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 3), 4);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 4), 5);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 5), 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(indicesBuffer), Dod::DataUtils::getNumFilledElements(buffer));
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 0), 3);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 1), 1);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 2), 2);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 3), 4);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 4), 5);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 5), 0);
 
 }
 
@@ -387,15 +387,15 @@ TEST(Algorithms, GetSortedIndicesOneEl)
 
 	std::array<int32_t, values.size()> indices;
 	Dod::DBBuffer<int32_t> indicesBuffer;
-	Dod::BufferUtils::initFromArray(indicesBuffer, indices);
+	Dod::DataUtils::initFromArray(indicesBuffer, indices);
 
 	Dod::Algorithms::getSortedIndices(
 		indicesBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(indicesBuffer), Dod::BufferUtils::getNumFilledElements(buffer));
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 0), 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(indicesBuffer), Dod::DataUtils::getNumFilledElements(buffer));
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 0), 0);
 
 }
 
@@ -411,14 +411,14 @@ TEST(Algorithms, GetSortedIndicesNoEls)
 
 	std::array<int32_t, values.size()> indices;
 	Dod::DBBuffer<int32_t> indicesBuffer;
-	Dod::BufferUtils::initFromArray(indicesBuffer, indices);
+	Dod::DataUtils::initFromArray(indicesBuffer, indices);
 
 	Dod::Algorithms::getSortedIndices(
 		indicesBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(indicesBuffer), Dod::BufferUtils::getNumFilledElements(buffer));
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(indicesBuffer), Dod::DataUtils::getNumFilledElements(buffer));
 
 }
 
@@ -434,17 +434,17 @@ TEST(Algorithms, GetSortedIndicesNoSpace)
 
 	std::array<int32_t, 4> indices;
 	Dod::DBBuffer<int32_t> indicesBuffer;
-	Dod::BufferUtils::initFromArray(indicesBuffer, indices);
+	Dod::DataUtils::initFromArray(indicesBuffer, indices);
 
 	Dod::Algorithms::getSortedIndices(
 		indicesBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(indicesBuffer), 3);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 0), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 1), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 2), 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(indicesBuffer), 3);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 0), 1);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 1), 2);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 2), 0);
 
 }
 
@@ -460,14 +460,14 @@ TEST(Algorithms, GetSortedIndicesEmptyTarget)
 
 	std::array<int32_t, 1> indices;
 	Dod::DBBuffer<int32_t> indicesBuffer;
-	Dod::BufferUtils::initFromArray(indicesBuffer, indices);
+	Dod::DataUtils::initFromArray(indicesBuffer, indices);
 
 	Dod::Algorithms::getSortedIndices(
 		indicesBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(indicesBuffer), 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(indicesBuffer), 0);
 
 }
 
@@ -484,20 +484,20 @@ TEST(Algorithms, GetSortedIndicesLargeTarget)
 	std::array<int32_t, 15> indices;
 	indices.fill(1);
 	Dod::DBBuffer<int32_t> indicesBuffer;
-	Dod::BufferUtils::initFromArray(indicesBuffer, indices);
+	Dod::DataUtils::initFromArray(indicesBuffer, indices);
 
 	Dod::Algorithms::getSortedIndices(
 		indicesBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(indicesBuffer), Dod::BufferUtils::getNumFilledElements(buffer));
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 0), 3);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 1), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 2), 5);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 3), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 4), 4);
-	EXPECT_EQ(Dod::BufferUtils::get(indicesBuffer, 5), 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(indicesBuffer), Dod::DataUtils::getNumFilledElements(buffer));
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 0), 3);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 1), 1);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 2), 5);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 3), 2);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 4), 4);
+	EXPECT_EQ(Dod::DataUtils::get(indicesBuffer, 5), 0);
 
 }
 
@@ -513,14 +513,14 @@ TEST(Algorithms, GetSortedIndicesEmptySrc)
 
 	std::array<int32_t, 6> indices;
 	Dod::DBBuffer<int32_t> indicesBuffer;
-	Dod::BufferUtils::initFromArray(indicesBuffer, indices);
+	Dod::DataUtils::initFromArray(indicesBuffer, indices);
 
 	Dod::Algorithms::getSortedIndices(
 		indicesBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(indicesBuffer), 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(indicesBuffer), 0);
 
 }
 
@@ -536,19 +536,19 @@ TEST(Algorithms, CountUniques)
 
 	std::array<int32_t, values.size()> counters;
 	Dod::DBBuffer<int32_t> countersBuffer;
-	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+	Dod::DataUtils::initFromArray(countersBuffer, counters);
 
 	Dod::Algorithms::countUniques(
 		countersBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 5);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 1), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 2), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 3), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 4), 3);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(countersBuffer), 5);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 0), 2);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 1), 1);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 2), 2);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 3), 1);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 4), 3);
 
 }
 
@@ -564,19 +564,19 @@ TEST(Algorithms, CountUniquesOneElsOnSides)
 
 	std::array<int32_t, values.size()> counters;
 	Dod::DBBuffer<int32_t> countersBuffer;
-	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+	Dod::DataUtils::initFromArray(countersBuffer, counters);
 
 	Dod::Algorithms::countUniques(
 		countersBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 5);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 1), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 2), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 3), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 4), 1);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(countersBuffer), 5);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 0), 1);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 1), 1);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 2), 2);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 3), 1);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 4), 1);
 
 }
 
@@ -592,19 +592,19 @@ TEST(Algorithms, CountUniquesOnlyMultiples)
 
 	std::array<int32_t, values.size()> counters;
 	Dod::DBBuffer<int32_t> countersBuffer;
-	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+	Dod::DataUtils::initFromArray(countersBuffer, counters);
 
 	Dod::Algorithms::countUniques(
 		countersBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 5);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 1), 3);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 2), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 3), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 4), 3);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(countersBuffer), 5);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 0), 2);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 1), 3);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 2), 2);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 3), 2);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 4), 3);
 
 }
 
@@ -620,19 +620,19 @@ TEST(Algorithms, CountUniquesOnlySingles)
 
 	std::array<int32_t, values.size()> counters;
 	Dod::DBBuffer<int32_t> countersBuffer;
-	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+	Dod::DataUtils::initFromArray(countersBuffer, counters);
 
 	Dod::Algorithms::countUniques(
 		countersBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 5);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 1), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 2), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 3), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 4), 1);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(countersBuffer), 5);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 0), 1);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 1), 1);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 2), 1);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 3), 1);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 4), 1);
 
 }
 
@@ -648,15 +648,15 @@ TEST(Algorithms, CountUniquesOneMultiple)
 
 	std::array<int32_t, values.size()> counters;
 	Dod::DBBuffer<int32_t> countersBuffer;
-	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+	Dod::DataUtils::initFromArray(countersBuffer, counters);
 
 	Dod::Algorithms::countUniques(
 		countersBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 3);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(countersBuffer), 1);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 0), 3);
 
 }
 
@@ -672,15 +672,15 @@ TEST(Algorithms, CountUniquesOneSingle)
 
 	std::array<int32_t, values.size()> counters;
 	Dod::DBBuffer<int32_t> countersBuffer;
-	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+	Dod::DataUtils::initFromArray(countersBuffer, counters);
 
 	Dod::Algorithms::countUniques(
 		countersBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 1);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 1);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(countersBuffer), 1);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 0), 1);
 
 }
 
@@ -696,14 +696,14 @@ TEST(Algorithms, CountUniquesEmpty)
 
 	std::array<int32_t, values.size()> counters;
 	Dod::DBBuffer<int32_t> countersBuffer;
-	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+	Dod::DataUtils::initFromArray(countersBuffer, counters);
 
 	Dod::Algorithms::countUniques(
 		countersBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(countersBuffer), 0);
 
 }
 
@@ -719,15 +719,15 @@ TEST(Algorithms, CountUniquesNotEnouthCounters)
 
 	std::array<int32_t, 3> counters;
 	Dod::DBBuffer<int32_t> countersBuffer;
-	Dod::BufferUtils::initFromArray(countersBuffer, counters);
+	Dod::DataUtils::initFromArray(countersBuffer, counters);
 
 	Dod::Algorithms::countUniques(
 		countersBuffer,
-		Dod::BufferUtils::createImFromBuffer(buffer)
+		Dod::DataUtils::createImFromBuffer(buffer)
 	);
 
-	ASSERT_EQ(Dod::BufferUtils::getNumFilledElements(countersBuffer), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 0), 2);
-	EXPECT_EQ(Dod::BufferUtils::get(countersBuffer, 1), 1);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(countersBuffer), 2);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 0), 2);
+	EXPECT_EQ(Dod::DataUtils::get(countersBuffer, 1), 1);
 
 }

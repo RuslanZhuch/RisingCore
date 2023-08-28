@@ -148,12 +148,14 @@
   <ItemGroup>
     <ClInclude Include="src\dod\Algorithms.h" />
     <ClInclude Include="src\dod\Buffers.h" />
-    <ClInclude Include="src\dod\BufferUtils.h" />
+    <ClInclude Include="src\dod\CommonData.h" />
     <ClInclude Include="src\dod\ConditionTable.h" />
+    <ClInclude Include="src\dod\DataUtils.h" />
     <ClInclude Include="src\dod\MemPool.h" />
     <ClInclude Include="src\dod\MemTypes.h" />
     <ClInclude Include="src\dod\MemUtils.h" />
     <ClInclude Include="src\dod\SharedContext.h" />
+    <ClInclude Include="src\dod\Tables.h" />
     <ClInclude Include="src\engine\contextUtils.h" />
     <ClInclude Include="src\engine\jsonParser.h" />
     <ClInclude Include="src\engine\String.h" />

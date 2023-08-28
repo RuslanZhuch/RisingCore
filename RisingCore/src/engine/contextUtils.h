@@ -3,7 +3,7 @@
 #include <dod/MemPool.h>
 #include <dod/MemUtils.h>
 #include <dod/Buffers.h>
-#include <dod/BufferUtils.h>
+#include <dod/DataUtils.h>
 
 #include <engine/StringUtils.h>
 
@@ -112,7 +112,7 @@ namespace Engine::ContextUtils
     ) noexcept
     {
 
-        Dod::BufferUtils::initFromMemory(dest, Dod::MemUtils::stackAquire(pool, capacityBytes, header));
+        Dod::DataUtils::initFromMemory(dest, Dod::MemUtils::stackAquire(pool, capacityBytes, header));
 
     }
 
@@ -135,14 +135,14 @@ namespace Engine::ContextUtils
         const auto initialData{ initialField->value.GetArray() };
 
         const auto numOfElementsToLoad{ static_cast<int32_t>(initialData.Size()) };
-        const auto bufferSize{ Dod::BufferUtils::getCapacity(dest) };
+        const auto bufferSize{ Dod::DataUtils::getCapacity(dest) };
 
         const auto totalElements{ std::min(numOfElementsToLoad, bufferSize) };
 
         for (int32_t elId{}; elId < totalElements; ++elId)
         {
-            Dod::BufferUtils::constructBack(dest);
-            loadVariableFromList(Dod::BufferUtils::get(dest, elId), initialData, elId);
+            Dod::DataUtils::constructBack(dest);
+            loadVariableFromList(Dod::DataUtils::get(dest, elId), initialData, elId);
         }
 
     }

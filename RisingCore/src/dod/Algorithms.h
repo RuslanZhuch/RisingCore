@@ -9,12 +9,12 @@ namespace Dod::Algorithms
 	static void leftUniques(DBBuffer<T>& buffer) noexcept
 	{
 
-		if (Dod::BufferUtils::getNumFilledElements(buffer) == 0)
+		if (Dod::DataUtils::getNumFilledElements(buffer) == 0)
 			return;
 
 		T prevElValue{ buffer.dataBegin[1] };
 		int32_t prevUniqueId{ 1 };
-		for (int32_t elId{ 2 }; elId < Dod::BufferUtils::getNumFilledElements(buffer) + 1; ++elId)
+		for (int32_t elId{ 2 }; elId < Dod::DataUtils::getNumFilledElements(buffer) + 1; ++elId)
 		{
 			const auto bIsUnique{ prevElValue != buffer.dataBegin[elId] };
 			prevElValue = buffer.dataBegin[elId];
@@ -40,14 +40,14 @@ namespace Dod::Algorithms
 		int32_t srcLeftId{ 0 };
 		int32_t srcRightId{ 0 };
 
-		while (srcLeftId < Dod::BufferUtils::getNumFilledElements(srcLeft) && srcRightId < srcRight.numOfFilledEls)
+		while (srcLeftId < Dod::DataUtils::getNumFilledElements(srcLeft) && srcRightId < srcRight.numOfFilledEls)
 		{
 
-			const auto leftValue{ BufferUtils::get(srcLeft, srcLeftId) };
-			const auto rightValue{ BufferUtils::get(srcRight, srcRightId) };
+			const auto leftValue{ DataUtils::get(srcLeft, srcLeftId) };
+			const auto rightValue{ DataUtils::get(srcRight, srcRightId) };
 			if (leftValue == rightValue)
 			{
-				BufferUtils::populate(resultBuffer, leftValue, true);
+				DataUtils::populate(resultBuffer, leftValue, true);
 				++srcLeftId;
 				++srcRightId;
 			}
@@ -64,17 +64,17 @@ namespace Dod::Algorithms
 	static void getSortedIndices(DBBuffer<int32_t>& sortedIndices, ImBuffer<T> srcBuffer) noexcept
 	{
 
-		if (Dod::BufferUtils::getNumFilledElements(srcBuffer) == 0)
+		if (Dod::DataUtils::getNumFilledElements(srcBuffer) == 0)
 			return;
 
-		for (int32_t id{}; id < Dod::BufferUtils::getNumFilledElements(srcBuffer); ++id)
-			Dod::BufferUtils::populate(sortedIndices, id, true);
+		for (int32_t id{}; id < Dod::DataUtils::getNumFilledElements(srcBuffer); ++id)
+			Dod::DataUtils::populate(sortedIndices, id, true);
 
 		const auto beginOffset{ 1 };
-		const auto endOffset{ 1 + Dod::BufferUtils::getNumFilledElements(sortedIndices) };
+		const auto endOffset{ 1 + Dod::DataUtils::getNumFilledElements(sortedIndices) };
 
 		std::sort(sortedIndices.dataBegin + beginOffset, sortedIndices.dataBegin + endOffset, [&](int32_t leftId, int32_t rightId) -> bool {
-			return Dod::BufferUtils::get(srcBuffer, leftId) < Dod::BufferUtils::get(srcBuffer, rightId);
+			return Dod::DataUtils::get(srcBuffer, leftId) < Dod::DataUtils::get(srcBuffer, rightId);
 		});
 
 	}
@@ -86,25 +86,25 @@ namespace Dod::Algorithms
 	}
 	{
 
-		if (Dod::BufferUtils::getNumFilledElements(srcSortedBuffer) == 0)
+		if (Dod::DataUtils::getNumFilledElements(srcSortedBuffer) == 0)
 			return;
 
 		using type_t = BufferType::type_t;
 
-		type_t prevValue{ Dod::BufferUtils::get(srcSortedBuffer, 0) };
+		type_t prevValue{ Dod::DataUtils::get(srcSortedBuffer, 0) };
 		int32_t counter{ 1 };
-		for (int32_t id{ 1 }; id < Dod::BufferUtils::getNumFilledElements(srcSortedBuffer); ++id)
+		for (int32_t id{ 1 }; id < Dod::DataUtils::getNumFilledElements(srcSortedBuffer); ++id)
 		{
-			const auto currValue{ Dod::BufferUtils::get(srcSortedBuffer, id) };
+			const auto currValue{ Dod::DataUtils::get(srcSortedBuffer, id) };
 			const auto bDiffers{ currValue != prevValue };
 			prevValue = currValue;
 			counter += !bDiffers;
 
-			Dod::BufferUtils::populate(counters, counter, bDiffers);
+			Dod::DataUtils::populate(counters, counter, bDiffers);
 			counter -= (counter - 1) * bDiffers;
 		}
 
-		Dod::BufferUtils::populate(counters, counter, counter > 0);
+		Dod::DataUtils::populate(counters, counter, counter > 0);
 
 	}
 
