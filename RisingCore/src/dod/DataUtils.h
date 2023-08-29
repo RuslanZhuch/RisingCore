@@ -271,9 +271,9 @@ namespace Dod::DataUtils
 		return buffer.dataBegin[elId];
 	}
 
-	template <std::size_t N, std::size_t Current = 1>
+	template <std::size_t N, std::size_t Current = 0>
 	constexpr void constexprLoop(auto func) {
-		if constexpr (Current <= N) {
+		if constexpr (Current < N) {
 			func.operator()<Current>();
 			constexprLoop<N, Current + 1>(func);
 		}
@@ -282,29 +282,62 @@ namespace Dod::DataUtils
 	template<int32_t collumnId>
 	[[nodiscard]] auto get(const CommonData::CTable auto& table) noexcept
 	{
+
 		using tableType = std::decay_t<decltype(table)>;
 		using types_t = tableType::types_t;
-		using returnType_t = std::tuple_element_t<static_cast<size_t>(collumnId), types_t>;
 
-		MemTypes::dataPoint_t rowMemPosition{ reinterpret_cast<MemTypes::dataPoint_t>(table.dataBegin) };
+		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
 		constexprLoop<collumnId>([&]<size_t currColId>() {
 			constexpr auto collumnTypeSize{ sizeof(std::tuple_element_t<currColId, types_t>) };
-			rowMemPosition += table.numOfFilledEls * collumnTypeSize;
+			rowMemPosition += table.capacityEls * collumnTypeSize;
 		});
-//		for (int32_t currColId{ 0 }; currColId < collumnId; ++currColId)
-//		{
-//			const auto collumnTypeSize{ sizeof(std::tuple_element_t<static_cast<size_t>(currColId), types_t>) };
-//			rowMemPosition += table.numOfFilledEls * collumnTypeSize;
-//		}
 
+		using returnType_t = std::tuple_element_t<static_cast<size_t>(collumnId), types_t>;
+		constexpr auto returnTypeSize{ sizeof(returnType_t) };
 		struct Span
 		{
-			MemTypes::dataPoint_t dataBegin{ rowMemPosition + sizeof(returnType_t) };
-			MemTypes::dataPoint_t dataEnd{ rowMemPosition + sizeof(returnType_t) + table.numOfFilledEls * sizeof(returnType_t) };
+			MemTypes::dataPoint_t dataBegin{ rowMemPosition };
+			MemTypes::dataPoint_t dataEnd{ rowMemPosition + table.numOfFilledEls * returnTypeSize };
 		};
 
 		Dod::ImBuffer<returnType_t> imBuffer;
 		initFromMemory(imBuffer, Span{});
+
+		return imBuffer;
+
+	}
+
+	template <typename... Types>
+	struct TypeTuple<std::tuple<Types...>> {
+		using TupleType = std::tuple<TypeWrapper<Types>...>;
+	};
+
+	[[nodiscard]] auto get(const CommonData::CTable auto& table) noexcept
+	{
+
+		using tableType = std::decay_t<decltype(table)>;
+		using types_t = tableType::types_t;
+
+		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
+		constexprLoop<collumnId>([&]<size_t currColId>() {
+			constexpr auto collumnTypeSize{ sizeof(std::tuple_element_t<currColId, types_t>) };
+			rowMemPosition += table.capacityEls * collumnTypeSize;
+		});
+
+		using returnType_t = std::tuple_element_t<static_cast<size_t>(collumnId), types_t>;
+		constexpr auto returnTypeSize{ sizeof(returnType_t) };
+		struct Span
+		{
+			MemTypes::dataPoint_t dataBegin{ rowMemPosition };
+			MemTypes::dataPoint_t dataEnd{ rowMemPosition + table.numOfFilledEls * returnTypeSize };
+		};
+
+		Dod::ImBuffer<returnType_t> imBuffer;
+		initFromMemory(imBuffer, Span{});
+
+		using returnType_t = std::tuple<ImBuffer<Types>...>
+
+		auto buffers{ std::make_tuple(Dod::ImBuffer<Ts>{}...); }
 
 		return imBuffer;
 

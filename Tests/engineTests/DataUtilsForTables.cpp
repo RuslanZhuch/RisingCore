@@ -10,14 +10,13 @@
 #pragma warning(disable : 4365)
 
 #include <array>
+#include <array>
 #pragma warning(pop)
-
 
 template <size_t memorySize, typename ... Types>
 class InitDBTableFromMemoryTest : public ::testing::Test {
 
 protected:
-
 	void run(int32_t memBeginIndex, int32_t memEndIndex, int32_t expectCapacityEls)
 	{
 
@@ -46,7 +45,7 @@ protected:
 
 	}
 
-	std::array<Dod::MemTypes::data_t, memorySize> memory;
+	std::array<Dod::MemTypes::data_t, memorySize> memory{};
 	Dod::DBTable<Types...> table;
 
 };
@@ -101,159 +100,220 @@ TEST_F(InitDBTableFromMemory32BytesIntDouble, InitFromMemory)
 
 }
 
-TEST(TableUtils, PopulateIntFloat)
+template <size_t memorySize, typename ... Types>
+class PopulateTest : public ::testing::Test {
+
+	using types_t = std::tuple<Types...>;
+	static constexpr auto deadBucketSize{ Dod::DataUtils::computeDeadbucketSizeInBytes<types_t>() };
+
+protected:
+	void init(int32_t expectCapacityEls)
+	{
+
+		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
+
+		Dod::DataUtils::initFromMemory(this->table, memSpan);
+		ASSERT_EQ(this->table.capacityEls, expectCapacityEls);
+
+	}
+
+	void populate(int32_t expectedNumOfFilledEls, Types&& ... values)
+	{
+		Dod::DataUtils::populate<Types...>(this->table, true, std::forward<Types>(values)...);
+		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), expectedNumOfFilledEls);
+	}
+
+	template <typename T>
+	void check(std::vector<T> expectedValues, int32_t offset)
+	{
+		const auto populatedPtr{ reinterpret_cast<T*>(table.dataBegin + deadBucketSize + static_cast<size_t>(offset)) };
+
+		for (int32_t id{}; const auto expected : expectedValues)
+			EXPECT_EQ(*(populatedPtr + (id++)), expected);
+	}
+
+	std::array<Dod::MemTypes::data_t, memorySize> memory{};
+	Dod::DBTable<Types...> table;
+
+};
+
+using PopulateIntFloat = PopulateTest<32, int, float>;
+TEST_F(PopulateIntFloat, Populate)
 {
 
-	constexpr auto dataSize{ 32 };
-	std::array<Dod::MemTypes::data_t, dataSize> memory;
-	MemorySpan memSpan(memory.data(), memory.data() + memory.size());
+	this->init(3);
 
-	Dod::DBTable<int, float> table;
+	this->populate(1, 1, 2.f);
+	this->check<int>({ 1 }, 0);
+	this->check<float>({ 2.f }, 12);
 
-	Dod::DataUtils::initFromMemory(table, memSpan);
+	this->populate(2, 3, 4.f);
+	this->check<int>({ 1, 3 }, 0);
+	this->check<float>({ 2.f, 4.f }, 12);
 
-	Dod::DataUtils::populate(table, true, 1, 2.f);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), 1);
+	this->populate(3, 5, 6.f);
+	this->check<int>({ 1, 3, 5 }, 0);
+	this->check<float>({ 2.f, 4.f, 6 }, 12);
 
-	const auto deadBucketSize{ 4 };
-	
-	{
-		const auto populatedIntPtr{ reinterpret_cast<int32_t*>(table.dataBegin + deadBucketSize) };
-		EXPECT_EQ(*populatedIntPtr, 1);
-
-		const auto floatCollumnMemOffset{ table.dataBegin + deadBucketSize + sizeof(int) * table.capacityEls };
-		const auto populatedFloatPtr{ (float*)floatCollumnMemOffset };
-		EXPECT_EQ(*populatedFloatPtr, 2.f);
-	}
-
-	Dod::DataUtils::populate(table, true, 3, 4.f);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), 2);
-
-	{
-		const auto populatedIntPtr{ reinterpret_cast<int32_t*>(table.dataBegin + deadBucketSize) };
-		EXPECT_EQ(*populatedIntPtr, 1);
-		EXPECT_EQ(*populatedIntPtr, 1);
-		EXPECT_EQ(*(populatedIntPtr + 1), 3);
-
-		const auto floatCollumnMemOffset{ table.dataBegin + deadBucketSize + sizeof(int) * table.capacityEls };
-		const auto populatedFloatPtr{ (float*)floatCollumnMemOffset };
-		EXPECT_EQ(*populatedFloatPtr, 2.f);
-		EXPECT_EQ(*(populatedFloatPtr + 1), 4.f);
-	}
-
-	Dod::DataUtils::populate(table, true, 5, 6.f);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), 3);
-	{
-		const auto populatedIntPtr{ reinterpret_cast<int32_t*>(table.dataBegin + deadBucketSize) };
-		EXPECT_EQ(*populatedIntPtr, 1);
-		EXPECT_EQ(*(populatedIntPtr + 1), 3);
-		EXPECT_EQ(*(populatedIntPtr + 2), 5);
-
-		const auto floatCollumnMemOffset{ table.dataBegin + deadBucketSize + sizeof(int) * table.capacityEls };
-		const auto populatedFloatPtr{ (float*)floatCollumnMemOffset };
-		EXPECT_EQ(*populatedFloatPtr, 2.f);
-		EXPECT_EQ(*(populatedFloatPtr + 1), 4.f);
-		EXPECT_EQ(*(populatedFloatPtr + 2), 6.f);
-	}
-	Dod::DataUtils::populate(table, true, 7, 8.f);
-	EXPECT_EQ(Dod::DataUtils::getNumFilledElements(table), 3);
-
-//	Dod::ImBuffer<int> col1{ Dod::DataUtils::get<0>(table) };
-//	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(col1), 1);
-//	EXPECT_EQ(Dod::DataUtils::get(col1, 0), 1);
-//
-//	Dod::ImBuffer<float> col2{ Dod::DataUtils::get<1>(table) };
-//	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(col2), 1);
-//	EXPECT_EQ(Dod::DataUtils::get(col2, 0), 2.f);
+	this->populate(3, 7, 8.f);
 
 }
 
-TEST(TableUtils, PopulateIntDouble)
+using PopulateIntDouble = PopulateTest<32, int, double>;
+TEST_F(PopulateIntDouble, Populate)
 {
 
-	constexpr auto dataSize{ 32 };
-	std::array<Dod::MemTypes::data_t, dataSize> memory;
-	MemorySpan memSpan(memory.data(), memory.data() + memory.size());
+	this->init(2);
 
-	Dod::DBTable<int, double> table;
+	this->populate(1, 1, 2.);
+	this->check<int>({ 1 }, 0);
+	this->check<double>({ 2. }, 8);
 
-	Dod::DataUtils::initFromMemory(table, memSpan);
+	this->populate(2, 3, 4.);
+	this->check<int>({ 1, 3 }, 0);
+	this->check<double>({ 2., 4. }, 8);
 
-	Dod::DataUtils::populate(table, true, 1, 2.);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), 1);
-
-	const auto deadBucketSize{ 8 };
-
-	{
-		const auto populatedIntPtr{ reinterpret_cast<int32_t*>(table.dataBegin + deadBucketSize) };
-		EXPECT_EQ(*populatedIntPtr, 1);
-
-		const auto doubleCollumnMemOffset{ table.dataBegin + deadBucketSize + sizeof(int) * table.capacityEls };
-		const auto populatedDoublePtr{ (double*)doubleCollumnMemOffset };
-		EXPECT_EQ(*populatedDoublePtr, 2.);
-	}
-
-	Dod::DataUtils::populate(table, true, 3, 4.);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), 2);
-
-	{
-		const auto populatedIntPtr{ reinterpret_cast<int32_t*>(table.dataBegin + deadBucketSize) };
-		EXPECT_EQ(*populatedIntPtr, 1);
-		EXPECT_EQ(*populatedIntPtr, 1);
-		EXPECT_EQ(*(populatedIntPtr + 1), 3);
-
-		const auto doubleCollumnMemOffset{ table.dataBegin + deadBucketSize + sizeof(int) * table.capacityEls };
-		const auto populatedDoublePtr{ (double*)doubleCollumnMemOffset };
-		EXPECT_EQ(*populatedDoublePtr, 2.f);
-		EXPECT_EQ(*(populatedDoublePtr + 1), 4.f);
-	}
-
-	Dod::DataUtils::populate(table, true, 5, 6.);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), 2);
+	this->populate(2, 5, 6.);
 
 }
 
-TEST(TableUtils, PopulateDoubleInt)
+using PopulateDoubleInt = PopulateTest<32, double, int>;
+TEST_F(PopulateDoubleInt, Populate)
 {
 
-	constexpr auto dataSize{ 32 };
-	std::array<Dod::MemTypes::data_t, dataSize> memory;
-	MemorySpan memSpan(memory.data(), memory.data() + memory.size());
+	this->init(2);
 
-	Dod::DBTable<double, int> table;
+	this->populate(1, 1., 2);
+	this->check<double>({ 1. }, 0);
+	this->check<int>({ 2 }, 16);
 
-	Dod::DataUtils::initFromMemory(table, memSpan);
+	this->populate(2, 3., 4);
+	this->check<double>({ 1., 3. }, 0);
+	this->check<int>({ 2, 4 }, 16);
 
-	Dod::DataUtils::populate(table, true, 1., 2);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), 1);
+	this->populate(2, 5., 6);
 
-	const auto deadBucketSize{ 8 };
+}
 
+template <size_t memorySize, typename ... Types>
+class GetElementsTest : public ::testing::Test {
+
+protected:
+	void init(int32_t expectCapacityEls)
 	{
-		const auto populatedDoublePtr{ reinterpret_cast<double*>(table.dataBegin + deadBucketSize) };
-		EXPECT_EQ(*populatedDoublePtr, 1.);
 
-		const auto intCollumnMemOffset{ table.dataBegin + deadBucketSize + sizeof(double) * table.capacityEls };
-		const auto populatedIntPtr{ (int*)intCollumnMemOffset };
-		EXPECT_EQ(*populatedIntPtr, 2);
+		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
+
+		Dod::DataUtils::initFromMemory(this->table, memSpan);
+		ASSERT_EQ(this->table.capacityEls, expectCapacityEls);
+
 	}
 
-	Dod::DataUtils::populate(table, true, 3., 4);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), 2);
-
+	void populate(int32_t expectedNumOfFilledEls, Types&& ... values)
 	{
-		const auto populatedDoublePtr{ reinterpret_cast<double*>(table.dataBegin + deadBucketSize) };
-		EXPECT_EQ(*populatedDoublePtr, 1);
-		EXPECT_EQ(*populatedDoublePtr, 1);
-		EXPECT_EQ(*(populatedDoublePtr + 1), 3);
-
-		const auto intCollumnMemOffset{ table.dataBegin + deadBucketSize + sizeof(double) * table.capacityEls };
-		const auto populatedIntPtr{ (int*)intCollumnMemOffset };
-		EXPECT_EQ(*populatedIntPtr, 2.f);
-		EXPECT_EQ(*(populatedIntPtr + 1), 4.f);
+		Dod::DataUtils::populate<Types...>(this->table, true, std::forward<Types>(values)...);
+		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), expectedNumOfFilledEls);
 	}
 
-	Dod::DataUtils::populate(table, true, 5., 6);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), 2);
+	template <int32_t columnId, typename T>
+	void check(std::vector<T> expectedValues)
+	{
+		Dod::ImBuffer<T> col{ Dod::DataUtils::get<columnId>(this->table) };
+		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(col), expectedValues.size());
+		
+		for (int32_t id{}; const auto expected : expectedValues)
+			EXPECT_EQ(Dod::DataUtils::get(col, id++), expected);
+	}
+	std::array<Dod::MemTypes::data_t, memorySize> memory{};
+	Dod::DBTable<Types...> table;
+
+};
+
+using GetIntFloat = GetElementsTest<32, int, float>;
+TEST_F(GetIntFloat, GetElements)
+{
+
+	this->init(3);
+
+	this->populate(1, 1, 2.f);
+	this->check<0, int>({ 1 });
+	this->check<1, float>({ 2.f });
+
+	this->populate(2, 3, 4.f);
+	this->check<0, int>({ 1, 3 });
+	this->check<1, float>({ 2.f, 4.f });
+
+	this->populate(3, 5, 6.f);
+	this->check<0, int>({ 1, 3, 5 });
+	this->check<1, float>({ 2.f, 4.f, 6.f });
+
+	this->populate(3, 7, 8.f);
+
+}
+
+using GetIntDouble = GetElementsTest<32, int, double>;
+TEST_F(GetIntDouble, GetElements)
+{
+
+	this->init(2);
+
+	this->populate(1, 1, 2.);
+	this->check<0, int>({ 1 });
+	this->check<1, double>({ 2. });
+
+	this->populate(2, 3, 4.);
+	this->check<0, int>({ 1, 3 });
+	this->check<1, double>({ 2., 4. });
+
+	this->populate(2, 5, 6.f);
+
+}
+
+template <size_t memorySize, typename ... Types>
+class GetAllElementsTest : public ::testing::Test {
+
+protected:
+	void init(int32_t expectCapacityEls)
+	{
+
+		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
+
+		Dod::DataUtils::initFromMemory(this->table, memSpan);
+		ASSERT_EQ(this->table.capacityEls, expectCapacityEls);
+
+	}
+
+	void populate(int32_t expectedNumOfFilledEls, Types&& ... values)
+	{
+		Dod::DataUtils::populate<Types...>(this->table, true, std::forward<Types>(values)...);
+		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), expectedNumOfFilledEls);
+	}
+
+	template <int32_t columnId, typename T>
+	void check(std::vector<T> expectedValues)
+	{
+		Dod::ImBuffer<T> col{ Dod::DataUtils::get<columnId>(this->table) };
+		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(col), expectedValues.size());
+
+		for (int32_t id{}; const auto expected : expectedValues)
+			EXPECT_EQ(Dod::DataUtils::get(col, id++), expected);
+	}
+	std::array<Dod::MemTypes::data_t, memorySize> memory{};
+	Dod::DBTable<Types...> table;
+
+};
+
+using GetAllIntFloat = GetAllElementsTest<32, int, float>;
+TEST_F(GetAllIntFloat, GetAllElements)
+{
+
+	this->init(3);
+
+	this->populate(1, 1, 2.f);
+
+	const auto [ints, floats] { Dod::DataUtils::get(this->table) };
+
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(ints), 1);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(float), 1);
 
 }
