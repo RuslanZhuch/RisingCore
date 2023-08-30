@@ -272,9 +272,9 @@ namespace Dod::DataUtils
 	}
 
 	template <std::size_t N, std::size_t Current = 0>
-	constexpr void constexprLoop(auto func) {
+	constexpr void constexprLoop(auto func, auto&& ... args) {
 		if constexpr (Current < N) {
-			func.operator()<Current>();
+			func.operator()<Current>(std::forward<decltype(args)>(args)...);
 			constexprLoop<N, Current + 1>(func);
 		}
 	}
@@ -307,10 +307,34 @@ namespace Dod::DataUtils
 
 	}
 
-	template <typename... Types>
-	struct TypeTuple<std::tuple<Types...>> {
-		using TupleType = std::tuple<TypeWrapper<Types>...>;
-	};
+	template <typename Types, typename ... ExtractedTypes>
+	constexpr auto createImBuffersPack()
+	{
+		constexpr auto numOfTypes{ std::tuple_size_v<Types> };
+		constexpr auto numOfExtractedTypes{ sizeof ... (ExtractedTypes) };
+		if constexpr (numOfExtractedTypes == numOfTypes)
+		{
+			return std::tuple<Dod::ImBuffer<ExtractedTypes>...>{};
+		}
+		else
+		{
+			constexpr auto elementId{ numOfTypes - 1 - numOfExtractedTypes };
+			using type_t = std::tuple_element_t<elementId, Types>;
+			return createImBuffersPack<Types, type_t, ExtractedTypes...>();
+		}
+	}
+
+//	template <typename Types>
+//	struct ImBuffersPack {
+//		using type_t = decltype(createImBuffersPack<Types>());
+//	};
+
+	template <typename Tuple, typename Func>
+	constexpr void for_each_in_tuple(Tuple& tuple, Func&& func) {
+		std::apply([&](auto&... args) {
+			(func(args), ...);
+		}, tuple);
+	}
 
 	[[nodiscard]] auto get(const CommonData::CTable auto& table) noexcept
 	{
@@ -318,28 +342,28 @@ namespace Dod::DataUtils
 		using tableType = std::decay_t<decltype(table)>;
 		using types_t = tableType::types_t;
 
+		using returnType_t = decltype(createImBuffersPack<types_t>());
+		returnType_t buffersPack;
+
 		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
-		constexprLoop<collumnId>([&]<size_t currColId>() {
-			constexpr auto collumnTypeSize{ sizeof(std::tuple_element_t<currColId, types_t>) };
-			rowMemPosition += table.capacityEls * collumnTypeSize;
+		for_each_in_tuple(buffersPack, [&](auto& bufferPack) {
+			
+			using pack_t = std::decay_t<decltype(bufferPack)>;
+			using packType_t = pack_t::type_t;
+
+			constexpr auto columnTypeSize{ sizeof(packType_t) };
+			struct Span
+			{
+				MemTypes::dataPoint_t dataBegin{ nullptr };
+				MemTypes::dataPoint_t dataEnd{ nullptr };
+			};
+
+			initFromMemory(bufferPack, Span(rowMemPosition, rowMemPosition + table.numOfFilledEls * columnTypeSize));
+			rowMemPosition += table.capacityEls * columnTypeSize;
+
 		});
 
-		using returnType_t = std::tuple_element_t<static_cast<size_t>(collumnId), types_t>;
-		constexpr auto returnTypeSize{ sizeof(returnType_t) };
-		struct Span
-		{
-			MemTypes::dataPoint_t dataBegin{ rowMemPosition };
-			MemTypes::dataPoint_t dataEnd{ rowMemPosition + table.numOfFilledEls * returnTypeSize };
-		};
-
-		Dod::ImBuffer<returnType_t> imBuffer;
-		initFromMemory(imBuffer, Span{});
-
-		using returnType_t = std::tuple<ImBuffer<Types>...>
-
-		auto buffers{ std::make_tuple(Dod::ImBuffer<Ts>{}...); }
-
-		return imBuffer;
+		return buffersPack;
 
 	}
 
@@ -434,8 +458,11 @@ namespace Dod::DataUtils
 	void flush(DBBuffer<T>& dest) noexcept
 	{
 		dest.numOfFilledEls = 0;
-		//		const auto numOfElements{ std::min(Dod::DataUtils::getNumFilledElements(dest), Dod::DataUtils::getNumFilledElements(src)) };
-		//		std::memcpy(dest.dataBegin, src.dataBegin, sizeof(BufferType::type_t) * numOfElements)
+	}
+
+	void flush(CommonData::CTable auto& table) noexcept
+	{
+		table.numOfFilledEls = 0;
 	}
 
 	template<typename T>
@@ -455,6 +482,7 @@ namespace Dod::DataUtils
 		std::memcpy(begin, src.dataBegin, sizeof(T) * numOfElements);
 		dest.numOfFilledEls += numOfElements;
 	}
+
 	template<typename T>
 	void append(DBBuffer<T>& dest, Dod::ImBuffer<T> src) noexcept
 	{
@@ -465,9 +493,46 @@ namespace Dod::DataUtils
 		}
 	}
 
-//	void f()
-//	{
-//		static_assert(std::is_trivially_copyable_v<int>);
-//	}
+	void append(CommonData::CTable auto& table, const CommonData::CTable auto& srcTable) noexcept
+	{
+
+		const auto destSpaceLeft{ table.capacityEls - getNumFilledElements(table) };
+		const auto srcNumOfElements{ getNumFilledElements(srcTable) };
+		const auto numOfElementsToAppend{ std::min(destSpaceLeft, srcNumOfElements) };
+
+		const auto startElementPosition{ getNumFilledElements(table) };
+		table.numOfFilledEls += numOfElementsToAppend;
+
+		using tableType = std::decay_t<decltype(table)>;
+		using types_t = tableType::types_t;
+
+		auto dstRowMemPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
+		auto srcRowMemPosition{ srcTable.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
+
+		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
+		constexprLoop<numOfColumns>([&]<size_t currColId>() {
+			constexpr auto columnTypeSize{ sizeof(std::tuple_element_t<currColId, types_t>) };
+			const auto dstBegin{ dstRowMemPosition + startElementPosition * columnTypeSize };
+			const auto srcBegin{ srcRowMemPosition };
+			std::memcpy(dstBegin, srcBegin, columnTypeSize * numOfElementsToAppend);
+			dstRowMemPosition += table.capacityEls * columnTypeSize;
+			srcRowMemPosition += srcTable.capacityEls * columnTypeSize;
+		});
+
+	}
+
+	void remove(CommonData::CTable auto& table, const ImBuffer<int32_t> indicesToRemove) noexcept
+	{
+		static_assert(false, "In progress");
+		auto targetIdx{ Dod::DataUtils::getNumFilledElements(buffer) };
+		for (int32_t idx{ 0 }; idx < Dod::DataUtils::getNumFilledElements(indicesToRemove); ++idx)
+		{
+			const auto removeId{ indicesToRemove.dataBegin[idx] };
+			std::swap(buffer.dataBegin[removeId + 1], buffer.dataBegin[targetIdx]);
+			--targetIdx;
+		}
+		buffer.numOfFilledEls -= Dod::DataUtils::getNumFilledElements(indicesToRemove);
+
+	}
 
 };
