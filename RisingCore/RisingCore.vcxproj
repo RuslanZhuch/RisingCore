@@ -163,6 +163,7 @@
     <ClInclude Include="src\engine\String.h" />
     <ClInclude Include="src\engine\StringUtils.h" />
     <ClInclude Include="src\engine\types.h" />
+    <ClInclude Include="src\Helpers.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dod\MemPool.cpp" />

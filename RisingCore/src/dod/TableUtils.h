@@ -6,18 +6,20 @@
 #include "Buffers.h"
 #include "BufferUtils.h"
 
+#include "Helpers.h"
+
 #include <type_traits>
 #include <concepts>
 
 namespace Dod::DataUtils
 {
 
-	template <typename Tuple, size_t index = 0>
+	template <typename Tuple, size_t Index = 0>
 	constexpr size_t computeTypesSize() {
-		if constexpr (index < std::tuple_size_v<Tuple>) 
+		if constexpr (Index < std::tuple_size_v<Tuple>)
 		{
-			using type_t = std::tuple_element_t<index, Tuple>;
-			return sizeof(type_t) + computeTypesSize<Tuple, index + 1>();
+			using type_t = std::tuple_element_t<Index, Tuple>;
+			return sizeof(type_t) + computeTypesSize<Tuple, Index + 1>();
 		}
 		else
 			return 0;
@@ -34,9 +36,7 @@ namespace Dod::DataUtils
 			return (currentSize > remainingSize) ? currentSize : remainingSize;
 		}
 		else
-		{
 			return 0;
-		}
 	}
 
 	void initTableFromMemoryImpl(CommonData::CTable auto& dbTable, auto&& actualData) noexcept
@@ -108,14 +108,6 @@ namespace Dod::DataUtils
 
 	}
 
-	template <std::size_t N, std::size_t Current = 0>
-	constexpr void constexprLoop(auto func, auto&& ... args) {
-		if constexpr (Current < N) {
-			func.operator()<Current>(std::forward<decltype(args)>(args)...);
-			constexprLoop<N, Current + 1>(func);
-		}
-	}
-
 	template<int32_t collumnId>
 	[[nodiscard]] auto get(const CommonData::CTable auto& table) noexcept
 	{
@@ -124,7 +116,7 @@ namespace Dod::DataUtils
 		using types_t = tableType::types_t;
 
 		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
-		constexprLoop<collumnId>([&]<size_t currColId>() {
+		RisingCore::Helpers::constexprLoop<collumnId>([&]<size_t currColId>() {
 			constexpr auto collumnTypeSize{ sizeof(std::tuple_element_t<currColId, types_t>) };
 			rowMemPosition += table.capacityEls * collumnTypeSize;
 		});
@@ -145,7 +137,7 @@ namespace Dod::DataUtils
 	}
 
 	template <typename Types, typename ... ExtractedTypes>
-	constexpr auto createImBuffersPack()
+	consteval auto createImBuffersPack()
 	{
 		constexpr auto numOfTypes{ std::tuple_size_v<Types> };
 		constexpr auto numOfExtractedTypes{ sizeof ... (ExtractedTypes) };
@@ -161,13 +153,6 @@ namespace Dod::DataUtils
 		}
 	}
 
-	template <typename Tuple, typename Func>
-	constexpr void for_each_in_tuple(Tuple& tuple, Func&& func) {
-		std::apply([&](auto&... args) {
-			(func(args), ...);
-		}, tuple);
-	}
-
 	[[nodiscard]] auto get(const CommonData::CTable auto& table) noexcept
 	{
 
@@ -178,8 +163,8 @@ namespace Dod::DataUtils
 		returnType_t buffersPack;
 
 		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
-		for_each_in_tuple(buffersPack, [&](auto& bufferPack) {
-			
+		RisingCore::Helpers::constexprLoop<std::tuple_size_v<returnType_t>>([&]<size_t columnId>() {
+			auto& bufferPack{ std::get<columnId>(buffersPack) };
 			using pack_t = std::decay_t<decltype(bufferPack)>;
 			using packType_t = pack_t::type_t;
 
@@ -226,7 +211,7 @@ namespace Dod::DataUtils
 		auto srcRowMemPosition{ srcTable.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
 
 		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
-		constexprLoop<numOfColumns>([&]<size_t currColId>() {
+		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t currColId>() {
 			constexpr auto columnTypeSize{ sizeof(std::tuple_element_t<currColId, types_t>) };
 			const auto dstBegin{ dstRowMemPosition + startElementPosition * columnTypeSize };
 			const auto srcBegin{ srcRowMemPosition };
@@ -245,7 +230,7 @@ namespace Dod::DataUtils
 		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
 		const auto totalElements{ getNumFilledElements(table) };
 		auto columnDataBegin{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
-		constexprLoop<numOfColumns>([&]<size_t currColId>() {
+		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t currColId>() {
 			using columnType_t = std::tuple_element_t<currColId, types_t>;
 			constexpr auto columnTypeSize{ sizeof(columnType_t) };
 			const auto columnTypedDataBegin{ reinterpret_cast<columnType_t*>(columnDataBegin) };

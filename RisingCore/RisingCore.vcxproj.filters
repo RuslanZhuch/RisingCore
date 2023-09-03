@@ -59,6 +59,7 @@
     </ClInclude>
     <ClInclude Include="src\dod\TableUtils.h" />
     <ClInclude Include="src\dod\BufferUtils.h" />
+    <ClInclude Include="src\Helpers.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dod\MemPool.cpp">

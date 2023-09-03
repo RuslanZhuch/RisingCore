@@ -146,7 +146,7 @@ protected:
 
 		const auto columns{ Dod::DataUtils::get(this->table) };
 
-		Dod::DataUtils::constexprLoop<std::tuple_size_v<decltype(expectedValues)>>([&]<size_t columnId>() {
+		RisingCore::Helpers::constexprLoop<std::tuple_size_v<decltype(expectedValues)>>([&]<size_t columnId>() {
 			const auto& expectedColumn{ std::get<columnId>(expectedValues) };
 			this->check<columnId>(expectedColumn);
 		});
