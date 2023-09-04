@@ -13,6 +13,50 @@
 #include <array>
 #pragma warning(pop)
 
+struct NonTrivialType
+{
+	std::vector<int> data;
+
+	[[nodiscard]] friend auto operator<=>(const NonTrivialType&, const NonTrivialType&) = default;
+};
+
+static_assert(std::is_trivially_copy_assignable_v<NonTrivialType> == false);
+static_assert(std::is_trivially_constructible_v<NonTrivialType> == false);
+static_assert(std::is_move_assignable_v<NonTrivialType> == true);
+static_assert(std::is_move_constructible_v<NonTrivialType> == true);
+static_assert(std::is_copy_assignable_v<NonTrivialType> == true);
+static_assert(std::is_copy_constructible_v<NonTrivialType> == true);
+static_assert(sizeof(NonTrivialType) == 32);
+
+
+struct NonTrivialMoveOnlyType
+{
+	std::vector<int> data;
+
+	NonTrivialMoveOnlyType(std::vector<int> data) noexcept
+		:data(data)
+	{
+
+	}
+
+	NonTrivialMoveOnlyType(NonTrivialMoveOnlyType &&) noexcept = default;
+	[[nodiscard]] NonTrivialMoveOnlyType& operator=(NonTrivialMoveOnlyType&&) noexcept = default;
+
+	NonTrivialMoveOnlyType(const NonTrivialMoveOnlyType&) noexcept = delete;
+	[[nodiscard]] NonTrivialMoveOnlyType& operator=(const NonTrivialMoveOnlyType&) noexcept = delete;
+
+
+	[[nodiscard]] friend auto operator<=>(const NonTrivialMoveOnlyType&, const NonTrivialMoveOnlyType&) = default;
+};
+
+static_assert(std::is_trivially_copy_assignable_v<NonTrivialMoveOnlyType> == false);
+static_assert(std::is_trivially_constructible_v<NonTrivialMoveOnlyType> == false);
+static_assert(std::is_move_assignable_v<NonTrivialMoveOnlyType> == true);
+static_assert(std::is_move_constructible_v<NonTrivialMoveOnlyType> == true);
+static_assert(std::is_copy_assignable_v<NonTrivialMoveOnlyType> == false);
+static_assert(std::is_copy_constructible_v<NonTrivialMoveOnlyType> == false);
+static_assert(sizeof(NonTrivialMoveOnlyType) == 32);
+
 template <size_t memorySize, typename ... Types>
 class InitDBTableFromMemoryTest : public ::testing::Test {
 
@@ -115,9 +159,9 @@ protected:
 
 	}
 
-	void populate(int32_t expectedNumOfFilledEls, Types&& ... values)
+	void populate(int32_t expectedNumOfFilledEls, auto&& ... values)
 	{
-		Dod::DataUtils::populate(this->table, true, std::forward<Types>(values)...);
+		Dod::DataUtils::populate(this->table, true, std::forward<decltype(values)>(values)...);
 		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), expectedNumOfFilledEls);
 	}
 
@@ -131,24 +175,24 @@ protected:
 	}
 
 	template <int32_t columnId, typename T>
-	void check(std::vector<T> expectedValues)
+	void check(std::vector<T>&& expectedValues)
 	{
 		Dod::ImBuffer<T> col{ Dod::DataUtils::get<columnId>(this->table) };
 		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(col), expectedValues.size());
 
-		for (int32_t id{}; const auto expected : expectedValues)
+		for (int32_t id{}; auto&& expected : expectedValues)
 			EXPECT_EQ(Dod::DataUtils::get(col, id++), expected);
 	}
 
 	template <typename ... T>
-	void checkTable(std::tuple<std::vector<T>...> expectedValues)
+	void checkTable(std::tuple<std::vector<T>...>&& expectedValues)
 	{
 
 		const auto columns{ Dod::DataUtils::get(this->table) };
 
-		RisingCore::Helpers::constexprLoop<std::tuple_size_v<decltype(expectedValues)>>([&]<size_t columnId>() {
-			const auto& expectedColumn{ std::get<columnId>(expectedValues) };
-			this->check<columnId>(expectedColumn);
+		RisingCore::Helpers::constexprLoop<std::tuple_size_v<std::decay_t<decltype(expectedValues)>>>([&]<size_t columnId>() {
+			auto&& expectedColumn{ std::get<columnId>(expectedValues) };
+			this->check<columnId>(std::move(expectedColumn));
 		});
 
 	}
@@ -221,6 +265,70 @@ TEST_F(PopulateDoubleInt, Populate)
 	this->checkInternal<int>({ 2, 4 }, 16);
 
 	this->populate(2, 5., 6);
+
+}
+
+using PopulateIntNonTrivial = TableTest<128, int, NonTrivialType>;
+TEST_F(PopulateIntNonTrivial, Populate)
+{
+
+	this->init(2);
+
+	NonTrivialType nonTrivial1({ 10, 20 });
+	this->populate(1, 1, nonTrivial1);
+	this->check<0, int>({ 1 });
+	this->check<1, NonTrivialType>({ nonTrivial1 });
+
+	NonTrivialType nonTrivial2({ 30, 40, 50 });
+	this->populate(2, 3, nonTrivial2);
+	this->check<0, int>({ 1, 3 });
+	this->check<1, NonTrivialType>({ nonTrivial1, nonTrivial2 });
+
+	NonTrivialType nonTrivial3({ 60, 70 });
+	this->populate(2, 5, nonTrivial3);
+	this->check<0, int>({ 1, 3 });
+	this->check<1, NonTrivialType>({ nonTrivial1, nonTrivial2 });
+
+}
+
+template <typename... Ts>
+struct AllSameType : std::conjunction<std::is_same<Ts, typename std::tuple_element<0, std::tuple<Ts...>>::type>...> {};
+
+using PopulateIntMoveOnly = TableTest<128, int, NonTrivialMoveOnlyType>;
+TEST_F(PopulateIntMoveOnly, Populate)
+{
+
+	this->init(2);
+
+	const auto genNonTrivial1 = []() noexcept {
+		return NonTrivialMoveOnlyType({ 10, 20 });
+	};
+	const auto genNonTrivial2 = []() noexcept {
+		return NonTrivialMoveOnlyType({ 30, 40, 50 });
+	};
+	const auto genNonTrivial3 = []() noexcept {
+		return NonTrivialMoveOnlyType({ 60, 70 });
+	};
+
+	const auto genCheckVector = [] <typename T, typename ... TOther> (T&& first, TOther&& ... other) {
+		static_assert(AllSameType<T, TOther...>{});
+		std::vector<T> out;
+		out.emplace_back(std::forward<T>(first));
+
+		(out.emplace_back(std::forward<TOther>(other)), ...);
+		return out;
+	};
+	this->populate(1, 1, genNonTrivial1());
+	this->check<0, int>({ 1 });
+	this->check<1, NonTrivialMoveOnlyType>(genCheckVector(genNonTrivial1()));
+
+	this->populate(2, 3, genNonTrivial2());
+	this->check<0, int>({ 1, 3 });
+	this->check<1, NonTrivialMoveOnlyType>(genCheckVector(genNonTrivial1(), genNonTrivial2()));
+
+	this->populate(2, 5, genNonTrivial3());
+	this->check<0, int>({ 1, 3 });
+	this->check<1, NonTrivialMoveOnlyType>(genCheckVector(genNonTrivial1(), genNonTrivial2()));
 
 }
 

@@ -101,8 +101,15 @@ namespace Dod::DataUtils
 		(std::invoke([&] {
 			using valueType_t = std::decay_t<decltype(value)>;
 			const auto inColumnMemoryOffset{ memoryOffset + (elementPosition - 1) * sizeof(valueType_t) };
-			const auto memoryPosition{ reinterpret_cast<valueType_t*>( table.dataBegin + inColumnMemoryOffset * bCanAddValue) };
-			*memoryPosition = std::move(value);
+			const auto memoryPosition{ reinterpret_cast<valueType_t*>(table.dataBegin + inColumnMemoryOffset * bCanAddValue) };
+			if constexpr (std::is_trivially_constructible_v<valueType_t> && std::is_trivially_copy_assignable_v<valueType_t>)
+			{
+				*memoryPosition = std::forward<decltype(value)>(value);
+			}
+			else 
+			{
+				std::construct_at<valueType_t>(memoryPosition, std::forward<decltype(value)>(value));
+			}
 			memoryOffset += (table.capacityEls) * sizeof(valueType_t);
 		}), ...);
 
