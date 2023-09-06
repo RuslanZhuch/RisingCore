@@ -102,13 +102,14 @@ namespace Dod::DataUtils
 			using valueType_t = std::decay_t<decltype(value)>;
 			const auto inColumnMemoryOffset{ memoryOffset + (elementPosition - 1) * sizeof(valueType_t) };
 			const auto memoryPosition{ reinterpret_cast<valueType_t*>(table.dataBegin + inColumnMemoryOffset * bCanAddValue) };
-			if constexpr (std::is_trivially_constructible_v<valueType_t> && std::is_trivially_copy_assignable_v<valueType_t>)
+			if constexpr (std::is_trivial_v<valueType_t>)
 			{
 				*memoryPosition = std::forward<decltype(value)>(value);
 			}
 			else 
 			{
-				std::construct_at<valueType_t>(memoryPosition, std::forward<decltype(value)>(value));
+				if (bCanAddValue)
+					std::construct_at<valueType_t>(memoryPosition, std::forward<decltype(value)>(value));
 			}
 			memoryOffset += (table.capacityEls) * sizeof(valueType_t);
 		}), ...);
@@ -193,7 +194,29 @@ namespace Dod::DataUtils
 
 	void flush(CommonData::CTable auto& table) noexcept
 	{
+		
+		using tableType = std::decay_t<decltype(table)>;
+		using types_t = tableType::types_t;
+
+		auto memPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
+		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
+		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t currColId>() {
+			using columnType_t = std::tuple_element_t<currColId, types_t>;
+			constexpr auto columnTypeSize{ sizeof(columnType_t) };
+			if constexpr (std::is_trivial_v<columnType_t> == false)
+			{
+				const auto destructBegin{ memPosition };
+				for (int32_t elId{}; elId < table.numOfFilledEls; ++elId)
+				{
+					const auto destructPoint = reinterpret_cast<columnType_t*>(memPosition) + elId;
+					std::destroy_at(destructPoint);
+				}
+			}
+			memPosition += table.capacityEls * columnTypeSize;
+		});
+
 		table.numOfFilledEls = 0;
+
 	}
 
 	[[nodiscard]] auto getCapacity(const CommonData::CTable auto& table) noexcept
@@ -219,10 +242,21 @@ namespace Dod::DataUtils
 
 		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
 		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t currColId>() {
-			constexpr auto columnTypeSize{ sizeof(std::tuple_element_t<currColId, types_t>) };
+			using columnType_t = std::tuple_element_t<currColId, types_t>;
+			constexpr auto columnTypeSize{ sizeof(columnType_t) };
 			const auto dstBegin{ dstRowMemPosition + startElementPosition * columnTypeSize };
 			const auto srcBegin{ srcRowMemPosition };
-			std::memcpy(dstBegin, srcBegin, columnTypeSize * numOfElementsToAppend);
+			if constexpr(std::is_trivial_v<columnType_t>)
+				std::memcpy(dstBegin, srcBegin, columnTypeSize * numOfElementsToAppend);
+			else
+			{
+				for (int32_t elId{}; elId < numOfElementsToAppend; ++elId)
+				{
+					const auto constractPoint = reinterpret_cast<columnType_t*>(dstBegin) + elId;
+					auto&& srcValue{ reinterpret_cast<columnType_t*>(srcBegin) + elId };
+					std::construct_at<columnType_t>(constractPoint, std::forward<columnType_t>(*srcValue));
+				}
+			}
 			dstRowMemPosition += table.capacityEls * columnTypeSize;
 			srcRowMemPosition += srcTable.capacityEls * columnTypeSize;
 		});
