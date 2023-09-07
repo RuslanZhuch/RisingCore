@@ -10,38 +10,73 @@
 #pragma warning(disable : 4365)
 
 #include <array>
-#include <array>
+#include <cassert>
 #pragma warning(pop)
 
 struct NonTrivialType
 {
 
-	NonTrivialType(std::vector<int> initial)
+	NonTrivialType(std::vector<int> initial) noexcept
 		:data(initial)
 	{
+		this->instanceCounter = new int(1);
 		++this->counter;
 	}
-	NonTrivialType(const NonTrivialType& other)
+	NonTrivialType(const NonTrivialType& other) noexcept
 	{
 		this->data = other.data;
 		++this->counter;
+		this->instanceCounter = other.instanceCounter;
+		++(*this->instanceCounter);
 	}
-	~NonTrivialType()
+	NonTrivialType(NonTrivialType&& other) noexcept
 	{
+		this->data = other.data;
+		++this->counter;
+		this->instanceCounter = other.instanceCounter;
+		other.instanceCounter = nullptr;
+	}
+	~NonTrivialType() noexcept
+	{
+		if (this->instanceCounter != nullptr && --(*this->instanceCounter) <= 0)
+			delete this->instanceCounter;
 		--this->counter;
 	}
 
-	[[nodiscard]] NonTrivialType& operator=(const NonTrivialType& other)
+	[[nodiscard]] NonTrivialType& operator=(const NonTrivialType& other) noexcept
 	{
 		this->data = other.data;
-		++this->counter;
+		if (--(*this->instanceCounter) <= 0)
+		{
+			delete this->instanceCounter;
+			this->instanceCounter = nullptr;
+		}
+		this->instanceCounter = other.instanceCounter;
+		++(*this->instanceCounter);
+		return *this;
+	}
+
+	[[nodiscard]] NonTrivialType& operator=(NonTrivialType&& other) noexcept
+	{
+		this->data = other.data;
+		if (--(*this->instanceCounter) <= 0)
+		{
+			delete this->instanceCounter;
+			this->instanceCounter = nullptr;
+		}
+		this->instanceCounter = other.instanceCounter;
+		other.instanceCounter = nullptr;
 		return *this;
 	}
 
 	static int counter;
+	int* instanceCounter{};
 	std::vector<int> data;
 
-	[[nodiscard]] friend auto operator<=>(const NonTrivialType&, const NonTrivialType&) = default;
+	[[nodiscard]] friend auto operator==(const NonTrivialType& left, const NonTrivialType& right) noexcept
+	{
+		return left.data == right.data;
+	}
 };
 int NonTrivialType::counter = 0;
 
@@ -50,33 +85,109 @@ static_assert(std::is_move_assignable_v<NonTrivialType> == true);
 static_assert(std::is_move_constructible_v<NonTrivialType> == true);
 static_assert(std::is_copy_assignable_v<NonTrivialType> == true);
 static_assert(std::is_copy_constructible_v<NonTrivialType> == true);
-static_assert(sizeof(NonTrivialType) == 32);
+static_assert(sizeof(NonTrivialType) == 40);
+
+struct NonTrivialNonMovableType
+{
+
+	NonTrivialNonMovableType(std::vector<int> initial) noexcept
+		:data(initial)
+	{
+		this->instanceCounter = new int(1);
+		++this->counter;
+	}
+	NonTrivialNonMovableType(const NonTrivialNonMovableType& other) noexcept
+	{
+		this->data = other.data;
+		++this->counter;
+		this->instanceCounter = other.instanceCounter;
+		++(*this->instanceCounter);
+	}
+	NonTrivialNonMovableType(NonTrivialNonMovableType&& other) noexcept = delete;
+	~NonTrivialNonMovableType() noexcept
+	{
+		if (this->instanceCounter != nullptr && --(*this->instanceCounter) <= 0)
+			delete this->instanceCounter;
+		--this->counter;
+	}
+
+	[[nodiscard]] NonTrivialNonMovableType& operator=(const NonTrivialNonMovableType& other) noexcept
+	{
+		this->data = other.data;
+		if (--(*this->instanceCounter) <= 0)
+		{
+			delete this->instanceCounter;
+			this->instanceCounter = nullptr;
+		}
+		this->instanceCounter = other.instanceCounter;
+		++(*this->instanceCounter);
+		return *this;
+	}
+
+	[[nodiscard]] NonTrivialNonMovableType& operator=(NonTrivialNonMovableType&& other) noexcept = delete;
+
+	static int counter;
+	int* instanceCounter{};
+	std::vector<int> data;
+
+	[[nodiscard]] friend auto operator==(const NonTrivialNonMovableType& left, const NonTrivialNonMovableType& right) noexcept
+	{
+		return left.data == right.data;
+	}
+};
+int NonTrivialNonMovableType::counter = 0;
+
+static_assert(std::is_trivial_v<NonTrivialNonMovableType> == false);
+static_assert(std::is_move_assignable_v<NonTrivialNonMovableType> == false);
+static_assert(std::is_move_constructible_v<NonTrivialNonMovableType> == false);
+static_assert(std::is_copy_assignable_v<NonTrivialNonMovableType> == true);
+static_assert(std::is_copy_constructible_v<NonTrivialNonMovableType> == true);
+static_assert(sizeof(NonTrivialNonMovableType) == 40);
+
 
 struct NonTrivialMoveOnlyType
 {
 	std::vector<int> data;
+	int* instanceCounter{};
 	static int counter;
 
 	NonTrivialMoveOnlyType(std::vector<int> data) noexcept
 		:data(data)
 	{
 		++this->counter;
+		this->instanceCounter = new int(1);
 	}
 
 	NonTrivialMoveOnlyType(NonTrivialMoveOnlyType&& other) noexcept
 		:data(std::move(other.data))
 	{
 		++this->counter;
+		this->instanceCounter = other.instanceCounter;
+		other.instanceCounter = nullptr;
 	}
 
 	[[nodiscard]] NonTrivialMoveOnlyType& operator=(NonTrivialMoveOnlyType&& other) noexcept
 	{
 		std::exchange(this->data, other.data);
-		++this->counter;
+		if (--(*this->instanceCounter) <= 0)
+		{
+			delete this->instanceCounter;
+			this->instanceCounter = nullptr;
+		}
+		this->instanceCounter = other.instanceCounter;
+		other.instanceCounter = nullptr;
+		return *this;
 	};
 
 	~NonTrivialMoveOnlyType()
 	{
+		if (this->instanceCounter != nullptr)
+		{
+			--(*this->instanceCounter);
+			EXPECT_EQ(*this->instanceCounter, 0);
+			if (*this->instanceCounter == 0)
+				delete this->instanceCounter;
+		}
 		--this->counter;
 	}
 
@@ -84,7 +195,10 @@ struct NonTrivialMoveOnlyType
 	[[nodiscard]] NonTrivialMoveOnlyType& operator=(const NonTrivialMoveOnlyType&) noexcept = delete;
 
 
-	[[nodiscard]] friend auto operator<=>(const NonTrivialMoveOnlyType&, const NonTrivialMoveOnlyType&) = default;
+	[[nodiscard]] friend auto operator==(const NonTrivialMoveOnlyType& left, const NonTrivialMoveOnlyType& right) noexcept
+	{
+		return left.data == right.data;
+	}
 };
 int NonTrivialMoveOnlyType::counter = 0;
 
@@ -94,7 +208,7 @@ static_assert(std::is_move_assignable_v<NonTrivialMoveOnlyType> == true);
 static_assert(std::is_move_constructible_v<NonTrivialMoveOnlyType> == true);
 static_assert(std::is_copy_assignable_v<NonTrivialMoveOnlyType> == false);
 static_assert(std::is_copy_constructible_v<NonTrivialMoveOnlyType> == false);
-static_assert(sizeof(NonTrivialMoveOnlyType) == 32);
+static_assert(sizeof(NonTrivialMoveOnlyType) == 40);
 
 template <size_t memorySize, typename ... Types>
 class InitDBTableFromMemoryTest : public ::testing::Test {
@@ -473,7 +587,7 @@ public:
 
 	void populate(int32_t expectedNumOfFilledEls, auto&& ... values)
 	{
-		Dod::DataUtils::populate(this->table, true, std::forward<Types>(values)...);
+		Dod::DataUtils::populate(this->table, true, std::forward<decltype(values)>(values)...);
 	}
 
 	std::array<Dod::MemTypes::data_t, memorySize> memory{};
@@ -566,7 +680,7 @@ TEST_F(AppendIntDouble, Append3Elements)
 
 }
 
-using AppendIntNonTrivial = TableTest<176, int, NonTrivialType>;
+using AppendIntNonTrivial = TableTest<216, int, NonTrivialType>;
 TEST_F(AppendIntNonTrivial, Append2Elements)
 {
 
@@ -577,8 +691,10 @@ TEST_F(AppendIntNonTrivial, Append2Elements)
 
 	NonTrivialType nonTrivial1({ 10, 20 });
 	srcTable.populate(1, 1, nonTrivial1);
+	ASSERT_EQ(*nonTrivial1.instanceCounter, 2);
 	NonTrivialType nonTrivial2({ 30, 40 });
 	srcTable.populate(2, 3, nonTrivial2);
+	ASSERT_EQ(*nonTrivial2.instanceCounter, 2);
 
 	Dod::DataUtils::append(this->table, srcTable.table);
 	EXPECT_EQ(NonTrivialType::counter, 6);
@@ -597,7 +713,7 @@ TEST_F(AppendIntNonTrivial, Append2Elements)
 
 }
 
-using AppendIntNonTrivialMoveOnly = TableTest<176, int, NonTrivialMoveOnlyType>;
+using AppendIntNonTrivialMoveOnly = TableTest<216, int, NonTrivialMoveOnlyType>;
 TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 {
 
@@ -666,7 +782,7 @@ TEST_F(FlushIntFloat, FlushAllElements)
 
 }
 
-using FlushIntNonTrivial = TableTest<140, int, NonTrivialType>;
+using FlushIntNonTrivial = TableTest<172, int, NonTrivialType>;
 TEST_F(FlushIntNonTrivial, FlushAllElements)
 {
 
@@ -704,13 +820,12 @@ TEST_F(FlushIntNonTrivial, FlushAllElements)
 
 }
 
-using FlushIntNonTrivialMoveOnly = TableTest<140, int, NonTrivialMoveOnlyType>;
+using FlushIntNonTrivialMoveOnly = TableTest<172, int, NonTrivialMoveOnlyType>;
 TEST_F(FlushIntNonTrivialMoveOnly, FlushAllElements)
 {
 
 	this->init(3);
 	NonTrivialMoveOnlyType::counter = 0;
-
 
 	const auto genNonTrivial1 = []() noexcept {	return NonTrivialMoveOnlyType({ 10, 20 }); };
 	const auto genNonTrivial2 = []() noexcept {	return NonTrivialMoveOnlyType({ 30, 40 }); };
@@ -780,5 +895,211 @@ TEST_F(RemoveElementsIntFloat, RemoveElements)
 
 	this->remove(3, { });
 	this->checkTable<int, float>({ { 15, 19, 21 }, { 16.f, 20.f, 22.f } });
+
+}
+
+using RemoveElementsIntNonTrivial = TableTest<172, int, NonTrivialType>;
+TEST_F(RemoveElementsIntNonTrivial, RemoveElements)
+{
+
+	this->init(3);
+	NonTrivialType::counter = 0;
+
+	NonTrivialType nonTrivial1({ 10, 20 });
+	this->populate(1, 1, nonTrivial1);
+	NonTrivialType nonTrivial2({ 30, 40 });
+	this->populate(2, 3, nonTrivial2);
+	this->remove(1, { 1 });
+	EXPECT_EQ(*nonTrivial1.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialType::counter, 3);
+	this->checkTable<int, NonTrivialType>({ { 1 }, { nonTrivial1 } });
+
+	this->remove(0, { 0 });
+	EXPECT_EQ(*nonTrivial1.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialType::counter, 2);
+
+	NonTrivialType nonTrivial3({ 50, 60 });
+	this->populate(1, 5, nonTrivial3);
+	NonTrivialType nonTrivial4({ 70, 80 });
+	this->populate(2, 7, nonTrivial4);
+	EXPECT_EQ(*nonTrivial3.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial4.instanceCounter, 2);
+	this->remove(1, { 0 });
+	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial4.instanceCounter, 2);
+	EXPECT_EQ(NonTrivialType::counter, 5);
+	this->checkTable<int, NonTrivialType>({ { 7 }, { nonTrivial4 } });
+
+	this->remove(0, { 0 });
+	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial4.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialType::counter, 4);
+
+	NonTrivialType nonTrivial5({ 90, 100 });
+	this->populate(1, 9, nonTrivial5);
+	NonTrivialType nonTrivial6({ 110, 120 });
+	this->populate(2, 11, nonTrivial6);
+	EXPECT_EQ(*nonTrivial5.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial6.instanceCounter, 2);
+	this->remove(0, { 0, 1 });
+	EXPECT_EQ(*nonTrivial5.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial6.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialType::counter, 6);
+
+	NonTrivialType nonTrivial7({ 130, 140 });
+	this->populate(1, 13, nonTrivial7);
+	NonTrivialType nonTrivial8({ 150, 160 });
+	this->populate(2, 15, nonTrivial8);
+	NonTrivialType nonTrivial9({ 170, 180 });
+	this->populate(3, 17, nonTrivial9);
+	EXPECT_EQ(*nonTrivial7.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial9.instanceCounter, 2);
+	this->remove(1, { 0, 2 });
+	EXPECT_EQ(*nonTrivial7.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial9.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialType::counter, 10);
+	this->checkTable<int, NonTrivialType>({ { 15 }, { nonTrivial8 } });
+
+	EXPECT_EQ(*nonTrivial1.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial4.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial5.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial6.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial7.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial9.instanceCounter, 1);
+
+}
+
+
+using RemoveElementsIntNonTrivialNonMovable = TableTest<172, int, NonTrivialNonMovableType>;
+TEST_F(RemoveElementsIntNonTrivialNonMovable, RemoveElements)
+{
+
+	this->init(3);
+	NonTrivialNonMovableType::counter = 0;
+
+	NonTrivialNonMovableType nonTrivial1({ 10, 20 });
+	this->populate(1, 1, nonTrivial1);
+	NonTrivialNonMovableType nonTrivial2({ 30, 40 });
+	this->populate(2, 3, nonTrivial2);
+	this->remove(1, { 1 });
+	EXPECT_EQ(*nonTrivial1.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialNonMovableType::counter, 3);
+	this->checkTable<int, NonTrivialNonMovableType>({ { 1 }, { nonTrivial1 } });
+
+	this->remove(0, { 0 });
+	EXPECT_EQ(*nonTrivial1.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialNonMovableType::counter, 2);
+
+	NonTrivialNonMovableType nonTrivial3({ 50, 60 });
+	this->populate(1, 5, nonTrivial3);
+	NonTrivialNonMovableType nonTrivial4({ 70, 80 });
+	this->populate(2, 7, nonTrivial4);
+	EXPECT_EQ(*nonTrivial3.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial4.instanceCounter, 2);
+	this->remove(1, { 0 });
+	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial4.instanceCounter, 2);
+	EXPECT_EQ(NonTrivialNonMovableType::counter, 5);
+	this->checkTable<int, NonTrivialNonMovableType>({ { 7 }, { nonTrivial4 } });
+
+	this->remove(0, { 0 });
+	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial4.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialNonMovableType::counter, 4);
+
+	NonTrivialNonMovableType nonTrivial5({ 90, 100 });
+	this->populate(1, 9, nonTrivial5);
+	NonTrivialNonMovableType nonTrivial6({ 110, 120 });
+	this->populate(2, 11, nonTrivial6);
+	EXPECT_EQ(*nonTrivial5.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial6.instanceCounter, 2);
+	this->remove(0, { 0, 1 });
+	EXPECT_EQ(*nonTrivial5.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial6.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialNonMovableType::counter, 6);
+
+	NonTrivialNonMovableType nonTrivial7({ 130, 140 });
+	this->populate(1, 13, nonTrivial7);
+	NonTrivialNonMovableType nonTrivial8({ 150, 160 });
+	this->populate(2, 15, nonTrivial8);
+	NonTrivialNonMovableType nonTrivial9({ 170, 180 });
+	this->populate(3, 17, nonTrivial9);
+	EXPECT_EQ(*nonTrivial7.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial9.instanceCounter, 2);
+	this->remove(1, { 0, 2 });
+	EXPECT_EQ(*nonTrivial7.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial9.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialNonMovableType::counter, 10);
+	this->checkTable<int, NonTrivialNonMovableType>({ { 15 }, { nonTrivial8 } });
+
+	EXPECT_EQ(*nonTrivial1.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial4.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial5.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial6.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial7.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivial9.instanceCounter, 1);
+
+}
+
+using RemoveElementsIntNonTrivialMoveOnly = TableTest<172, int, NonTrivialMoveOnlyType>;
+TEST_F(RemoveElementsIntNonTrivialMoveOnly, RemoveElements)
+{
+
+	const auto genNonTrivial1 = []() noexcept {	return NonTrivialMoveOnlyType({ 10, 20 }); };
+	const auto genNonTrivial2 = []() noexcept {	return NonTrivialMoveOnlyType({ 30, 40 }); };
+	const auto genNonTrivial3 = []() noexcept {	return NonTrivialMoveOnlyType({ 50, 60 }); };
+	const auto genNonTrivial4 = []() noexcept {	return NonTrivialMoveOnlyType({ 70, 80 }); };
+	const auto genNonTrivial5 = []() noexcept {	return NonTrivialMoveOnlyType({ 90, 100 }); };
+	const auto genNonTrivial6 = []() noexcept {	return NonTrivialMoveOnlyType({ 110, 120 }); };
+	const auto genNonTrivial7 = []() noexcept {	return NonTrivialMoveOnlyType({ 130, 140 }); };
+	const auto genNonTrivial8 = []() noexcept {	return NonTrivialMoveOnlyType({ 150, 160 }); };
+	const auto genNonTrivial9 = []() noexcept {	return NonTrivialMoveOnlyType({ 170, 180 }); };
+
+	this->init(3);
+	NonTrivialMoveOnlyType::counter = 0;
+
+	this->populate(1, 1, genNonTrivial1());
+	this->populate(2, 3, genNonTrivial2());
+	this->remove(1, { 1 });
+	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 1);
+	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({ 1 }, genCheckVector(genNonTrivial1())));
+
+	this->remove(0, { 0 });
+	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 0);
+
+	this->populate(1, 5, genNonTrivial3());
+	this->populate(2, 7, genNonTrivial4());
+	this->remove(1, { 0 });
+	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 1);
+	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({ 7 }, genCheckVector(genNonTrivial4())));
+
+	this->remove(0, { 0 });
+	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 0);
+
+	this->populate(1, 9, genNonTrivial5());
+	this->populate(2, 11, genNonTrivial6());
+	this->remove(0, { 0, 1 });
+	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 0);
+
+	this->populate(1, 13, genNonTrivial7());
+	this->populate(2, 15, genNonTrivial8());
+	this->populate(3, 17, genNonTrivial9());
+	this->remove(1, { 0, 2 });
+	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 1);
+	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({ 15 }, genCheckVector(genNonTrivial8())));
 
 }

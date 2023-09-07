@@ -192,9 +192,8 @@ namespace Dod::DataUtils
 
 	}
 
-	void flush(CommonData::CTable auto& table) noexcept
+	void destroyRange(CommonData::CTable auto& table, int32_t beginElementId, int32_t endElementId)
 	{
-		
 		using tableType = std::decay_t<decltype(table)>;
 		using types_t = tableType::types_t;
 
@@ -206,7 +205,7 @@ namespace Dod::DataUtils
 			if constexpr (std::is_trivial_v<columnType_t> == false)
 			{
 				const auto destructBegin{ memPosition };
-				for (int32_t elId{}; elId < table.numOfFilledEls; ++elId)
+				for (int32_t elId{ beginElementId }; elId < endElementId; ++elId)
 				{
 					const auto destructPoint = reinterpret_cast<columnType_t*>(memPosition) + elId;
 					std::destroy_at(destructPoint);
@@ -214,7 +213,12 @@ namespace Dod::DataUtils
 			}
 			memPosition += table.capacityEls * columnTypeSize;
 		});
+	}
 
+	void flush(CommonData::CTable auto& table) noexcept
+	{
+		
+		destroyRange(table, 0, table.numOfFilledEls);
 		table.numOfFilledEls = 0;
 
 	}
@@ -279,11 +283,17 @@ namespace Dod::DataUtils
 			for (int32_t idx{ Dod::DataUtils::getNumFilledElements(indicesToRemove) - 1 }; idx >= 0 ; --idx)
 			{
 				const auto removeId{ indicesToRemove.dataBegin[idx] };
-				columnTypedDataBegin[removeId] = columnTypedDataBegin[targetIdx];
+				if constexpr (std::is_move_assignable_v<columnType_t>)
+					columnTypedDataBegin[removeId] = std::move(columnTypedDataBegin[targetIdx]);
+				else 
+					columnTypedDataBegin[removeId] = columnTypedDataBegin[targetIdx];
 				--targetIdx;
 			}
 			columnDataBegin += table.capacityEls * columnTypeSize;
 		});
+		const auto beginElementId{ table.numOfFilledEls - Dod::DataUtils::getNumFilledElements(indicesToRemove) };
+		const auto endElementId{ table.numOfFilledEls };
+		destroyRange(table, beginElementId, endElementId);
 		table.numOfFilledEls -= Dod::DataUtils::getNumFilledElements(indicesToRemove);
 
 	}
