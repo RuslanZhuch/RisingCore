@@ -86,6 +86,7 @@ static_assert(std::is_move_constructible_v<NonTrivialType> == true);
 static_assert(std::is_copy_assignable_v<NonTrivialType> == true);
 static_assert(std::is_copy_constructible_v<NonTrivialType> == true);
 static_assert(sizeof(NonTrivialType) == 40);
+static_assert(alignof(NonTrivialType) == 8);
 
 struct NonTrivialNonMovableType
 {
@@ -143,6 +144,7 @@ static_assert(std::is_move_constructible_v<NonTrivialNonMovableType> == false);
 static_assert(std::is_copy_assignable_v<NonTrivialNonMovableType> == true);
 static_assert(std::is_copy_constructible_v<NonTrivialNonMovableType> == true);
 static_assert(sizeof(NonTrivialNonMovableType) == 40);
+static_assert(alignof(NonTrivialNonMovableType) == 8);
 
 
 struct NonTrivialMoveOnlyType
@@ -209,6 +211,7 @@ static_assert(std::is_move_constructible_v<NonTrivialMoveOnlyType> == true);
 static_assert(std::is_copy_assignable_v<NonTrivialMoveOnlyType> == false);
 static_assert(std::is_copy_constructible_v<NonTrivialMoveOnlyType> == false);
 static_assert(sizeof(NonTrivialMoveOnlyType) == 40);
+static_assert(alignof(NonTrivialMoveOnlyType) == 8);
 
 template <size_t memorySize, typename ... Types>
 class InitDBTableFromMemoryTest : public ::testing::Test {
@@ -324,7 +327,14 @@ protected:
 		const auto populatedPtr{ reinterpret_cast<T*>(table.dataBegin + deadBucketSize + static_cast<size_t>(offset)) };
 
 		for (int32_t id{}; const auto expected : expectedValues)
-			EXPECT_EQ(*(populatedPtr + (id++)), expected);
+		{
+			const auto point{ populatedPtr + (id++) };
+			EXPECT_EQ(*point, expected);
+
+			const auto address{ reinterpret_cast<std::uintptr_t>(point) };
+			constexpr auto expectedAlignment{ alignof(T) };
+			EXPECT_EQ(address % expectedAlignment, 0);
+		}
 	}
 
 	template <int32_t columnId, typename T>
@@ -333,8 +343,13 @@ protected:
 		Dod::ImBuffer<T> col{ Dod::DataUtils::get<columnId>(this->table) };
 		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(col), expectedValues.size());
 
-		for (int32_t id{}; auto&& expected : expectedValues)
-			EXPECT_EQ(Dod::DataUtils::get(col, id++), expected);
+		constexpr auto expectedAlignment{ alignof(T) };
+		for (int32_t id{}; auto && expected : expectedValues)
+		{
+			auto&& value{ Dod::DataUtils::get(col, id++) };
+			EXPECT_EQ(value, expected);
+			EXPECT_EQ(reinterpret_cast<std::uintptr_t>(&value) % expectedAlignment, 0);
+		}
 	}
 
 	template <typename ... T>
@@ -390,6 +405,24 @@ TEST_F(PopulateIntDouble, Populate)
 {
 
 	this->init(2);
+
+	this->populate(1, 1, 2.);
+	this->checkInternal<int>({ 1 }, 0);
+	this->checkInternal<double>({ 2. }, 8);
+
+	this->populate(2, 3, 4.);
+	this->checkInternal<int>({ 1, 3 }, 0);
+	this->checkInternal<double>({ 2., 4. }, 8);
+
+	this->populate(2, 5, 6.);
+
+}
+
+using PopulateIntDoubleAlignment = TableTest<44, int, double>;
+TEST_F(PopulateIntDoubleAlignment, Populate)
+{
+
+	this->init(3);
 
 	this->populate(1, 1, 2.);
 	this->checkInternal<int>({ 1 }, 0);
@@ -898,7 +931,7 @@ TEST_F(RemoveElementsIntFloat, RemoveElements)
 
 }
 
-using RemoveElementsIntNonTrivial = TableTest<172, int, NonTrivialType>;
+using RemoveElementsIntNonTrivial = TableTest<292, int, NonTrivialType, NonTrivialNonMovableType>;
 TEST_F(RemoveElementsIntNonTrivial, RemoveElements)
 {
 
@@ -906,142 +939,98 @@ TEST_F(RemoveElementsIntNonTrivial, RemoveElements)
 	NonTrivialType::counter = 0;
 
 	NonTrivialType nonTrivial1({ 10, 20 });
-	this->populate(1, 1, nonTrivial1);
+	NonTrivialNonMovableType nonTrivialNonMovable1({ 210, 220 });
+	this->populate(1, 1, nonTrivial1, nonTrivialNonMovable1);
 	NonTrivialType nonTrivial2({ 30, 40 });
-	this->populate(2, 3, nonTrivial2);
+	NonTrivialNonMovableType nonTrivialNonMovable2({ 230, 240 });
+	this->populate(2, 3, nonTrivial2, nonTrivialNonMovable2);
 	this->remove(1, { 1 });
 	EXPECT_EQ(*nonTrivial1.instanceCounter, 2);
 	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable1.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivialNonMovable2.instanceCounter, 1);
 	EXPECT_EQ(NonTrivialType::counter, 3);
-	this->checkTable<int, NonTrivialType>({ { 1 }, { nonTrivial1 } });
-
-	this->remove(0, { 0 });
-	EXPECT_EQ(*nonTrivial1.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
-	EXPECT_EQ(NonTrivialType::counter, 2);
-
-	NonTrivialType nonTrivial3({ 50, 60 });
-	this->populate(1, 5, nonTrivial3);
-	NonTrivialType nonTrivial4({ 70, 80 });
-	this->populate(2, 7, nonTrivial4);
-	EXPECT_EQ(*nonTrivial3.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial4.instanceCounter, 2);
-	this->remove(1, { 0 });
-	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial4.instanceCounter, 2);
-	EXPECT_EQ(NonTrivialType::counter, 5);
-	this->checkTable<int, NonTrivialType>({ { 7 }, { nonTrivial4 } });
-
-	this->remove(0, { 0 });
-	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial4.instanceCounter, 1);
-	EXPECT_EQ(NonTrivialType::counter, 4);
-
-	NonTrivialType nonTrivial5({ 90, 100 });
-	this->populate(1, 9, nonTrivial5);
-	NonTrivialType nonTrivial6({ 110, 120 });
-	this->populate(2, 11, nonTrivial6);
-	EXPECT_EQ(*nonTrivial5.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial6.instanceCounter, 2);
-	this->remove(0, { 0, 1 });
-	EXPECT_EQ(*nonTrivial5.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial6.instanceCounter, 1);
-	EXPECT_EQ(NonTrivialType::counter, 6);
-
-	NonTrivialType nonTrivial7({ 130, 140 });
-	this->populate(1, 13, nonTrivial7);
-	NonTrivialType nonTrivial8({ 150, 160 });
-	this->populate(2, 15, nonTrivial8);
-	NonTrivialType nonTrivial9({ 170, 180 });
-	this->populate(3, 17, nonTrivial9);
-	EXPECT_EQ(*nonTrivial7.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial9.instanceCounter, 2);
-	this->remove(1, { 0, 2 });
-	EXPECT_EQ(*nonTrivial7.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial9.instanceCounter, 1);
-	EXPECT_EQ(NonTrivialType::counter, 10);
-	this->checkTable<int, NonTrivialType>({ { 15 }, { nonTrivial8 } });
-
-	EXPECT_EQ(*nonTrivial1.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial4.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial5.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial6.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial7.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial9.instanceCounter, 1);
-
-}
-
-
-using RemoveElementsIntNonTrivialNonMovable = TableTest<172, int, NonTrivialNonMovableType>;
-TEST_F(RemoveElementsIntNonTrivialNonMovable, RemoveElements)
-{
-
-	this->init(3);
-	NonTrivialNonMovableType::counter = 0;
-
-	NonTrivialNonMovableType nonTrivial1({ 10, 20 });
-	this->populate(1, 1, nonTrivial1);
-	NonTrivialNonMovableType nonTrivial2({ 30, 40 });
-	this->populate(2, 3, nonTrivial2);
-	this->remove(1, { 1 });
-	EXPECT_EQ(*nonTrivial1.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
 	EXPECT_EQ(NonTrivialNonMovableType::counter, 3);
-	this->checkTable<int, NonTrivialNonMovableType>({ { 1 }, { nonTrivial1 } });
+	this->checkTable<int, NonTrivialType, NonTrivialNonMovableType>({ { 1 }, { nonTrivial1 }, { nonTrivialNonMovable1 } });
 
 	this->remove(0, { 0 });
 	EXPECT_EQ(*nonTrivial1.instanceCounter, 1);
 	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable1.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable2.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialType::counter, 2);
 	EXPECT_EQ(NonTrivialNonMovableType::counter, 2);
 
-	NonTrivialNonMovableType nonTrivial3({ 50, 60 });
-	this->populate(1, 5, nonTrivial3);
-	NonTrivialNonMovableType nonTrivial4({ 70, 80 });
-	this->populate(2, 7, nonTrivial4);
+	NonTrivialType nonTrivial3({ 50, 60 });
+	NonTrivialNonMovableType nonTrivialNonMovable3({ 250, 260 });
+	this->populate(1, 5, nonTrivial3, nonTrivialNonMovable3);
+	NonTrivialType nonTrivial4({ 70, 80 });
+	NonTrivialNonMovableType nonTrivialNonMovable4({ 270, 280 });
+	this->populate(2, 7, nonTrivial4, nonTrivialNonMovable4);
 	EXPECT_EQ(*nonTrivial3.instanceCounter, 2);
 	EXPECT_EQ(*nonTrivial4.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivialNonMovable3.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivialNonMovable4.instanceCounter, 2);
 	this->remove(1, { 0 });
 	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
 	EXPECT_EQ(*nonTrivial4.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivialNonMovable3.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable4.instanceCounter, 2);
+	EXPECT_EQ(NonTrivialType::counter, 5);
 	EXPECT_EQ(NonTrivialNonMovableType::counter, 5);
-	this->checkTable<int, NonTrivialNonMovableType>({ { 7 }, { nonTrivial4 } });
+	this->checkTable<int, NonTrivialType, NonTrivialNonMovableType>({ { 7 }, { nonTrivial4 }, { nonTrivialNonMovable4 } });
 
 	this->remove(0, { 0 });
 	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
 	EXPECT_EQ(*nonTrivial4.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable3.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable4.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialType::counter, 4);
 	EXPECT_EQ(NonTrivialNonMovableType::counter, 4);
 
-	NonTrivialNonMovableType nonTrivial5({ 90, 100 });
-	this->populate(1, 9, nonTrivial5);
-	NonTrivialNonMovableType nonTrivial6({ 110, 120 });
-	this->populate(2, 11, nonTrivial6);
+	NonTrivialType nonTrivial5({ 90, 100 });
+	NonTrivialNonMovableType nonTrivialNonMovable5({ 290, 300 });
+	this->populate(1, 9, nonTrivial5, nonTrivialNonMovable5);
+	NonTrivialType nonTrivial6({ 110, 120 });
+	NonTrivialNonMovableType nonTrivialNonMovable6({ 310, 320 });
+	this->populate(2, 11, nonTrivial6, nonTrivialNonMovable6);
 	EXPECT_EQ(*nonTrivial5.instanceCounter, 2);
 	EXPECT_EQ(*nonTrivial6.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivialNonMovable5.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivialNonMovable6.instanceCounter, 2);
 	this->remove(0, { 0, 1 });
 	EXPECT_EQ(*nonTrivial5.instanceCounter, 1);
 	EXPECT_EQ(*nonTrivial6.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable5.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable6.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialType::counter, 6);
 	EXPECT_EQ(NonTrivialNonMovableType::counter, 6);
 
-	NonTrivialNonMovableType nonTrivial7({ 130, 140 });
-	this->populate(1, 13, nonTrivial7);
-	NonTrivialNonMovableType nonTrivial8({ 150, 160 });
-	this->populate(2, 15, nonTrivial8);
-	NonTrivialNonMovableType nonTrivial9({ 170, 180 });
-	this->populate(3, 17, nonTrivial9);
+	NonTrivialType nonTrivial7({ 130, 140 });
+	NonTrivialNonMovableType nonTrivialNonMovable7({ 330, 340 });
+	this->populate(1, 13, nonTrivial7, nonTrivialNonMovable7);
+	NonTrivialType nonTrivial8({ 150, 160 });
+	NonTrivialNonMovableType nonTrivialNonMovable8({ 350, 360 });
+	this->populate(2, 15, nonTrivial8, nonTrivialNonMovable8);
+	NonTrivialType nonTrivial9({ 170, 180 });
+	NonTrivialNonMovableType nonTrivialNonMovable9({ 370, 380 });
+	this->populate(3, 17, nonTrivial9, nonTrivialNonMovable9);
 	EXPECT_EQ(*nonTrivial7.instanceCounter, 2);
 	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
 	EXPECT_EQ(*nonTrivial9.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivialNonMovable7.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivialNonMovable8.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivialNonMovable9.instanceCounter, 2);
 	this->remove(1, { 0, 2 });
 	EXPECT_EQ(*nonTrivial7.instanceCounter, 1);
 	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
 	EXPECT_EQ(*nonTrivial9.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable7.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable8.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivialNonMovable9.instanceCounter, 1);
+	EXPECT_EQ(NonTrivialType::counter, 10);
 	EXPECT_EQ(NonTrivialNonMovableType::counter, 10);
-	this->checkTable<int, NonTrivialNonMovableType>({ { 15 }, { nonTrivial8 } });
+	this->checkTable<int, NonTrivialType, NonTrivialNonMovableType>({ { 15 }, { nonTrivial8 }, { nonTrivialNonMovable8 } });
 
 	EXPECT_EQ(*nonTrivial1.instanceCounter, 1);
 	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
@@ -1052,6 +1041,16 @@ TEST_F(RemoveElementsIntNonTrivialNonMovable, RemoveElements)
 	EXPECT_EQ(*nonTrivial7.instanceCounter, 1);
 	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
 	EXPECT_EQ(*nonTrivial9.instanceCounter, 1);
+
+	EXPECT_EQ(*nonTrivialNonMovable1.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable2.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable3.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable4.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable5.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable6.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable7.instanceCounter, 1);
+	EXPECT_EQ(*nonTrivialNonMovable8.instanceCounter, 2);
+	EXPECT_EQ(*nonTrivialNonMovable9.instanceCounter, 1);
 
 }
 
