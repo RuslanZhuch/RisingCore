@@ -35,6 +35,7 @@
     <ClCompile Include="engineTests\DataUtilsForTables.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="engineTests\TypeHelpers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -44,6 +45,7 @@
     <ClInclude Include="engineTests\utils\CommonStructures.h">
       <Filter>src\utils</Filter>
     </ClInclude>
+    <ClInclude Include="engineTests\utils\CommonCheckers.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

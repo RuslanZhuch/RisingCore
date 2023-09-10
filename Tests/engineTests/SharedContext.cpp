@@ -22,7 +22,7 @@ struct Context1
 		this->data1 = 42.f;
 		this->data2 = 123.f;
 
-		Dod::DataUtils::initFromMemory(this->buffer1, Dod::MemUtils::stackAquire(this->memory, 10 * sizeof(int32_t), header));
+		Dod::DataUtils::initFromMemory(this->buffer1, Dod::MemUtils::stackAquire(this->memory, 10 * sizeof(int32_t), alignof(int32_t), header));
 		Dod::DataUtils::populate(this->buffer1, 2, true);
 		Dod::DataUtils::populate(this->buffer1, 3, true);
 		Dod::DataUtils::populate(this->buffer1, 4, true);

@@ -24,7 +24,7 @@ namespace Dod::DataUtils
 	void initFromMemory(CommonData::CBuffer auto& dbBuffer, const auto& memSpan) noexcept
 	{
 
-		const auto actualData{ MemUtils::aquire(memSpan, 0, static_cast<int32_t>(memSpan.dataEnd - memSpan.dataBegin)) };
+		const auto actualData{ MemUtils::acquire(memSpan, 0, static_cast<int32_t>(memSpan.dataEnd - memSpan.dataBegin), 1) };
 		initBufferFromMemoryImpl(dbBuffer, actualData);
 
 	}
@@ -32,7 +32,7 @@ namespace Dod::DataUtils
 	void initFromMemory(CommonData::CBuffer auto& dbBuffer, const auto& memSpan, MemTypes::capacity_t beginIndex, MemTypes::capacity_t endIndex) noexcept
 	{
 
-		const auto actualData{ MemUtils::aquire(memSpan, beginIndex, endIndex) };
+		const auto actualData{ MemUtils::acquire(memSpan, beginIndex, endIndex, 1) };
 		initBufferFromMemoryImpl(dbBuffer, actualData);
 
 	}

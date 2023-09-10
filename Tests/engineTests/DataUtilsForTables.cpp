@@ -10,6 +10,7 @@
 #pragma warning(disable : 4365)
 
 #include <array>
+#include <span>
 #include <cassert>
 #pragma warning(pop)
 
@@ -213,12 +214,23 @@ static_assert(std::is_copy_constructible_v<NonTrivialMoveOnlyType> == false);
 static_assert(sizeof(NonTrivialMoveOnlyType) == 40);
 static_assert(alignof(NonTrivialMoveOnlyType) == 8);
 
+template <typename ... Types>
+static void checkMemoryAlignment(auto&& memory)
+{
+	using types_t = std::tuple<Types...>;
+	constexpr auto maxAlignment{ RisingCore::Helpers::findLargestAlignment<types_t>() };
+	const auto address{ reinterpret_cast<std::uintptr_t>(memory.data()) };
+	ASSERT_EQ(address % maxAlignment, 0);
+}
+
 template <size_t memorySize, typename ... Types>
 class InitDBTableFromMemoryTest : public ::testing::Test {
 
 protected:
-	void run(int32_t memBeginIndex, int32_t memEndIndex, int32_t expectCapacityEls)
+	void run(Dod::MemTypes::capacity_t memBeginIndex, Dod::MemTypes::capacity_t memEndIndex, int32_t expectCapacityEls)
 	{
+
+		checkMemoryAlignment<Types...>(this->memory);
 
 		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
 
@@ -229,10 +241,19 @@ protected:
 		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(this->table.dataBegin), memSpan.dataBegin + memBeginIndex);
 		EXPECT_EQ(Dod::DataUtils::getCapacity(this->table), expectCapacityEls);
 
+		EXPECT_TRUE(this->table.dataBegin >= this->memory.data());
+
+		using types_t = decltype(this->table)::types_t;
+		constexpr auto maxAlignment{ RisingCore::Helpers::findLargestAlignment<types_t>() };
+		const auto address{ reinterpret_cast<std::uintptr_t>(this->table.dataBegin) };
+		EXPECT_EQ(address % maxAlignment, 0);
+
 	}
 
 	void run(int32_t expectCapacityEls)
 	{
+
+		checkMemoryAlignment<Types...>(this->memory);
 
 		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
 
@@ -245,7 +266,7 @@ protected:
 
 	}
 
-	std::array<Dod::MemTypes::data_t, memorySize> memory{};
+	alignas(RisingCore::Helpers::findLargestAlignmentFlat<Types...>()) std::array<Dod::MemTypes::data_t, memorySize> memory{};
 	Dod::DBTable<Types...> table;
 
 };

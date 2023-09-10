@@ -112,7 +112,7 @@ namespace Engine::ContextUtils
     ) noexcept
     {
 
-        Dod::DataUtils::initFromMemory(dest, Dod::MemUtils::stackAquire(pool, capacityBytes, header));
+        Dod::DataUtils::initFromMemory(dest, Dod::MemUtils::stackAquire(pool, capacityBytes, alignof(T), header));
 
     }
 

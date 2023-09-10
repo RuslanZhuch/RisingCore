@@ -33,6 +33,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClInclude Include="engineTests\utils\CommonCheckers.h" />
     <ClInclude Include="engineTests\utils\CommonStructures.h" />
     <ClInclude Include="engineTests\utils\TypeUtils.h" />
     <ClInclude Include="pch.h" />
@@ -47,6 +48,7 @@
     <ClCompile Include="engineTests\SharedContext.cpp" />
     <ClCompile Include="engineTests\String.cpp" />
     <ClCompile Include="engineTests\DataUtilsForTables.cpp" />
+    <ClCompile Include="engineTests\TypeHelpers.cpp" />
     <ClCompile Include="engineTests\Types.cpp" />
     <ClCompile Include="engineTests\utils\TypesDesImpl.cpp" />
     <ClCompile Include="pch.cpp">

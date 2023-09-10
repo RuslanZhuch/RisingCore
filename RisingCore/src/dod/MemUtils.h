@@ -5,7 +5,16 @@
 namespace Dod::MemUtils
 {
 
-	[[nodiscard]] static auto aquire(const auto& source, MemTypes::capacity_t beginIndex, MemTypes::capacity_t endIndex) noexcept
+	[[nodiscard]] static auto getAlignOffset(const auto* point, MemTypes::alignment_t alignment)
+	{
+		const auto address{ reinterpret_cast<MemTypes::alignment_t>(point) };
+		const auto shifted{ static_cast<MemTypes::alignment_t>(address & (alignment - 1)) };
+		if (shifted != 0)
+			return alignment - shifted;
+		return MemTypes::alignment_t{};
+	}
+
+	[[nodiscard]] static auto acquire(const auto& source, MemTypes::capacity_t beginIndex, MemTypes::capacity_t endIndex, MemTypes::alignment_t alignment) noexcept
 	{
 
 		struct Output
@@ -14,21 +23,25 @@ namespace Dod::MemUtils
 			decltype(source.dataEnd) dataEnd{ nullptr };
 		};
 
+		const auto initialSourceBegin{ source.dataBegin + beginIndex };
+		const auto alignOffset{ MemUtils::getAlignOffset(initialSourceBegin, alignment) };
+		const auto alignedSourceBegin{ source.dataBegin + alignOffset };
+
 		const auto sourceCapacity{ source.dataEnd - source.dataBegin };
 		const auto bCanAcquire{ 
-			source.dataBegin != nullptr && 
+			alignedSourceBegin != nullptr &&
 			source.dataEnd != nullptr &&
 			beginIndex < sourceCapacity && 
 			endIndex <= sourceCapacity && 
 			endIndex > beginIndex
 		};
-		Output output(source.dataBegin + beginIndex * bCanAcquire, source.dataBegin + endIndex * bCanAcquire);
+		Output output(source.dataBegin + (beginIndex + alignOffset) * bCanAcquire, source.dataBegin + endIndex * bCanAcquire);
 
 		return output;
 
 	}
 
-	[[nodiscard]] static auto stackAquire(const auto& source, int32_t numOfBytes, int32_t& header) noexcept
+	[[nodiscard]] static auto stackAquire(const auto& source, int32_t numOfBytes, MemTypes::alignment_t alignment, int32_t& header) noexcept
 	{
 
 		struct Output
@@ -38,14 +51,20 @@ namespace Dod::MemUtils
 		};
 		Output output;
 
+		const auto initialSourceBegin{ source.dataBegin + header };
+		const auto alignOffset{ MemUtils::getAlignOffset(initialSourceBegin, alignment) };
+		const auto alignedSourceBegin{ initialSourceBegin + alignOffset };
+
 		const auto capacity{ source.dataEnd - source.dataBegin };
-		if ((source.dataBegin == nullptr) || (source.dataEnd == nullptr) || (header >= capacity) || (numOfBytes > capacity - header))
+		if ((source.dataBegin == nullptr) || (source.dataEnd == nullptr) || (header >= capacity) || (numOfBytes + alignOffset > capacity - header))
 			return output;
 
-		output.dataBegin = source.dataBegin + header;
-		output.dataEnd = source.dataBegin + header + numOfBytes;
+		const auto totalBytes{ numOfBytes + alignOffset };
 
-		header += numOfBytes;
+		output.dataBegin = alignedSourceBegin;
+		output.dataEnd = source.dataBegin + header + totalBytes;
+
+		header += totalBytes;
 
 		return output;
 

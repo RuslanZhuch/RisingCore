@@ -26,7 +26,7 @@ namespace Dod::DataUtils
 	}
 
 	template <typename Types, size_t Index = 0>
-	constexpr auto computeDeadbucketSizeInBytes() noexcept
+	[[nodiscard]] constexpr auto computeDeadbucketSizeInBytes() noexcept
 	{
 		if constexpr (Index < std::tuple_size_v<Types>)
 		{
@@ -37,6 +37,14 @@ namespace Dod::DataUtils
 		}
 		else
 			return 0;
+	}
+
+	template <typename Type>
+	[[nodiscard]] constexpr auto computeTypeOffset(const Type* ptr) noexcept
+	{
+		constexpr auto alignment{ alignof(Type) };
+		const auto address{ reinterpret_cast<std::uintptr_t>(ptr) };
+		return address % alignment;
 	}
 
 	void initTableFromMemoryImpl(CommonData::CTable auto& dbTable, auto&& actualData) noexcept
@@ -53,7 +61,7 @@ namespace Dod::DataUtils
 		constexpr auto deadBucketSize{ computeDeadbucketSizeInBytes<types_t>() };
 		const auto capacityInBytesWithDeadBuffer{ (capacityInBytes - deadBucketSize) * (capacityInBytes > deadBucketSize) };
 		dbTable.capacityEls = static_cast<int32_t>(capacityInBytesWithDeadBuffer / rowSize);
-		if constexpr (requires {dbTable.numOfFilledEls; })
+		if constexpr (requires { dbTable.numOfFilledEls; })
 			dbTable.numOfFilledEls = 0;
 
 	}
@@ -61,7 +69,7 @@ namespace Dod::DataUtils
 	void initFromMemory(CommonData::CTable auto& dbTable, const auto& memSpan, MemTypes::capacity_t beginIndex, MemTypes::capacity_t endIndex) noexcept
 	{
 
-		const auto actualData{ MemUtils::aquire(memSpan, beginIndex, endIndex) };
+		const auto actualData{ MemUtils::acquire(memSpan, beginIndex, endIndex, 1) };
 		initTableFromMemoryImpl(dbTable, actualData);
 
 	}
@@ -69,7 +77,7 @@ namespace Dod::DataUtils
 	void initFromMemory(CommonData::CTable auto& dbTable, const auto& memSpan) noexcept
 	{
 
-		const auto actualData{ MemUtils::aquire(memSpan, 0, static_cast<int32_t>(memSpan.dataEnd - memSpan.dataBegin)) };
+		const auto actualData{ MemUtils::acquire(memSpan, 0, static_cast<int32_t>(memSpan.dataEnd - memSpan.dataBegin), 1) };
 		initTableFromMemoryImpl(dbTable, actualData);
 
 	}

@@ -16,7 +16,7 @@ static void initDBuffer(Dod::DBBuffer<T>& dest, auto& src)
 {
 
 	const size_t totalElements{ src.size() };
-	const auto totalBytes{ static_cast<int32_t>(totalElements * sizeof(T)) };
+	const auto totalBytes{ totalElements * sizeof(T) };
 
 	std::memcpy(src.data(), src.data(), src.size());
 
