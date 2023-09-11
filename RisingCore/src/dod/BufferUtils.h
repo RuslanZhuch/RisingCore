@@ -12,30 +12,35 @@
 namespace Dod::DataUtils
 {
 
-	void initBufferFromMemoryImpl(CommonData::CBuffer auto& dbBuffer, auto&& actualData) noexcept
-	{
-		//TODO: Is it legal?
-		dbBuffer.dataBegin = reinterpret_cast<decltype(dbBuffer.dataBegin)>(actualData.dataBegin);
-		dbBuffer.dataEnd = reinterpret_cast<decltype(dbBuffer.dataEnd)>(actualData.dataEnd);
-		if constexpr (requires {dbBuffer.numOfFilledEls; })
-			dbBuffer.numOfFilledEls = 0;
-	}
+//	void initBufferFromMemoryImpl(CommonData::CBuffer auto& dbBuffer, auto&& actualData) noexcept
+//	{
+//		//TODO: Is it legal?
+//		dbBuffer.dataBegin = reinterpret_cast<decltype(dbBuffer.dataBegin)>(actualData.dataBegin);
+//		dbBuffer.dataEnd = reinterpret_cast<decltype(dbBuffer.dataEnd)>(actualData.dataEnd);
+//		if constexpr (requires {dbBuffer.numOfFilledEls; })
+//			dbBuffer.numOfFilledEls = 0;
+//	}
 
 	void initFromMemory(CommonData::CBuffer auto& dbBuffer, const auto& memSpan) noexcept
 	{
 
-		const auto actualData{ MemUtils::acquire(memSpan, 0, static_cast<int32_t>(memSpan.dataEnd - memSpan.dataBegin), 1) };
-		initBufferFromMemoryImpl(dbBuffer, actualData);
+		dbBuffer.dataBegin = reinterpret_cast<decltype(dbBuffer.dataBegin)>(memSpan.dataBegin);
+		dbBuffer.dataEnd = reinterpret_cast<decltype(dbBuffer.dataEnd)>(memSpan.dataEnd);
+		if constexpr (requires {dbBuffer.numOfFilledEls; })
+			dbBuffer.numOfFilledEls = 0;
+
+//		const auto actualData{ MemUtils::acquire(memSpan, 0, static_cast<int32_t>(memSpan.dataEnd - memSpan.dataBegin), 1) };
+//		initBufferFromMemoryImpl(dbBuffer, actualData);
 
 	}
 
-	void initFromMemory(CommonData::CBuffer auto& dbBuffer, const auto& memSpan, MemTypes::capacity_t beginIndex, MemTypes::capacity_t endIndex) noexcept
-	{
-
-		const auto actualData{ MemUtils::acquire(memSpan, beginIndex, endIndex, 1) };
-		initBufferFromMemoryImpl(dbBuffer, actualData);
-
-	}
+//	void initFromMemory(CommonData::CBuffer auto& dbBuffer, const auto& memSpan, MemTypes::capacity_t beginIndex, MemTypes::capacity_t endIndex) noexcept
+//	{
+//
+//		const auto actualData{ MemUtils::acquire(memSpan, beginIndex, endIndex, 1) };
+//		initBufferFromMemoryImpl(dbBuffer, actualData);
+//
+//	}
 
 	template <typename T>
 	[[nodiscard]] static auto initFromArray(DBBuffer<T>& dbBuffer, auto& src) noexcept

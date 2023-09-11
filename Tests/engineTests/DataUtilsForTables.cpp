@@ -227,28 +227,28 @@ template <size_t memorySize, typename ... Types>
 class InitDBTableFromMemoryTest : public ::testing::Test {
 
 protected:
-	void run(Dod::MemTypes::capacity_t memBeginIndex, Dod::MemTypes::capacity_t memEndIndex, int32_t expectCapacityEls)
-	{
-
-		checkMemoryAlignment<Types...>(this->memory);
-
-		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
-
-		Dod::DataUtils::initFromMemory(this->table, memSpan, memBeginIndex, memEndIndex);
-
-		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(table), 0);
-
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(this->table.dataBegin), memSpan.dataBegin + memBeginIndex);
-		EXPECT_EQ(Dod::DataUtils::getCapacity(this->table), expectCapacityEls);
-
-		EXPECT_TRUE(this->table.dataBegin >= this->memory.data());
-
-		using types_t = decltype(this->table)::types_t;
-		constexpr auto maxAlignment{ RisingCore::Helpers::findLargestAlignment<types_t>() };
-		const auto address{ reinterpret_cast<std::uintptr_t>(this->table.dataBegin) };
-		EXPECT_EQ(address % maxAlignment, 0);
-
-	}
+//	void run(Dod::MemTypes::capacity_t memBeginIndex, Dod::MemTypes::capacity_t memEndIndex, int32_t expectCapacityEls)
+//	{
+//
+//		checkMemoryAlignment<Types...>(this->memory);
+//
+//		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
+//
+//		Dod::DataUtils::initFromMemory(this->table, memSpan, memBeginIndex, memEndIndex);
+//
+//		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(table), 0);
+//
+//		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(this->table.dataBegin), memSpan.dataBegin + memBeginIndex);
+//		EXPECT_EQ(Dod::DataUtils::getCapacity(this->table), expectCapacityEls);
+//
+//		EXPECT_TRUE(this->table.dataBegin >= this->memory.data());
+//
+//		using types_t = decltype(this->table)::types_t;
+//		constexpr auto maxAlignment{ RisingCore::Helpers::findLargestAlignment<types_t>() };
+//		const auto address{ reinterpret_cast<std::uintptr_t>(this->table.dataBegin) };
+//		EXPECT_EQ(address % maxAlignment, 0);
+//
+//	}
 
 	void run(int32_t expectCapacityEls)
 	{
@@ -257,12 +257,12 @@ protected:
 
 		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
 
-		Dod::DataUtils::initFromMemory(this->table, memSpan);
+		Dod::DataUtils::initFromMemory(this->table, expectCapacityEls, memSpan);
 
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(table), 0);
 
 		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(this->table.dataBegin), memSpan.dataBegin);
-		EXPECT_EQ(Dod::DataUtils::getCapacity(this->table), expectCapacityEls);
+		ASSERT_EQ(Dod::DataUtils::getCapacity(this->table), expectCapacityEls);
 
 	}
 
@@ -275,20 +275,9 @@ using InitDBTableFromMemory32BytesInt = InitDBTableFromMemoryTest<32, int>;
 TEST_F(InitDBTableFromMemory32BytesInt, InitFromMemory)
 {
 
+	this->run(0);
+	this->run(1);
 	this->run(7);
-
-	this->run(0, 32, 7);
-	this->run(0, 28, 6);
-	this->run(0, 8, 1);
-	this->run(0, 4, 0);
-	this->run(0, 2, 0);
-	this->run(0, 0, 0);
-
-	this->run(4, 32, 6);
-	this->run(24, 32, 1);
-	this->run(28, 32, 0);
-	this->run(30, 32, 0);
-
 }
 
 using InitDBTableFromMemory32BytesIntFloat = InitDBTableFromMemoryTest<32, int, float>;
@@ -297,15 +286,6 @@ TEST_F(InitDBTableFromMemory32BytesIntFloat, InitFromMemory)
 
 	this->run(3);
 
-	this->run(0, 32, 3);
-	this->run(0, 20, 2);
-	this->run(0, 12, 1);
-	this->run(0, 8, 0);
-
-	this->run(12, 32, 2);
-	this->run(22, 32, 0);
-	this->run(30, 32, 0);
-
 }
 
 using InitDBTableFromMemory32BytesIntDouble = InitDBTableFromMemoryTest<32, int, double>;
@@ -313,11 +293,6 @@ TEST_F(InitDBTableFromMemory32BytesIntDouble, InitFromMemory)
 {
 
 	this->run(2);
-
-	this->run(0, 32, 2);
-	this->run(0, 30, 1);
-	this->run(0, 12, 0);
-	this->run(0, 4, 0);
 
 }
 
@@ -331,7 +306,7 @@ protected:
 
 		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
 
-		Dod::DataUtils::initFromMemory(this->table, memSpan);
+		Dod::DataUtils::initFromMemory(this->table, expectCapacityEls, memSpan);
 		ASSERT_EQ(Dod::DataUtils::getCapacity(this->table), expectCapacityEls);
 
 	}
@@ -636,7 +611,7 @@ public:
 	TableToAppend(int32_t expectCapacityEls)
 	{
 		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
-		Dod::DataUtils::initFromMemory(this->table, memSpan);
+		Dod::DataUtils::initFromMemory(this->table, expectCapacityEls, memSpan);
 	}
 
 	void populate(int32_t expectedNumOfFilledEls, auto&& ... values)

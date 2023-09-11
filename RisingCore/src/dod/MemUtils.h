@@ -14,8 +14,13 @@ namespace Dod::MemUtils
 		return MemTypes::alignment_t{};
 	}
 
-	[[nodiscard]] static auto acquire(const auto& source, MemTypes::capacity_t beginIndex, MemTypes::capacity_t endIndex, MemTypes::alignment_t alignment) noexcept
+	[[nodiscard]] static auto acquire(const auto& source, MemTypes::capacity_t beginIndex, MemTypes::capacity_t numOfBytes, MemTypes::alignment_t alignment) noexcept
 	{
+
+		beginIndex = std::max(MemTypes::capacity_t{}, beginIndex);
+		numOfBytes = std::max(MemTypes::capacity_t{}, numOfBytes);
+
+
 
 		struct Output
 		{
@@ -32,10 +37,10 @@ namespace Dod::MemUtils
 			alignedSourceBegin != nullptr &&
 			source.dataEnd != nullptr &&
 			beginIndex < sourceCapacity && 
-			endIndex <= sourceCapacity && 
-			endIndex > beginIndex
+			beginIndex + numOfBytes <= sourceCapacity &&
+			numOfBytes > 0
 		};
-		Output output(source.dataBegin + (beginIndex + alignOffset) * bCanAcquire, source.dataBegin + endIndex * bCanAcquire);
+		Output output(source.dataBegin + (beginIndex + alignOffset) * bCanAcquire, source.dataBegin + (beginIndex + numOfBytes + alignOffset) * bCanAcquire);
 
 		return output;
 

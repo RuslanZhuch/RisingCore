@@ -33,39 +33,6 @@ TEST(DataUtils, Initialization)
 
 		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
 		constexpr Dod::MemTypes::capacity_t endIndex{ 32 };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
-
-		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 8);
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataBegin), memSpan.dataBegin + beginIndex);
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataEnd), memSpan.dataBegin + endIndex);
-	}
-	{
-		CommonBuffer<int32_t> buffer;
-
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ 16 };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
-
-		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 4);
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataBegin), memSpan.dataBegin + beginIndex);
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataEnd), memSpan.dataBegin + endIndex);
-	}
-	{
-		CommonBuffer<int32_t> buffer;
-
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 8 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ 24 };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
-
-		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 4);
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataBegin), memSpan.dataBegin + beginIndex);
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataEnd), memSpan.dataBegin + endIndex);
-	} 
-	{
-		CommonBuffer<int32_t> buffer;
-
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ 32 };
 		Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 8);
@@ -100,39 +67,6 @@ TEST(DBBufferUtils, Initialization)
 
 		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
 		constexpr Dod::MemTypes::capacity_t endIndex{ 32 };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
-
-		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 0);
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataBegin), memSpan.dataBegin + beginIndex);
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataEnd), memSpan.dataBegin + endIndex);
-	}
-	{
-		Dod::DBBuffer<int32_t> buffer;
-
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ 16 };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
-
-		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 0);
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataBegin), memSpan.dataBegin + beginIndex);
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataEnd), memSpan.dataBegin + endIndex);
-	}
-	{
-		Dod::DBBuffer<int32_t> buffer;
-
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 8 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ 24 };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
-
-		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 0);
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataBegin), memSpan.dataBegin + beginIndex);
-		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataEnd), memSpan.dataBegin + endIndex);
-	}
-	{
-		Dod::DBBuffer<int32_t> buffer;
-
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ 32 };
 		Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 0);
@@ -151,44 +85,6 @@ TEST(DBBufferUtils, Initialization)
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 0);
 		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataBegin), memSpan2.dataBegin + beginIndex);
 		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(buffer.dataEnd), memSpan2.dataBegin + endIndex);
-	}
-
-}
-
-TEST(DBBufferUtils, InitializationFailed)
-{
-
-	std::array<Dod::MemTypes::data_t, 32> memory;
-	MemorySpan memSpan(memory.data(), memory.data() + memory.size());
-
-	{
-		Dod::DBBuffer<int32_t> buffer;
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ 40 };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
-
-		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 0);
-		EXPECT_EQ(buffer.dataBegin, buffer.dataEnd);
-	}
-
-	{
-		Dod::DBBuffer<int32_t> buffer;
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 35 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ 40 };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
-
-		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 0);
-		EXPECT_EQ(buffer.dataBegin, buffer.dataEnd);
-	}
-
-	{
-		Dod::DBBuffer<int32_t> buffer;
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 10 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ 5 };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
-
-		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 0);
-		EXPECT_EQ(buffer.dataBegin, buffer.dataEnd);
 	}
 
 }
@@ -253,9 +149,7 @@ TEST(DBBufferUtils, Population)
 
 	Dod::DBBuffer<int32_t> buffer;
 
-	constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-	constexpr Dod::MemTypes::capacity_t endIndex{ 16 };
-	Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+	Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 	{
 		const int32_t value{ 1 };
@@ -620,9 +514,7 @@ TEST(DataUtils, DBBufferBound)
 	using type_t = int32_t;
 	Dod::DBBuffer<int32_t> buffer;
 
-	constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-	constexpr Dod::MemTypes::capacity_t endIndex{ 16 };
-	Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+	Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 	const auto boundSpan{ Dod::DataUtils::getBufferBounds(buffer) };
 	EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataPoint_t>(boundSpan.dataBegin), memSpan.dataBegin + sizeof(type_t));
@@ -639,9 +531,7 @@ TEST(DataUtils, BufferBound)
 	using type_t = int32_t;
 	CommonBuffer<int32_t> buffer;
 
-	constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-	constexpr Dod::MemTypes::capacity_t endIndex{ 16 };
-	Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+	Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 	const auto boundSpan{ Dod::DataUtils::getBufferBounds(buffer) };
 	EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(boundSpan.dataBegin), memSpan.dataBegin);
@@ -658,12 +548,10 @@ TEST(DataUtils, InitializationFromDBBuffer)
 
 	std::array<Dod::MemTypes::data_t, totalBytes> memory;
 
-	constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-	constexpr Dod::MemTypes::capacity_t endIndex{ 32 };
 	MemorySpan memSpan(memory.data(), memory.data() + memory.size());
 	Dod::DBBuffer<int32_t> srcBuffer;
 
-	Dod::DataUtils::initFromMemory(srcBuffer, memSpan, beginIndex, endIndex);
+	Dod::DataUtils::initFromMemory(srcBuffer, memSpan);
 
 	for (const auto value : std::to_array<int32_t>({ 1, 2, 3, 4, 5, 6, 7, 8 }))
 		Dod::DataUtils::populate(srcBuffer, value, true);
@@ -712,11 +600,9 @@ TEST(DataUtils, CreateImFromBuffer)
 
 	std::array<Dod::MemTypes::data_t, totalBytes> memory;
 
-	constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-	constexpr Dod::MemTypes::capacity_t endIndex{ 32 };
 	MemorySpan memSpan(memory.data(), memory.data() + memory.size());
 	Dod::DBBuffer<int32_t> srcBuffer;
-	Dod::DataUtils::initFromMemory(srcBuffer, memSpan, beginIndex, endIndex);
+	Dod::DataUtils::initFromMemory(srcBuffer, memSpan);
 
 	for (const auto value : std::to_array<int32_t>({ 1, 2, 3, 4, 5, 6, 7, 8 }))
 		Dod::DataUtils::populate(srcBuffer, value, true);
@@ -745,9 +631,7 @@ TEST(DBBufferUtils, GetValue)
 
 	Dod::DBBuffer<int32_t> buffer;
 
-	constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-	constexpr Dod::MemTypes::capacity_t endIndex{ totalBytes };
-	Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+	Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 	EXPECT_EQ(Dod::DataUtils::get(buffer, 0), static_cast<type_t>(2));
 	EXPECT_EQ(Dod::DataUtils::get(buffer, 1), static_cast<type_t>(3));
@@ -777,9 +661,7 @@ TEST(DataUtils, GetValue)
 
 	CommonBuffer<int32_t> buffer;
 
-	constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-	constexpr Dod::MemTypes::capacity_t endIndex{ totalBytes };
-	Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+	Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 8);
 	EXPECT_EQ(Dod::DataUtils::get(buffer, 0), static_cast<type_t>(1));
@@ -854,9 +736,7 @@ TEST(DBBufferUtils, GetLen)
 
 	Dod::DBBuffer<int32_t> buffer;
 
-	constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-	constexpr Dod::MemTypes::capacity_t endIndex{ totalBytes };
-	Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+	Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 	EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), 0);
 	Dod::DataUtils::populate(buffer, 10, true);
@@ -893,9 +773,7 @@ TEST(DataUtils, GetLen)
 
 		CommonBuffer<int32_t> buffer;
 
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ totalBytes };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+		Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), totalElements);
 	}
@@ -912,9 +790,7 @@ TEST(DataUtils, GetLen)
 
 		CommonBuffer<int32_t> buffer;
 
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ totalBytes };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+		Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), totalElements);
 	}
@@ -931,9 +807,7 @@ TEST(DataUtils, GetLen)
 
 		CommonBuffer<int32_t> buffer;
 
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ totalBytes };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+		Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), totalElements);
 	}
@@ -950,9 +824,7 @@ TEST(DataUtils, GetLen)
 
 		Dod::MutBuffer<int32_t> buffer;
 
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ totalBytes };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+		Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), totalElements);
 	}
@@ -969,9 +841,7 @@ TEST(DataUtils, GetLen)
 
 		Dod::MutBuffer<int32_t> buffer;
 
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ totalBytes };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+		Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), totalElements);
 	}
@@ -988,9 +858,7 @@ TEST(DataUtils, GetLen)
 
 		Dod::MutBuffer<int32_t> buffer;
 
-		constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-		constexpr Dod::MemTypes::capacity_t endIndex{ totalBytes };
-		Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+		Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(buffer), totalElements);
 	}
@@ -999,14 +867,12 @@ TEST(DataUtils, GetLen)
 TEST(DBBufferUtils, PopulationPartialMemory)
 {
 
-	std::array<Dod::MemTypes::data_t, 16> memory;
+	std::array<Dod::MemTypes::data_t, 13> memory;
 	MemorySpan memSpan(memory.data(), memory.data() + memory.size());
 
 	Dod::DBBuffer<int32_t> buffer;
 
-	constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-	constexpr Dod::MemTypes::capacity_t endIndex{ 13 };
-	Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+	Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 	{
 		const int32_t value{ 1 };
@@ -1044,9 +910,7 @@ TEST(DBBufferUtils, PopulationConditional)
 	MemorySpan memSpan(memory.data(), memory.data() + memory.size());
 
 	Dod::DBBuffer<int32_t> buffer;
-	constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-	constexpr Dod::MemTypes::capacity_t endIndex{ totalMemory };
-	Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+	Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 	for (type_t value{ 1 }; value < totalValues + 1; ++value)
 	{
@@ -1083,17 +947,14 @@ TEST(DBBufferUtils, RemoveElements)
 	constexpr size_t totalElementsToRemove{ totalElements };
 	constexpr size_t totalBytesForEls{ totalElements * sizeof(type_t) };
 	constexpr size_t totalBytesForRemove{ totalElementsToRemove * sizeof(type_t) };
-	constexpr size_t totalBytes{ (totalElements + totalElementsToRemove) * sizeof(type_t) };
 
-	std::array<Dod::MemTypes::data_t, totalBytes> memory;
+	std::array<Dod::MemTypes::data_t, totalBytesForEls> memory;
 	MemorySpan memSpan(memory.data(), memory.data() + totalBytesForEls);
 
 	std::array<type_t, totalElements> values{ {0, 1, 2, 3, 4, 5, 6, 7} };
 
 	Dod::DBBuffer<int32_t> buffer;
-	constexpr Dod::MemTypes::capacity_t beginIndex{ 0 };
-	constexpr Dod::MemTypes::capacity_t endIndex{ totalBytesForEls };
-	Dod::DataUtils::initFromMemory(buffer, memSpan, beginIndex, endIndex);
+	Dod::DataUtils::initFromMemory(buffer, memSpan);
 
 	{
 

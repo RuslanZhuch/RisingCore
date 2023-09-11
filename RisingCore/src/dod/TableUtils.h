@@ -26,13 +26,13 @@ namespace Dod::DataUtils
 	}
 
 	template <typename Types, size_t Index = 0>
-	[[nodiscard]] constexpr auto computeDeadbucketSizeInBytes() noexcept
+	[[nodiscard]] consteval auto computeDeadbucketSizeInBytes() noexcept
 	{
 		if constexpr (Index < std::tuple_size_v<Types>)
 		{
 			using type_t = std::tuple_element_t<Index, Types>;
-			const auto currentSize = sizeof(type_t);
-			const auto remainingSize = computeDeadbucketSizeInBytes<Types, Index + 1>();
+			constexpr auto currentSize = static_cast<MemTypes::capacity_t>(sizeof(type_t));
+			constexpr auto remainingSize = computeDeadbucketSizeInBytes<Types, Index + 1>();
 			return (currentSize > remainingSize) ? currentSize : remainingSize;
 		}
 		else
@@ -47,7 +47,7 @@ namespace Dod::DataUtils
 		return address % alignment;
 	}
 
-	void initTableFromMemoryImpl(CommonData::CTable auto& dbTable, auto&& actualData) noexcept
+	void initTableFromMemoryImpl(CommonData::CTable auto& dbTable, int32_t numOfElements, auto&& actualData) noexcept
 	{
 
 		using tableType_t = typename std::decay_t<decltype(dbTable)>;
@@ -56,29 +56,39 @@ namespace Dod::DataUtils
 		constexpr auto rowSize{ computeTypesSize<types_t>() };
 
 		dbTable.dataBegin = actualData.dataBegin;
-		const auto capacityInBytes{ (actualData.dataEnd - actualData.dataBegin) };
 
 		constexpr auto deadBucketSize{ computeDeadbucketSizeInBytes<types_t>() };
-		const auto capacityInBytesWithDeadBuffer{ (capacityInBytes - deadBucketSize) * (capacityInBytes > deadBucketSize) };
-		dbTable.capacityEls = static_cast<int32_t>(capacityInBytesWithDeadBuffer / rowSize);
+
+		MemTypes::capacity_t needBytes{ deadBucketSize };
+		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
+		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t columnId>() {
+			using type_t = std::tuple_element_t<columnId, types_t>;
+			const auto alignmentOffset{ static_cast<MemTypes::capacity_t>(MemUtils::getAlignOffset(actualData.dataBegin + needBytes, alignof(type_t))) };
+			const auto pureBytesForColumn{ static_cast<MemTypes::capacity_t>(sizeof(type_t) * numOfElements) };
+			needBytes += alignmentOffset + pureBytesForColumn;
+		});
+
+		const auto capacityInBytes{ static_cast<MemTypes::capacity_t>(actualData.dataEnd - actualData.dataBegin) };
+		dbTable.capacityEls = numOfElements * (needBytes <= capacityInBytes);
+
 		if constexpr (requires { dbTable.numOfFilledEls; })
 			dbTable.numOfFilledEls = 0;
 
 	}
 
-	void initFromMemory(CommonData::CTable auto& dbTable, const auto& memSpan, MemTypes::capacity_t beginIndex, MemTypes::capacity_t endIndex) noexcept
+//	void initFromMemory(CommonData::CTable auto& dbTable, const auto& memSpan, MemTypes::capacity_t beginIndex, MemTypes::capacity_t numOfBytes) noexcept
+//	{
+//
+//		const auto actualData{ MemUtils::acquire(memSpan, beginIndex, numOfBytes, 1) };
+//		initTableFromMemoryImpl(dbTable, actualData);
+//
+//	}
+
+	void initFromMemory(CommonData::CTable auto& dbTable, int32_t numOfElements, const auto& memSpan) noexcept
 	{
 
-		const auto actualData{ MemUtils::acquire(memSpan, beginIndex, endIndex, 1) };
-		initTableFromMemoryImpl(dbTable, actualData);
-
-	}
-
-	void initFromMemory(CommonData::CTable auto& dbTable, const auto& memSpan) noexcept
-	{
-
-		const auto actualData{ MemUtils::acquire(memSpan, 0, static_cast<int32_t>(memSpan.dataEnd - memSpan.dataBegin), 1) };
-		initTableFromMemoryImpl(dbTable, actualData);
+//		const auto actualData{ MemUtils::acquire(memSpan, 0, static_cast<int32_t>(memSpan.dataEnd - memSpan.dataBegin), 1) };
+		initTableFromMemoryImpl(dbTable, numOfElements, memSpan);
 
 	}
 
