@@ -118,7 +118,8 @@ namespace Dod::DataUtils
 		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin };
 		(std::invoke([&] {
 			using valueType_t = std::decay_t<decltype(value)>;
-			const auto inColumnMemoryOffset{ memoryOffset + (elementPosition - 1) * sizeof(valueType_t) };
+			const auto alignmentOffset{ MemUtils::getAlignOffset(table.dataBegin + memoryOffset, alignof(valueType_t)) };
+			const auto inColumnMemoryOffset{ memoryOffset + alignmentOffset + (elementPosition - 1) * sizeof(valueType_t) };
 			const auto memoryPosition{ reinterpret_cast<valueType_t*>(table.dataBegin + inColumnMemoryOffset * bCanAddValue) };
 			if constexpr (std::is_trivial_v<valueType_t>)
 			{
@@ -143,11 +144,16 @@ namespace Dod::DataUtils
 
 		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
 		RisingCore::Helpers::constexprLoop<collumnId>([&]<size_t currColId>() {
-			constexpr auto collumnTypeSize{ sizeof(std::tuple_element_t<currColId, types_t>) };
-			rowMemPosition += table.capacityEls * collumnTypeSize;
+			using columnType_t = std::tuple_element_t<currColId, types_t>;
+			constexpr auto columnTypeSize{ sizeof(columnType_t) };
+			const auto alignmentOffset{ MemUtils::getAlignOffset(rowMemPosition, alignof(columnType_t)) };
+			rowMemPosition += alignmentOffset + table.capacityEls * columnTypeSize;
 		});
 
+
 		using returnType_t = std::tuple_element_t<static_cast<size_t>(collumnId), types_t>;
+		rowMemPosition += MemUtils::getAlignOffset(rowMemPosition, alignof(returnType_t));
+
 		constexpr auto returnTypeSize{ sizeof(returnType_t) };
 		struct Span
 		{
@@ -222,6 +228,7 @@ namespace Dod::DataUtils
 			constexpr auto columnTypeSize{ sizeof(columnType_t) };
 			if constexpr (std::is_trivial_v<columnType_t> == false)
 			{
+				memPosition += MemUtils::getAlignOffset(memPosition, alignof(columnType_t));
 				const auto destructBegin{ memPosition };
 				for (int32_t elId{ beginElementId }; elId < endElementId; ++elId)
 				{
@@ -266,21 +273,23 @@ namespace Dod::DataUtils
 		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t currColId>() {
 			using columnType_t = std::tuple_element_t<currColId, types_t>;
 			constexpr auto columnTypeSize{ sizeof(columnType_t) };
-			const auto dstBegin{ dstRowMemPosition + startElementPosition * columnTypeSize };
-			const auto srcBegin{ srcRowMemPosition };
+			const auto dstAlignmentOffset{ MemUtils::getAlignOffset(dstRowMemPosition, alignof(columnType_t)) };
+			const auto dstBegin{ dstRowMemPosition + dstAlignmentOffset + startElementPosition * columnTypeSize };
+			const auto srcAlignmentOffset{ MemUtils::getAlignOffset(srcRowMemPosition, alignof(columnType_t)) };
+			const auto srcBegin{ srcRowMemPosition + srcAlignmentOffset };
 			if constexpr(std::is_trivial_v<columnType_t>)
 				std::memcpy(dstBegin, srcBegin, columnTypeSize * numOfElementsToAppend);
 			else
 			{
 				for (int32_t elId{}; elId < numOfElementsToAppend; ++elId)
 				{
-					const auto constractPoint = reinterpret_cast<columnType_t*>(dstBegin) + elId;
+					const auto constructPoint = reinterpret_cast<columnType_t*>(dstBegin) + elId;
 					auto&& srcValue{ reinterpret_cast<columnType_t*>(srcBegin) + elId };
-					std::construct_at<columnType_t>(constractPoint, std::forward<columnType_t>(*srcValue));
+					std::construct_at<columnType_t>(constructPoint, std::forward<columnType_t>(*srcValue));
 				}
 			}
-			dstRowMemPosition += table.capacityEls * columnTypeSize;
-			srcRowMemPosition += srcTable.capacityEls * columnTypeSize;
+			dstRowMemPosition += dstAlignmentOffset + table.capacityEls * columnTypeSize;
+			srcRowMemPosition += srcAlignmentOffset + srcTable.capacityEls * columnTypeSize;
 		});
 
 	}
@@ -296,7 +305,8 @@ namespace Dod::DataUtils
 		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t currColId>() {
 			using columnType_t = std::tuple_element_t<currColId, types_t>;
 			constexpr auto columnTypeSize{ sizeof(columnType_t) };
-			const auto columnTypedDataBegin{ reinterpret_cast<columnType_t*>(columnDataBegin) };
+			const auto alignmentOffset{ MemUtils::getAlignOffset(columnDataBegin, alignof(columnType_t)) };
+			const auto columnTypedDataBegin{ reinterpret_cast<columnType_t*>(columnDataBegin + alignmentOffset) };
 			auto targetIdx{ totalElements - 1 };
 			for (int32_t idx{ Dod::DataUtils::getNumFilledElements(indicesToRemove) - 1 }; idx >= 0 ; --idx)
 			{
@@ -307,7 +317,7 @@ namespace Dod::DataUtils
 					columnTypedDataBegin[removeId] = columnTypedDataBegin[targetIdx];
 				--targetIdx;
 			}
-			columnDataBegin += table.capacityEls * columnTypeSize;
+			columnDataBegin += alignmentOffset + table.capacityEls * columnTypeSize;
 		});
 		const auto beginElementId{ table.numOfFilledEls - Dod::DataUtils::getNumFilledElements(indicesToRemove) };
 		const auto endElementId{ table.numOfFilledEls };

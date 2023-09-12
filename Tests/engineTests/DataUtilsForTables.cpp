@@ -369,7 +369,7 @@ protected:
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), expectedEls);
 	}
 
-	std::array<Dod::MemTypes::data_t, memorySize> memory{};
+	alignas(RisingCore::Helpers::findLargestAlignmentFlat<Types...>()) std::array<Dod::MemTypes::data_t, memorySize> memory{};
 	Dod::DBTable<Types...> table;
 
 };
@@ -414,7 +414,7 @@ TEST_F(PopulateIntDouble, Populate)
 
 }
 
-using PopulateIntDoubleAlignment = TableTest<44, int, double>;
+using PopulateIntDoubleAlignment = TableTest<48, int, double>;
 TEST_F(PopulateIntDoubleAlignment, Populate)
 {
 
@@ -422,13 +422,17 @@ TEST_F(PopulateIntDoubleAlignment, Populate)
 
 	this->populate(1, 1, 2.);
 	this->checkInternal<int>({ 1 }, 0);
-	this->checkInternal<double>({ 2. }, 8);
+	this->checkInternal<double>({ 2. }, 16);
 
 	this->populate(2, 3, 4.);
 	this->checkInternal<int>({ 1, 3 }, 0);
-	this->checkInternal<double>({ 2., 4. }, 8);
+	this->checkInternal<double>({ 2., 4. }, 16);
 
-	this->populate(2, 5, 6.);
+	this->populate(3, 5, 6.);
+	this->checkInternal<int>({ 1, 3, 5 }, 0);
+	this->checkInternal<double>({ 2., 4., 6. }, 16);
+
+	this->populate(3, 7, 8.);
 
 }
 
@@ -551,11 +555,11 @@ TEST_F(GetIntFloat, GetElements)
 
 }
 
-using GetIntDouble = TableTest<32, int, double>;
+using GetIntDouble = TableTest<48, int, double>;
 TEST_F(GetIntDouble, GetElements)
 {
 
-	this->init(2);
+	this->init(3);
 
 	this->populate(1, 1, 2.);
 	this->check<0, int>({ 1 });
@@ -565,7 +569,11 @@ TEST_F(GetIntDouble, GetElements)
 	this->check<0, int>({ 1, 3 });
 	this->check<1, double>({ 2., 4. });
 
-	this->populate(2, 5, 6.f);
+	this->populate(3, 5, 6.);
+	this->check<0, int>({ 1, 3, 5 });
+	this->check<1, double>({ 2., 4., 6. });
+
+	this->populate(3, 7, 8.f);
 
 }
 
@@ -612,6 +620,7 @@ public:
 	{
 		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
 		Dod::DataUtils::initFromMemory(this->table, expectCapacityEls, memSpan);
+		EXPECT_EQ(Dod::DataUtils::getCapacity(this->table), expectCapacityEls);
 	}
 
 	void populate(int32_t expectedNumOfFilledEls, auto&& ... values)
@@ -619,7 +628,7 @@ public:
 		Dod::DataUtils::populate(this->table, true, std::forward<decltype(values)>(values)...);
 	}
 
-	std::array<Dod::MemTypes::data_t, memorySize> memory{};
+	alignas(RisingCore::Helpers::findLargestAlignmentFlat<Types...>()) std::array<Dod::MemTypes::data_t, memorySize> memory{};
 	Dod::DBTable<Types...> table;
 
 };
@@ -713,7 +722,7 @@ using AppendIntNonTrivial = TableTest<216, int, NonTrivialType>;
 TEST_F(AppendIntNonTrivial, Append2Elements)
 {
 
-	TableToAppend<140, int, NonTrivialType> srcTable(3);
+	TableToAppend<184, int, NonTrivialType> srcTable(3);
 
 	this->init(4);
 	NonTrivialType::counter = 0;
@@ -757,7 +766,7 @@ TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 		return NonTrivialMoveOnlyType({ 30, 400 });
 	};
 
-	TableToAppend<140, int, NonTrivialMoveOnlyType> srcTable1(3);
+	TableToAppend<184, int, NonTrivialMoveOnlyType> srcTable1(3);
 	srcTable1.populate(1, 1, genNonTrivial1());
 	srcTable1.populate(2, 3, genNonTrivial2());
 
@@ -767,7 +776,7 @@ TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 2);
 	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({1, 3}, genCheckVector(genNonTrivial1(), genNonTrivial2())));
 
-	TableToAppend<140, int, NonTrivialMoveOnlyType> srcTable2(3);
+	TableToAppend<184, int, NonTrivialMoveOnlyType> srcTable2(3);
 	srcTable2.populate(1, 1, genNonTrivial1());
 	srcTable2.populate(2, 3, genNonTrivial2());
 
@@ -776,7 +785,7 @@ TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 4);
 	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({1, 3, 1, 3}, genCheckVector(genNonTrivial1(), genNonTrivial2(), genNonTrivial1(), genNonTrivial2())));
 
-	TableToAppend<140, int, NonTrivialMoveOnlyType> srcTable3(3);
+	TableToAppend<184, int, NonTrivialMoveOnlyType> srcTable3(3);
 	srcTable3.populate(1, 1, genNonTrivial1());
 	srcTable3.populate(2, 3, genNonTrivial2());
 
@@ -811,7 +820,7 @@ TEST_F(FlushIntFloat, FlushAllElements)
 
 }
 
-using FlushIntNonTrivial = TableTest<172, int, NonTrivialType>;
+using FlushIntNonTrivial = TableTest<184, int, NonTrivialType>;
 TEST_F(FlushIntNonTrivial, FlushAllElements)
 {
 
@@ -849,7 +858,7 @@ TEST_F(FlushIntNonTrivial, FlushAllElements)
 
 }
 
-using FlushIntNonTrivialMoveOnly = TableTest<172, int, NonTrivialMoveOnlyType>;
+using FlushIntNonTrivialMoveOnly = TableTest<184, int, NonTrivialMoveOnlyType>;
 TEST_F(FlushIntNonTrivialMoveOnly, FlushAllElements)
 {
 
@@ -927,7 +936,7 @@ TEST_F(RemoveElementsIntFloat, RemoveElements)
 
 }
 
-using RemoveElementsIntNonTrivial = TableTest<292, int, NonTrivialType, NonTrivialNonMovableType>;
+using RemoveElementsIntNonTrivial = TableTest<296, int, NonTrivialType, NonTrivialNonMovableType>;
 TEST_F(RemoveElementsIntNonTrivial, RemoveElements)
 {
 
@@ -1050,7 +1059,7 @@ TEST_F(RemoveElementsIntNonTrivial, RemoveElements)
 
 }
 
-using RemoveElementsIntNonTrivialMoveOnly = TableTest<172, int, NonTrivialMoveOnlyType>;
+using RemoveElementsIntNonTrivialMoveOnly = TableTest<184, int, NonTrivialMoveOnlyType>;
 TEST_F(RemoveElementsIntNonTrivialMoveOnly, RemoveElements)
 {
 
