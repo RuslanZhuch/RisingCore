@@ -223,7 +223,7 @@ static void checkMemoryAlignment(auto&& memory)
 	ASSERT_EQ(address % maxAlignment, 0);
 }
 
-template <size_t memorySize, typename ... Types>
+template <size_t memorySize, Dod::MemTypes::alignment_t memoryAlignmentOffset, typename ... Types>
 class InitDBTableFromMemoryTest : public ::testing::Test {
 
 protected:
@@ -255,7 +255,7 @@ protected:
 
 		checkMemoryAlignment<Types...>(this->memory);
 
-		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
+		MemorySpan memSpan(this->memory.data() + memoryAlignmentOffset, this->memory.data() + memoryAlignmentOffset + this->memory.size());
 
 		Dod::DataUtils::initFromMemory(this->table, expectCapacityEls, memSpan);
 
@@ -266,21 +266,20 @@ protected:
 
 	}
 
-	alignas(RisingCore::Helpers::findLargestAlignmentFlat<Types...>()) std::array<Dod::MemTypes::data_t, memorySize> memory{};
+	alignas(RisingCore::Helpers::findLargestAlignmentFlat<Types...>()) std::array<Dod::MemTypes::data_t, memorySize + memoryAlignmentOffset> memory{};
 	Dod::DBTable<Types...> table;
 
 };
 
-using InitDBTableFromMemory32BytesInt = InitDBTableFromMemoryTest<32, int>;
+using InitDBTableFromMemory32BytesInt = InitDBTableFromMemoryTest<36, 0, int>;
 TEST_F(InitDBTableFromMemory32BytesInt, InitFromMemory)
 {
-
 	this->run(0);
 	this->run(1);
 	this->run(7);
 }
 
-using InitDBTableFromMemory32BytesIntFloat = InitDBTableFromMemoryTest<32, int, float>;
+using InitDBTableFromMemory32BytesIntFloat = InitDBTableFromMemoryTest<36, 0, int, float>;
 TEST_F(InitDBTableFromMemory32BytesIntFloat, InitFromMemory)
 {
 
@@ -288,15 +287,19 @@ TEST_F(InitDBTableFromMemory32BytesIntFloat, InitFromMemory)
 
 }
 
-using InitDBTableFromMemory32BytesIntDouble = InitDBTableFromMemoryTest<32, int, double>;
+using InitDBTableFromMemory32BytesIntDouble = InitDBTableFromMemoryTest<40, 0, int, double>;
 TEST_F(InitDBTableFromMemory32BytesIntDouble, InitFromMemory)
 {
-
 	this->run(2);
-
 }
 
-template <size_t memorySize, typename ... Types>
+using InitDBTableFromMemory3IntDouble = InitDBTableFromMemoryTest<56, 0, int, double>;
+TEST_F(InitDBTableFromMemory3IntDouble, InitFromMemory)
+{
+	this->run(3);
+}
+
+template <size_t memorySize, Dod::MemTypes::alignment_t memoryAlignmentOffset, typename ... Types>
 class TableTest : public ::testing::Test {
 	using types_t = std::tuple<Types...>;
 	static constexpr auto deadBucketSize{ Dod::DataUtils::computeDeadbucketSizeInBytes<types_t>() };
@@ -304,7 +307,7 @@ protected:
 	void init(int32_t expectCapacityEls)
 	{
 
-		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
+		MemorySpan memSpan(this->memory.data() + memoryAlignmentOffset, this->memory.data() + memoryAlignmentOffset + this->memory.size());
 
 		Dod::DataUtils::initFromMemory(this->table, expectCapacityEls, memSpan);
 		ASSERT_EQ(Dod::DataUtils::getCapacity(this->table), expectCapacityEls);
@@ -331,6 +334,19 @@ protected:
 			constexpr auto expectedAlignment{ alignof(T) };
 			EXPECT_EQ(address % expectedAlignment, 0);
 		}
+	}
+
+	template <typename T>
+	void checkDeadBucket(T expectedValue, int32_t offset)
+	{
+		const auto populatedPtr{ reinterpret_cast<T*>(table.dataBegin + static_cast<size_t>(offset)) };
+
+		const auto point{ populatedPtr };
+		EXPECT_EQ(*point, expectedValue);
+
+		const auto address{ reinterpret_cast<std::uintptr_t>(point) };
+		constexpr auto expectedAlignment{ alignof(T) };
+		EXPECT_EQ(address % expectedAlignment, 0);
 	}
 
 	template <int32_t columnId, typename T>
@@ -369,12 +385,12 @@ protected:
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), expectedEls);
 	}
 
-	alignas(RisingCore::Helpers::findLargestAlignmentFlat<Types...>()) std::array<Dod::MemTypes::data_t, memorySize> memory{};
+	alignas(RisingCore::Helpers::findLargestAlignmentFlat<Types...>()) std::array<Dod::MemTypes::data_t, memorySize + memoryAlignmentOffset> memory{};
 	Dod::DBTable<Types...> table;
 
 };
 
-using PopulateIntFloat = TableTest<32, int, float>;
+using PopulateIntFloat = TableTest<36, 0, int, float>;
 TEST_F(PopulateIntFloat, Populate)
 {
 
@@ -393,10 +409,11 @@ TEST_F(PopulateIntFloat, Populate)
 	this->checkInternal<float>({ 2.f, 4.f, 6 }, 12);
 
 	this->populate(3, 7, 8.f);
+	this->checkDeadBucket(8.f, 0);
 
 }
 
-using PopulateIntDouble = TableTest<32, int, double>;
+using PopulateIntDouble = TableTest<40, 0, int, double>;
 TEST_F(PopulateIntDouble, Populate)
 {
 
@@ -411,10 +428,11 @@ TEST_F(PopulateIntDouble, Populate)
 	this->checkInternal<double>({ 2., 4. }, 8);
 
 	this->populate(2, 5, 6.);
+	this->checkDeadBucket(6., 0);
 
 }
 
-using PopulateIntDoubleAlignment = TableTest<48, int, double>;
+using PopulateIntDoubleAlignment = TableTest<56, 0, int, double>;
 TEST_F(PopulateIntDoubleAlignment, Populate)
 {
 
@@ -433,10 +451,11 @@ TEST_F(PopulateIntDoubleAlignment, Populate)
 	this->checkInternal<double>({ 2., 4., 6. }, 16);
 
 	this->populate(3, 7, 8.);
+	this->checkDeadBucket(8., 0);
 
 }
 
-using PopulateDoubleInt = TableTest<32, double, int>;
+using PopulateDoubleInt = TableTest<40, 0, double, int>;
 TEST_F(PopulateDoubleInt, Populate)
 {
 
@@ -451,10 +470,11 @@ TEST_F(PopulateDoubleInt, Populate)
 	this->checkInternal<int>({ 2, 4 }, 16);
 
 	this->populate(2, 5., 6);
+	this->checkDeadBucket(6, 0);
 
 }
 
-using PopulateIntNonTrivial = TableTest<128, int, NonTrivialType>;
+using PopulateIntNonTrivial = TableTest<136, 0, int, NonTrivialType>;
 TEST_F(PopulateIntNonTrivial, Populate)
 {
 
@@ -481,6 +501,44 @@ TEST_F(PopulateIntNonTrivial, Populate)
 
 }
 
+using PopulateIntDoubleNotAligned = TableTest<44, 4, int, double>;
+TEST_F(PopulateIntDoubleNotAligned, Populate)
+{
+
+	this->init(2);
+
+	this->populate(1, 1, 2.);
+	this->checkInternal<int>({ 1 }, 0);
+	this->checkInternal<double>({ 2. }, 12);
+
+	this->populate(2, 3, 4.);
+	this->checkInternal<int>({ 1, 3 }, 0);
+	this->checkInternal<double>({ 2., 4. }, 12);
+
+	this->populate(2, 5, 6.);
+	this->checkDeadBucket(6., 4);
+
+}
+
+using PopulateDoubleIntNotAligned = TableTest<44, 4, double, int>;
+TEST_F(PopulateDoubleIntNotAligned, Populate)
+{
+
+	this->init(2);
+
+	this->populate(1, 1., 2);
+	this->checkInternal<double>({ 1. }, 4);
+	this->checkInternal<int>({ 2 }, 20);
+
+	this->populate(2, 3., 4);
+	this->checkInternal<double>({ 1., 3. }, 4);
+	this->checkInternal<int>({ 2, 4 }, 20);
+
+	this->populate(2, 5., 6);
+	this->checkDeadBucket(6, 0);
+
+}
+
 template <typename... Ts>
 struct AllSameType : std::conjunction<std::is_same<Ts, typename std::tuple_element<0, std::tuple<Ts...>>::type>...> {};
 
@@ -499,7 +557,7 @@ template <typename ... T>
 	return std::make_tuple(std::forward<std::vector<T>>(values)...);
 };
 
-using PopulateIntNonTrivialMoveOnly = TableTest<128, int, NonTrivialMoveOnlyType>;
+using PopulateIntNonTrivialMoveOnly = TableTest<136, 0, int, NonTrivialMoveOnlyType>;
 TEST_F(PopulateIntNonTrivialMoveOnly, Populate)
 {
 
@@ -533,7 +591,7 @@ TEST_F(PopulateIntNonTrivialMoveOnly, Populate)
 
 }
 
-using GetIntFloat = TableTest<32, int, float>;
+using GetIntFloat = TableTest<36, 0, int, float>;
 TEST_F(GetIntFloat, GetElements)
 {
 
@@ -555,7 +613,7 @@ TEST_F(GetIntFloat, GetElements)
 
 }
 
-using GetIntDouble = TableTest<48, int, double>;
+using GetIntDouble = TableTest<56, 0, int, double>;
 TEST_F(GetIntDouble, GetElements)
 {
 
@@ -577,7 +635,7 @@ TEST_F(GetIntDouble, GetElements)
 
 }
 
-using GetAllIntFloat = TableTest<32, int, float>;
+using GetAllIntFloat = TableTest<36, 0, int, float>;
 TEST_F(GetAllIntFloat, GetAllElements)
 {
 
@@ -596,7 +654,7 @@ TEST_F(GetAllIntFloat, GetAllElements)
 
 }
 
-using GetAllIntDouble = TableTest<32, int, double>;
+using GetAllIntDouble = TableTest<40, 0, int, double>;
 TEST_F(GetAllIntDouble, GetAllElements)
 {
 
@@ -612,13 +670,13 @@ TEST_F(GetAllIntDouble, GetAllElements)
 
 }
 
-template <size_t memorySize, typename ... Types>
+template <size_t memorySize, Dod::MemTypes::alignment_t memoryAlignmentOffset, typename ... Types>
 class TableToAppend
 {
 public:
 	TableToAppend(int32_t expectCapacityEls)
 	{
-		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
+		MemorySpan memSpan(this->memory.data() + memoryAlignmentOffset, this->memory.data() + memoryAlignmentOffset + this->memory.size());
 		Dod::DataUtils::initFromMemory(this->table, expectCapacityEls, memSpan);
 		EXPECT_EQ(Dod::DataUtils::getCapacity(this->table), expectCapacityEls);
 	}
@@ -628,16 +686,16 @@ public:
 		Dod::DataUtils::populate(this->table, true, std::forward<decltype(values)>(values)...);
 	}
 
-	alignas(RisingCore::Helpers::findLargestAlignmentFlat<Types...>()) std::array<Dod::MemTypes::data_t, memorySize> memory{};
+	alignas(RisingCore::Helpers::findLargestAlignmentFlat<Types...>()) std::array<Dod::MemTypes::data_t, memorySize + memoryAlignmentOffset> memory{};
 	Dod::DBTable<Types...> table;
 
 };
 
-using AppendIntFloat = TableTest<64, int, float>;
+using AppendIntFloat = TableTest<68, 0, int, float>;
 TEST_F(AppendIntFloat, Append2Elements)
 {
 
-	TableToAppend<32, int, float> srcTable(3);
+	TableToAppend<32, 0, int, float> srcTable(3);
 
 	this->init(7);
 	srcTable.populate(1, 1, 2.f);
@@ -656,7 +714,7 @@ TEST_F(AppendIntFloat, Append2Elements)
 TEST_F(AppendIntFloat, Append3Elements)
 {
 
-	TableToAppend<32, int, float> srcTable(3);
+	TableToAppend<36, 0, int, float> srcTable(3);
 
 	this->init(7);
 	srcTable.populate(1, 1, 2.f);
@@ -680,7 +738,7 @@ TEST_F(AppendIntFloat, Append3Elements)
 TEST_F(AppendIntFloat, Append0Elements)
 {
 
-	TableToAppend<32, int, float> srcTable(3);
+	TableToAppend<36, 0, int, float> srcTable(3);
 
 	this->init(7);
 
@@ -694,11 +752,11 @@ TEST_F(AppendIntFloat, Append0Elements)
 
 }
 
-using AppendIntDouble = TableTest<64, int, double>;
+using AppendIntDouble = TableTest<72, 0, int, double>;
 TEST_F(AppendIntDouble, Append3Elements)
 {
 
-	TableToAppend<32, int, double> srcTable(2);
+	TableToAppend<40, 0, int, double> srcTable(2);
 
 	this->init(4);
 	srcTable.populate(1, 1, 2.);
@@ -718,11 +776,11 @@ TEST_F(AppendIntDouble, Append3Elements)
 
 }
 
-using AppendIntNonTrivial = TableTest<216, int, NonTrivialType>;
+using AppendIntNonTrivial = TableTest<224, 0, int, NonTrivialType>;
 TEST_F(AppendIntNonTrivial, Append2Elements)
 {
 
-	TableToAppend<184, int, NonTrivialType> srcTable(3);
+	TableToAppend<192, 0, int, NonTrivialType> srcTable(3);
 
 	this->init(4);
 	NonTrivialType::counter = 0;
@@ -751,7 +809,7 @@ TEST_F(AppendIntNonTrivial, Append2Elements)
 
 }
 
-using AppendIntNonTrivialMoveOnly = TableTest<216, int, NonTrivialMoveOnlyType>;
+using AppendIntNonTrivialMoveOnly = TableTest<224, 0, int, NonTrivialMoveOnlyType>;
 TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 {
 
@@ -766,7 +824,7 @@ TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 		return NonTrivialMoveOnlyType({ 30, 400 });
 	};
 
-	TableToAppend<184, int, NonTrivialMoveOnlyType> srcTable1(3);
+	TableToAppend<192, 0, int, NonTrivialMoveOnlyType> srcTable1(3);
 	srcTable1.populate(1, 1, genNonTrivial1());
 	srcTable1.populate(2, 3, genNonTrivial2());
 
@@ -776,7 +834,7 @@ TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 2);
 	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({1, 3}, genCheckVector(genNonTrivial1(), genNonTrivial2())));
 
-	TableToAppend<184, int, NonTrivialMoveOnlyType> srcTable2(3);
+	TableToAppend<192, 0, int, NonTrivialMoveOnlyType> srcTable2(3);
 	srcTable2.populate(1, 1, genNonTrivial1());
 	srcTable2.populate(2, 3, genNonTrivial2());
 
@@ -785,7 +843,7 @@ TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 4);
 	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({1, 3, 1, 3}, genCheckVector(genNonTrivial1(), genNonTrivial2(), genNonTrivial1(), genNonTrivial2())));
 
-	TableToAppend<184, int, NonTrivialMoveOnlyType> srcTable3(3);
+	TableToAppend<192, 0, int, NonTrivialMoveOnlyType> srcTable3(3);
 	srcTable3.populate(1, 1, genNonTrivial1());
 	srcTable3.populate(2, 3, genNonTrivial2());
 
@@ -796,7 +854,7 @@ TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 
 }
 
-using FlushIntFloat = TableTest<32, int, float>;
+using FlushIntFloat = TableTest<36, 0, int, float>;
 TEST_F(FlushIntFloat, FlushAllElements)
 {
 
@@ -820,7 +878,7 @@ TEST_F(FlushIntFloat, FlushAllElements)
 
 }
 
-using FlushIntNonTrivial = TableTest<184, int, NonTrivialType>;
+using FlushIntNonTrivial = TableTest<192, 0, int, NonTrivialType>;
 TEST_F(FlushIntNonTrivial, FlushAllElements)
 {
 
@@ -858,7 +916,7 @@ TEST_F(FlushIntNonTrivial, FlushAllElements)
 
 }
 
-using FlushIntNonTrivialMoveOnly = TableTest<184, int, NonTrivialMoveOnlyType>;
+using FlushIntNonTrivialMoveOnly = TableTest<192, 0, int, NonTrivialMoveOnlyType>;
 TEST_F(FlushIntNonTrivialMoveOnly, FlushAllElements)
 {
 
@@ -897,7 +955,7 @@ TEST_F(FlushIntNonTrivialMoveOnly, FlushAllElements)
 
 }
 
-using RemoveElementsIntFloat = TableTest<32, int, float>;
+using RemoveElementsIntFloat = TableTest<36, 0, int, float>;
 TEST_F(RemoveElementsIntFloat, RemoveElements)
 {
 
@@ -936,7 +994,7 @@ TEST_F(RemoveElementsIntFloat, RemoveElements)
 
 }
 
-using RemoveElementsIntNonTrivial = TableTest<296, int, NonTrivialType, NonTrivialNonMovableType>;
+using RemoveElementsIntNonTrivial = TableTest<304, 0, int, NonTrivialType, NonTrivialNonMovableType>;
 TEST_F(RemoveElementsIntNonTrivial, RemoveElements)
 {
 
@@ -1059,7 +1117,7 @@ TEST_F(RemoveElementsIntNonTrivial, RemoveElements)
 
 }
 
-using RemoveElementsIntNonTrivialMoveOnly = TableTest<184, int, NonTrivialMoveOnlyType>;
+using RemoveElementsIntNonTrivialMoveOnly = TableTest<192, 0, int, NonTrivialMoveOnlyType>;
 TEST_F(RemoveElementsIntNonTrivialMoveOnly, RemoveElements)
 {
 

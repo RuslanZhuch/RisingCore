@@ -11,6 +11,23 @@ namespace RisingCore::Helpers
 		}
 	}
 
+	template <typename TypesList, size_t largestSize = 0, size_t Index = 0>
+	[[nodiscard]] consteval auto findLargestTypeSize() noexcept
+	{
+		constexpr auto numOfTypes{ std::tuple_size_v<TypesList> };
+		if constexpr (Index < numOfTypes)
+		{
+			using currentType_t = std::tuple_element_t<Index, TypesList>;
+			constexpr auto currentTypeSize{ sizeof(currentType_t) };
+			constexpr auto newLargestTypeSize{ std::max(largestSize, currentTypeSize) };
+			return findLargestTypeSize<TypesList, newLargestTypeSize, Index + 1>();
+		}
+		else
+		{
+			return largestSize;
+		}
+	}
+
 	template <typename TypesList, size_t largetsAlignment = 0, size_t Index = 0>
 	[[nodiscard]] consteval auto findLargestAlignment()
 	{

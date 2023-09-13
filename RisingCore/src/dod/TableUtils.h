@@ -25,18 +25,11 @@ namespace Dod::DataUtils
 			return 0;
 	}
 
-	template <typename Types, size_t Index = 0>
+
+	template <typename Types>
 	[[nodiscard]] consteval auto computeDeadbucketSizeInBytes() noexcept
 	{
-		if constexpr (Index < std::tuple_size_v<Types>)
-		{
-			using type_t = std::tuple_element_t<Index, Types>;
-			constexpr auto currentSize = static_cast<MemTypes::capacity_t>(sizeof(type_t));
-			constexpr auto remainingSize = computeDeadbucketSizeInBytes<Types, Index + 1>();
-			return (currentSize > remainingSize) ? currentSize : remainingSize;
-		}
-		else
-			return 0;
+		return RisingCore::Helpers::findLargestTypeSize<Types>() + RisingCore::Helpers::findLargestAlignment<Types>();
 	}
 
 	template <typename Type>
@@ -118,9 +111,9 @@ namespace Dod::DataUtils
 		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin };
 		(std::invoke([&] {
 			using valueType_t = std::decay_t<decltype(value)>;
-			const auto alignmentOffset{ MemUtils::getAlignOffset(table.dataBegin + memoryOffset, alignof(valueType_t)) };
-			const auto inColumnMemoryOffset{ memoryOffset + alignmentOffset + (elementPosition - 1) * sizeof(valueType_t) };
-			const auto memoryPosition{ reinterpret_cast<valueType_t*>(table.dataBegin + inColumnMemoryOffset * bCanAddValue) };
+			const auto alignmentOffset{ MemUtils::getAlignOffset(table.dataBegin + memoryOffset * bCanAddValue, alignof(valueType_t)) };
+			const auto inColumnMemoryOffset{ memoryOffset + (elementPosition - 1) * sizeof(valueType_t) };
+			const auto memoryPosition{ reinterpret_cast<valueType_t*>(table.dataBegin + alignmentOffset + inColumnMemoryOffset * bCanAddValue) };
 			if constexpr (std::is_trivial_v<valueType_t>)
 			{
 				*memoryPosition = std::forward<decltype(value)>(value);
@@ -130,7 +123,7 @@ namespace Dod::DataUtils
 				if (bCanAddValue)
 					std::construct_at<valueType_t>(memoryPosition, std::forward<decltype(value)>(value));
 			}
-			memoryOffset += (table.capacityEls) * sizeof(valueType_t);
+			memoryOffset += alignmentOffset + (table.capacityEls) * sizeof(valueType_t);
 		}), ...);
 
 	}
