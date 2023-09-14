@@ -4,7 +4,7 @@
 #include "MemUtils.h"
 
 #include "Buffers.h"
-#include "DataUtils.h"
+#include "CommonData.h"
 
 #include <type_traits>
 #include <concepts>
@@ -146,7 +146,7 @@ namespace Dod::DataUtils
 		requires requires() { requires std::is_trivially_constructible_v<T>; }
 	{
 
-		const auto capacity{ buffer.dataEnd - buffer.dataBegin };
+		const auto capacity{ static_cast<int32_t>(buffer.dataEnd - buffer.dataBegin) };
 		const auto bCanAddValue{ (Dod::DataUtils::getNumFilledElements(buffer) + 1 < capacity) && strobe };
 
 		buffer.numOfFilledEls += size_t(1) * bCanAddValue;

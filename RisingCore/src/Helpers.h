@@ -52,4 +52,7 @@ namespace RisingCore::Helpers
 		return findLargestAlignment<types_t>();
 	}
 
+	template <typename ... Types>
+	using gatherTypes = std::tuple<Types...>;
+
 }

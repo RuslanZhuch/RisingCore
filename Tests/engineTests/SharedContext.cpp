@@ -17,7 +17,7 @@ struct Context1
 	{
 
 		this->memory.allocate(1024);
-		int32_t header{};
+		Dod::MemTypes::capacity_t header{};
 
 		this->data1 = 42.f;
 		this->data2 = 123.f;

@@ -5,6 +5,7 @@
 
 #include "Buffers.h"
 #include "BufferUtils.h"
+#include "CommonData.h"
 
 #include "Helpers.h"
 
@@ -40,26 +41,35 @@ namespace Dod::DataUtils
 		return address % alignment;
 	}
 
-	void initTableFromMemoryImpl(CommonData::CTable auto& dbTable, int32_t numOfElements, auto&& actualData) noexcept
+	template <typename Types>
+	[[nodiscard]] auto computeCapacityInBytes(const auto* memoryPoint, int32_t numOfElements) noexcept
 	{
 
-		using tableType_t = typename std::decay_t<decltype(dbTable)>;
-		using types_t = tableType_t::types_t;
-
-		constexpr auto rowSize{ computeTypesSize<types_t>() };
-
-		dbTable.dataBegin = actualData.dataBegin;
-
+		using types_t = Types;
 		constexpr auto deadBucketSize{ computeDeadbucketSizeInBytes<types_t>() };
 
 		MemTypes::capacity_t needBytes{ deadBucketSize };
 		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
 		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t columnId>() {
 			using type_t = std::tuple_element_t<columnId, types_t>;
-			const auto alignmentOffset{ static_cast<MemTypes::capacity_t>(MemUtils::getAlignOffset(actualData.dataBegin + needBytes, alignof(type_t))) };
+			const auto alignmentOffset{ static_cast<MemTypes::capacity_t>(MemUtils::getAlignOffset(memoryPoint + needBytes, alignof(type_t))) };
 			const auto pureBytesForColumn{ static_cast<MemTypes::capacity_t>(sizeof(type_t) * numOfElements) };
 			needBytes += alignmentOffset + pureBytesForColumn;
 		});
+
+		return needBytes;
+
+	}
+
+	void initTableFromMemoryImpl(CommonData::CTable auto& dbTable, int32_t numOfElements, auto&& actualData) noexcept
+	{
+
+		using tableType_t = typename std::decay_t<decltype(dbTable)>;
+		using types_t = tableType_t::types_t;
+
+		dbTable.dataBegin = actualData.dataBegin;
+
+		const auto needBytes{ computeCapacityInBytes<types_t>(dbTable.dataBegin, numOfElements) };
 
 		const auto capacityInBytes{ static_cast<MemTypes::capacity_t>(actualData.dataEnd - actualData.dataBegin) };
 		dbTable.capacityEls = numOfElements * (needBytes <= capacityInBytes);
@@ -69,18 +79,9 @@ namespace Dod::DataUtils
 
 	}
 
-//	void initFromMemory(CommonData::CTable auto& dbTable, const auto& memSpan, MemTypes::capacity_t beginIndex, MemTypes::capacity_t numOfBytes) noexcept
-//	{
-//
-//		const auto actualData{ MemUtils::acquire(memSpan, beginIndex, numOfBytes, 1) };
-//		initTableFromMemoryImpl(dbTable, actualData);
-//
-//	}
-
 	void initFromMemory(CommonData::CTable auto& dbTable, int32_t numOfElements, const auto& memSpan) noexcept
 	{
 
-//		const auto actualData{ MemUtils::acquire(memSpan, 0, static_cast<int32_t>(memSpan.dataEnd - memSpan.dataBegin), 1) };
 		initTableFromMemoryImpl(dbTable, numOfElements, memSpan);
 
 	}
@@ -306,7 +307,7 @@ namespace Dod::DataUtils
 				const auto removeId{ indicesToRemove.dataBegin[idx] };
 				if constexpr (std::is_move_assignable_v<columnType_t>)
 					columnTypedDataBegin[removeId] = std::move(columnTypedDataBegin[targetIdx]);
-				else 
+				else
 					columnTypedDataBegin[removeId] = columnTypedDataBegin[targetIdx];
 				--targetIdx;
 			}

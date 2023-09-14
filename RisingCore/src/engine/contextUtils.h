@@ -104,11 +104,11 @@ namespace Engine::ContextUtils
     }
 
     template <typename T>
-    [[nodiscard]] static void initBuffer(
+    [[nodiscard]] static void initData(
         Dod::DBBuffer<T>& dest,
-        int32_t capacityBytes,
+        Dod::MemTypes::capacity_t capacityBytes,
         Dod::MemPool& pool, 
-        int32_t& header
+        Dod::MemTypes::capacity_t& header
     ) noexcept
     {
 
@@ -117,7 +117,7 @@ namespace Engine::ContextUtils
     }
 
     template <typename T>
-    [[nodiscard]] static void loadBufferContent(
+    [[nodiscard]] static void loadDataContent(
         Dod::DBBuffer<T>& dest,
         rapidjson::GenericArray<true, rapidjson::Value> src, 
         int32_t id

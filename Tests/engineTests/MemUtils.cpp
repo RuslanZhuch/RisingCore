@@ -125,7 +125,7 @@ protected:
 	void runFailed(DataHolder holder, Dod::MemTypes::capacity_t bytesToAcquire, Dod::MemTypes::alignment_t alignment)
 	{
 
-		int32_t header{ 0 };
+		Dod::MemTypes::capacity_t header{ 0 };
 
 		const auto [acquiredBegin, acquiredEnd] { Dod::MemUtils::stackAquire(holder, bytesToAcquire, alignment, header) };
 		EXPECT_EQ(acquiredBegin, nullptr);
@@ -165,7 +165,7 @@ protected:
 	}
 
 	Dod::MemTypes::capacity_t totalAcquired{};
-	int32_t header{ 0 };
+	Dod::MemTypes::capacity_t header{ 0 };
 	alignas(8) std::array<Dod::MemTypes::data_t, 32> data{};
 
 };

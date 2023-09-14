@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MemTypes.h"
+#include <algorithm>
 
 namespace Dod::MemUtils
 {
@@ -46,7 +47,7 @@ namespace Dod::MemUtils
 
 	}
 
-	[[nodiscard]] static auto stackAquire(const auto& source, int32_t numOfBytes, MemTypes::alignment_t alignment, int32_t& header) noexcept
+	[[nodiscard]] static auto stackAquire(const auto& source, MemTypes::capacity_t numOfBytes, MemTypes::alignment_t alignment, MemTypes::capacity_t& header) noexcept
 	{
 
 		struct Output
@@ -57,10 +58,10 @@ namespace Dod::MemUtils
 		Output output;
 
 		const auto initialSourceBegin{ source.dataBegin + header };
-		const auto alignOffset{ MemUtils::getAlignOffset(initialSourceBegin, alignment) };
+		const auto alignOffset{ static_cast<Dod::MemTypes::capacity_t>(MemUtils::getAlignOffset(initialSourceBegin, alignment)) };
 		const auto alignedSourceBegin{ initialSourceBegin + alignOffset };
 
-		const auto capacity{ source.dataEnd - source.dataBegin };
+		const auto capacity{ static_cast<Dod::MemTypes::capacity_t>(source.dataEnd - source.dataBegin) };
 		if ((source.dataBegin == nullptr) || (source.dataEnd == nullptr) || (header >= capacity) || (numOfBytes + alignOffset > capacity - header))
 			return output;
 

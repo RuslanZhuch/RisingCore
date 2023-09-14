@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MemTypes.h"
-#include "CommonData.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4365)
@@ -12,17 +11,17 @@ namespace Dod
 {
 
 	template <typename T>
-	struct DBBuffer : CommonData::Buffer
+	struct DBBuffer
 	{
 		using type_t = typename T;
 		T* dataBegin{ nullptr };
 		T* dataEnd{ nullptr };
-		int32_t pad[3];
+		int32_t pad[3]{};
 		int32_t numOfFilledEls{ 0 };
 	};
 
 	template <typename T>
-	struct ImBuffer : CommonData::Buffer
+	struct ImBuffer
 	{
 		using type_t = typename T;
 		const T* dataBegin{ nullptr };
@@ -30,7 +29,7 @@ namespace Dod
 	};
 
 	template <typename T>
-	struct MutBuffer : CommonData::Buffer
+	struct MutBuffer
 	{
 		using type_t = typename T;
 		T* dataBegin{ nullptr };
@@ -38,7 +37,7 @@ namespace Dod
 	};
 
 	template <typename T>
-	struct SortedImBuffer : CommonData::Buffer
+	struct SortedImBuffer
 	{
 		using type_t = typename T;
 		const T* dataBegin{ nullptr };

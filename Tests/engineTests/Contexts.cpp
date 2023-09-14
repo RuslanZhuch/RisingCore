@@ -156,13 +156,15 @@ TEST(Context, LoadBufferCapacity)
 
 	{
 		using type_t = float;
-		const auto capacityBytes{ Engine::ContextUtils::getBufferCapacityBytes<type_t>(data, 0) };
-		EXPECT_EQ(capacityBytes, 41 * sizeof(type_t));
+		const auto capacity{ Engine::ContextUtils::getBufferCapacityBytes<type_t>(data, 0) };
+		EXPECT_EQ(capacity.numOfBytes, 41 * sizeof(type_t));
+		EXPECT_EQ(capacity.numOfElements, 41);
 	}
 	{
 		using type_t = int64_t;
-		const auto capacityBytes{ Engine::ContextUtils::getBufferCapacityBytes<type_t>(data, 1) };
-		EXPECT_EQ(capacityBytes, 81 * sizeof(type_t));
+		const auto capacity{ Engine::ContextUtils::getBufferCapacityBytes<type_t>(data, 1) };
+		EXPECT_EQ(capacity.numOfBytes, 81 * sizeof(type_t));
+		EXPECT_EQ(capacity.numOfElements, 81);
 	}
 
 }
@@ -180,19 +182,19 @@ TEST(Context, InitBuffer)
 	{
 		Dod::MemPool memory;
 		memory.allocate(2048);
-		int32_t header{};
+		Dod::MemTypes::capacity_t header{};
 
 		Dod::DBBuffer<float> dst;
-		Engine::ContextUtils::initBuffer(dst, sizeof(float) * 41, memory, header);
+		Engine::ContextUtils::initData(dst, sizeof(float) * 41, memory, header);
 		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 40);
 	}
 	{
 		Dod::MemPool memory;
 		memory.allocate(2048);
-		int32_t header{};
+		Dod::MemTypes::capacity_t header{};
 
 		Dod::DBBuffer<int64_t> dst;
-		Engine::ContextUtils::initBuffer(dst, sizeof(int64_t) * 81, memory, header);
+		Engine::ContextUtils::initData(dst, sizeof(int64_t) * 81, memory, header);
 		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 80);
 	}
 
@@ -240,13 +242,13 @@ protected:
 		ASSERT_TRUE(data.IsArray());
 
 		this->memory.allocate(2048);
-		int32_t header{};
+		Dod::MemTypes::capacity_t header{};
 
 		const auto destCapacity{ numOfDestElements + 1 };
-		Engine::ContextUtils::initBuffer(this->dst, sizeof(DataType) * destCapacity, this->memory, header);
+		Engine::ContextUtils::initData(this->dst, sizeof(DataType) * destCapacity, this->memory, header);
 		ASSERT_EQ(Dod::DataUtils::getCapacity(this->dst), numOfDestElements);
 
-		Engine::ContextUtils::loadBufferContent(this->dst, data.GetArray(), dataId);
+		Engine::ContextUtils::loadDataContent(this->dst, data.GetArray(), dataId);
 	
 	}
 

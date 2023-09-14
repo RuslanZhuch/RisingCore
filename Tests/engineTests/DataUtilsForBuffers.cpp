@@ -1166,10 +1166,14 @@ TEST(DBBufferUtils, AppendComplex)
 	Dod::DBBuffer<type_t> bufferSrc;
 	Dod::DataUtils::initFromArray(bufferSrc, memorySrc);
 
+	const auto initData = [](int32_t elId) {
+		return std::vector<int32_t>(static_cast<size_t>(elId) + 1, 10);
+	};
+
 	for (int32_t elId{}; elId < 32; ++elId)
 	{
 		Type element;
-		element.data = std::vector<int32_t>(elId + 1, 10);
+		element.data = initData(elId);
 		Dod::DataUtils::populate(bufferSrc, element, true);
 	}
 
@@ -1178,7 +1182,7 @@ TEST(DBBufferUtils, AppendComplex)
 	for (int32_t elId{}; elId < Dod::DataUtils::getNumFilledElements(bufferDst); ++elId)
 	{
 		Type element;
-		element.data = std::vector<int32_t>(elId + 1, 10);
+		element.data = initData(elId);
 		Dod::DataUtils::populate(bufferSrc, element, true);
 		EXPECT_EQ(Dod::DataUtils::get(bufferDst, elId), element);
 	}
@@ -1187,7 +1191,7 @@ TEST(DBBufferUtils, AppendComplex)
 	for (int32_t elId{ 32 }; elId < 64; ++elId)
 	{
 		Type element;
-		element.data = std::vector<int32_t>(elId + 1, 10);
+		element.data = initData(elId);
 		Dod::DataUtils::populate(bufferSrc, element, true);
 	}
 
@@ -1196,7 +1200,7 @@ TEST(DBBufferUtils, AppendComplex)
 	for (int32_t elId{}; elId < Dod::DataUtils::getNumFilledElements(bufferDst); ++elId)
 	{
 		Type element;
-		element.data = std::vector<int32_t>(elId + 1, 10);
+		element.data = initData(elId);
 		Dod::DataUtils::populate(bufferSrc, element, true);
 		EXPECT_EQ(Dod::DataUtils::get(bufferDst, elId), element);
 	}
@@ -1207,7 +1211,7 @@ TEST(DBBufferUtils, AppendComplex)
 	for (int32_t elId{}; elId < Dod::DataUtils::getNumFilledElements(bufferDst); ++elId)
 	{
 		Type element;
-		element.data = std::vector<int32_t>(elId + 1, 10);
+		element.data = initData(elId);
 		Dod::DataUtils::populate(bufferSrc, element, true);
 		EXPECT_EQ(Dod::DataUtils::get(bufferDst, elId), element);
 	}
@@ -1216,7 +1220,7 @@ TEST(DBBufferUtils, AppendComplex)
 	for (int32_t elId{ 64 }; elId < 192; ++elId)
 	{
 		Type element;
-		element.data = std::vector<int32_t>(elId + 1, 10);
+		element.data = initData(elId);
 		Dod::DataUtils::populate(bufferSrc, element, true);
 	}
 
@@ -1225,7 +1229,7 @@ TEST(DBBufferUtils, AppendComplex)
 	for (int32_t elId{}; elId < Dod::DataUtils::getNumFilledElements(bufferDst); ++elId)
 	{
 		Type element;
-		element.data = std::vector<int32_t>(elId + 1, 10);
+		element.data = initData(elId);
 		Dod::DataUtils::populate(bufferSrc, element, true);
 		EXPECT_EQ(Dod::DataUtils::get(bufferDst, elId), element);
 	}
@@ -1234,7 +1238,7 @@ TEST(DBBufferUtils, AppendComplex)
 	for (int32_t elId{ 192 }; elId < 256; ++elId)
 	{
 		Type element;
-		element.data = std::vector<int32_t>(elId + 1, 10);
+		element.data = initData(elId);
 		Dod::DataUtils::populate(bufferSrc, element, true);
 	}
 
@@ -1243,7 +1247,7 @@ TEST(DBBufferUtils, AppendComplex)
 	for (int32_t elId{}; elId < Dod::DataUtils::getNumFilledElements(bufferDst); ++elId)
 	{
 		Type element;
-		element.data = std::vector<int32_t>(elId + 1, 10);
+		element.data = initData(elId);
 		Dod::DataUtils::populate(bufferSrc, element, true);
 		EXPECT_EQ(Dod::DataUtils::get(bufferDst, elId), element);
 	}
@@ -1254,7 +1258,7 @@ TEST(DBBufferUtils, AppendComplex)
 	for (int32_t elId{}; elId < Dod::DataUtils::getNumFilledElements(bufferDst); ++elId)
 	{
 		Type element;
-		element.data = std::vector<int32_t>(elId + 1, 10);
+		element.data = initData(elId);
 		Dod::DataUtils::populate(bufferSrc, element, true);
 		EXPECT_EQ(Dod::DataUtils::get(bufferDst, elId), element);
 	}

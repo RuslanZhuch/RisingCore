@@ -44,7 +44,7 @@ struct NonTrivialType
 		--this->counter;
 	}
 
-	[[nodiscard]] NonTrivialType& operator=(const NonTrivialType& other) noexcept
+	NonTrivialType& operator=(const NonTrivialType& other) noexcept
 	{
 		this->data = other.data;
 		if (--(*this->instanceCounter) <= 0)
@@ -57,7 +57,7 @@ struct NonTrivialType
 		return *this;
 	}
 
-	[[nodiscard]] NonTrivialType& operator=(NonTrivialType&& other) noexcept
+	NonTrivialType& operator=(NonTrivialType&& other) noexcept
 	{
 		this->data = other.data;
 		if (--(*this->instanceCounter) <= 0)
@@ -74,7 +74,7 @@ struct NonTrivialType
 	int* instanceCounter{};
 	std::vector<int> data;
 
-	[[nodiscard]] friend auto operator==(const NonTrivialType& left, const NonTrivialType& right) noexcept
+	friend auto operator==(const NonTrivialType& left, const NonTrivialType& right) noexcept
 	{
 		return left.data == right.data;
 	}
@@ -113,7 +113,7 @@ struct NonTrivialNonMovableType
 		--this->counter;
 	}
 
-	[[nodiscard]] NonTrivialNonMovableType& operator=(const NonTrivialNonMovableType& other) noexcept
+	NonTrivialNonMovableType& operator=(const NonTrivialNonMovableType& other) noexcept
 	{
 		this->data = other.data;
 		if (--(*this->instanceCounter) <= 0)
@@ -126,13 +126,13 @@ struct NonTrivialNonMovableType
 		return *this;
 	}
 
-	[[nodiscard]] NonTrivialNonMovableType& operator=(NonTrivialNonMovableType&& other) noexcept = delete;
+	NonTrivialNonMovableType& operator=(NonTrivialNonMovableType&& other) noexcept = delete;
 
 	static int counter;
 	int* instanceCounter{};
 	std::vector<int> data;
 
-	[[nodiscard]] friend auto operator==(const NonTrivialNonMovableType& left, const NonTrivialNonMovableType& right) noexcept
+	friend auto operator==(const NonTrivialNonMovableType& left, const NonTrivialNonMovableType& right) noexcept
 	{
 		return left.data == right.data;
 	}
@@ -169,7 +169,7 @@ struct NonTrivialMoveOnlyType
 		other.instanceCounter = nullptr;
 	}
 
-	[[nodiscard]] NonTrivialMoveOnlyType& operator=(NonTrivialMoveOnlyType&& other) noexcept
+	NonTrivialMoveOnlyType& operator=(NonTrivialMoveOnlyType&& other) noexcept
 	{
 		std::exchange(this->data, other.data);
 		if (--(*this->instanceCounter) <= 0)
@@ -195,10 +195,10 @@ struct NonTrivialMoveOnlyType
 	}
 
 	NonTrivialMoveOnlyType(const NonTrivialMoveOnlyType&) noexcept = delete;
-	[[nodiscard]] NonTrivialMoveOnlyType& operator=(const NonTrivialMoveOnlyType&) noexcept = delete;
+	NonTrivialMoveOnlyType& operator=(const NonTrivialMoveOnlyType&) noexcept = delete;
 
 
-	[[nodiscard]] friend auto operator==(const NonTrivialMoveOnlyType& left, const NonTrivialMoveOnlyType& right) noexcept
+	friend auto operator==(const NonTrivialMoveOnlyType& left, const NonTrivialMoveOnlyType& right) noexcept
 	{
 		return left.data == right.data;
 	}
@@ -227,33 +227,12 @@ template <size_t memorySize, Dod::MemTypes::alignment_t memoryAlignmentOffset, t
 class InitDBTableFromMemoryTest : public ::testing::Test {
 
 protected:
-//	void run(Dod::MemTypes::capacity_t memBeginIndex, Dod::MemTypes::capacity_t memEndIndex, int32_t expectCapacityEls)
-//	{
-//
-//		checkMemoryAlignment<Types...>(this->memory);
-//
-//		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
-//
-//		Dod::DataUtils::initFromMemory(this->table, memSpan, memBeginIndex, memEndIndex);
-//
-//		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(table), 0);
-//
-//		EXPECT_EQ(reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(this->table.dataBegin), memSpan.dataBegin + memBeginIndex);
-//		EXPECT_EQ(Dod::DataUtils::getCapacity(this->table), expectCapacityEls);
-//
-//		EXPECT_TRUE(this->table.dataBegin >= this->memory.data());
-//
-//		using types_t = decltype(this->table)::types_t;
-//		constexpr auto maxAlignment{ RisingCore::Helpers::findLargestAlignment<types_t>() };
-//		const auto address{ reinterpret_cast<std::uintptr_t>(this->table.dataBegin) };
-//		EXPECT_EQ(address % maxAlignment, 0);
-//
-//	}
-
-	void run(int32_t expectCapacityEls)
+	void run(int32_t expectCapacityEls, Dod::MemTypes::capacity_t expectedBytesRequires)
 	{
 
 		checkMemoryAlignment<Types...>(this->memory);
+
+		EXPECT_EQ(Dod::DataUtils::computeCapacityInBytes<RisingCore::Helpers::gatherTypes<Types...>>(this->memory.data(), expectCapacityEls), expectedBytesRequires);
 
 		MemorySpan memSpan(this->memory.data() + memoryAlignmentOffset, this->memory.data() + memoryAlignmentOffset + this->memory.size());
 
@@ -274,29 +253,29 @@ protected:
 using InitDBTableFromMemory32BytesInt = InitDBTableFromMemoryTest<36, 0, int>;
 TEST_F(InitDBTableFromMemory32BytesInt, InitFromMemory)
 {
-	this->run(0);
-	this->run(1);
-	this->run(7);
+	this->run(0, 8);
+	this->run(1, 12);
+	this->run(7, 36);
 }
 
 using InitDBTableFromMemory32BytesIntFloat = InitDBTableFromMemoryTest<36, 0, int, float>;
 TEST_F(InitDBTableFromMemory32BytesIntFloat, InitFromMemory)
 {
 
-	this->run(3);
+	this->run(3, 32);
 
 }
 
 using InitDBTableFromMemory32BytesIntDouble = InitDBTableFromMemoryTest<40, 0, int, double>;
 TEST_F(InitDBTableFromMemory32BytesIntDouble, InitFromMemory)
 {
-	this->run(2);
+	this->run(2, 40);
 }
 
 using InitDBTableFromMemory3IntDouble = InitDBTableFromMemoryTest<56, 0, int, double>;
 TEST_F(InitDBTableFromMemory3IntDouble, InitFromMemory)
 {
-	this->run(3);
+	this->run(3, 56);
 }
 
 template <size_t memorySize, Dod::MemTypes::alignment_t memoryAlignmentOffset, typename ... Types>
