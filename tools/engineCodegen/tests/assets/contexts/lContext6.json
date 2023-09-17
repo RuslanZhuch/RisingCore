@@ -3,11 +3,13 @@
     "version": 1,
     "data": [
         {
-            "type": "object",
-            "dataType": "int32_t",
-            "merge": "add",
-            "name": "var1",
-            "initial": 1
+            "type": "data",
+            "dataTypeList": [
+                "int",
+                "double"
+            ],
+            "name": "data1",
+            "capacity": 256
         }
     ]
 }

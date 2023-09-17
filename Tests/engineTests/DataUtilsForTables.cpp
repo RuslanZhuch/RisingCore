@@ -147,7 +147,6 @@ static_assert(std::is_copy_constructible_v<NonTrivialNonMovableType> == true);
 static_assert(sizeof(NonTrivialNonMovableType) == 40);
 static_assert(alignof(NonTrivialNonMovableType) == 8);
 
-
 struct NonTrivialMoveOnlyType
 {
 	std::vector<int> data;
@@ -214,6 +213,18 @@ static_assert(std::is_copy_constructible_v<NonTrivialMoveOnlyType> == false);
 static_assert(sizeof(NonTrivialMoveOnlyType) == 40);
 static_assert(alignof(NonTrivialMoveOnlyType) == 8);
 
+static constexpr size_t bytesForInt7{ 40 };
+static constexpr size_t bytesForIntFloat3{ 36 };
+static constexpr size_t bytesForIntFloat7{ 68 };
+static constexpr size_t bytesForIntDouble2{ 52 };
+static constexpr size_t bytesForIntDouble3{ 64 };
+static constexpr size_t bytesForIntDouble4{ 76 };
+static constexpr size_t bytesForDoubleInt2{ 48 };
+static constexpr size_t bytesForIntComplex2{ 148 };
+static constexpr size_t bytesForIntComplex3{ 192 };
+static constexpr size_t bytesForIntComplex4{ 236 };
+static constexpr size_t bytesForIntComplexComplex3{ 312 };
+
 template <typename ... Types>
 static void checkMemoryAlignment(auto&& memory)
 {
@@ -232,7 +243,7 @@ protected:
 
 		checkMemoryAlignment<Types...>(this->memory);
 
-		EXPECT_EQ(Dod::DataUtils::computeCapacityInBytes<RisingCore::Helpers::gatherTypes<Types...>>(this->memory.data(), expectCapacityEls), expectedBytesRequires);
+		EXPECT_EQ(Dod::DataUtils::computeCapacityInBytes<RisingCore::Helpers::gatherTypes<Types...>>(expectCapacityEls), expectedBytesRequires);
 
 		MemorySpan memSpan(this->memory.data() + memoryAlignmentOffset, this->memory.data() + memoryAlignmentOffset + this->memory.size());
 
@@ -250,32 +261,32 @@ protected:
 
 };
 
-using InitDBTableFromMemory32BytesInt = InitDBTableFromMemoryTest<36, 0, int>;
+using InitDBTableFromMemory32BytesInt = InitDBTableFromMemoryTest<bytesForInt7, 0, int>;
 TEST_F(InitDBTableFromMemory32BytesInt, InitFromMemory)
 {
-	this->run(0, 8);
-	this->run(1, 12);
-	this->run(7, 36);
+	this->run(0, 0);
+	this->run(1, 16);
+	this->run(7, 40);
 }
 
-using InitDBTableFromMemory32BytesIntFloat = InitDBTableFromMemoryTest<36, 0, int, float>;
+using InitDBTableFromMemory32BytesIntFloat = InitDBTableFromMemoryTest<bytesForIntFloat3, 0, int, float>;
 TEST_F(InitDBTableFromMemory32BytesIntFloat, InitFromMemory)
 {
 
-	this->run(3, 32);
+	this->run(3, 36);
 
 }
 
-using InitDBTableFromMemory32BytesIntDouble = InitDBTableFromMemoryTest<40, 0, int, double>;
+using InitDBTableFromMemory32BytesIntDouble = InitDBTableFromMemoryTest<bytesForIntDouble2, 0, int, double>;
 TEST_F(InitDBTableFromMemory32BytesIntDouble, InitFromMemory)
 {
-	this->run(2, 40);
+	this->run(2, 52);
 }
 
-using InitDBTableFromMemory3IntDouble = InitDBTableFromMemoryTest<56, 0, int, double>;
+using InitDBTableFromMemory3IntDouble = InitDBTableFromMemoryTest<bytesForIntDouble3, 0, int, double>;
 TEST_F(InitDBTableFromMemory3IntDouble, InitFromMemory)
 {
-	this->run(3, 56);
+	this->run(3, 64);
 }
 
 template <size_t memorySize, Dod::MemTypes::alignment_t memoryAlignmentOffset, typename ... Types>
@@ -369,7 +380,7 @@ protected:
 
 };
 
-using PopulateIntFloat = TableTest<36, 0, int, float>;
+using PopulateIntFloat = TableTest<bytesForIntFloat3, 0, int, float>;
 TEST_F(PopulateIntFloat, Populate)
 {
 
@@ -392,7 +403,7 @@ TEST_F(PopulateIntFloat, Populate)
 
 }
 
-using PopulateIntDouble = TableTest<40, 0, int, double>;
+using PopulateIntDouble = TableTest<bytesForIntDouble2, 0, int, double>;
 TEST_F(PopulateIntDouble, Populate)
 {
 
@@ -411,7 +422,7 @@ TEST_F(PopulateIntDouble, Populate)
 
 }
 
-using PopulateIntDoubleAlignment = TableTest<56, 0, int, double>;
+using PopulateIntDoubleAlignment = TableTest<bytesForIntDouble3, 0, int, double>;
 TEST_F(PopulateIntDoubleAlignment, Populate)
 {
 
@@ -434,7 +445,7 @@ TEST_F(PopulateIntDoubleAlignment, Populate)
 
 }
 
-using PopulateDoubleInt = TableTest<40, 0, double, int>;
+using PopulateDoubleInt = TableTest<bytesForDoubleInt2, 0, double, int>;
 TEST_F(PopulateDoubleInt, Populate)
 {
 
@@ -453,7 +464,7 @@ TEST_F(PopulateDoubleInt, Populate)
 
 }
 
-using PopulateIntNonTrivial = TableTest<136, 0, int, NonTrivialType>;
+using PopulateIntNonTrivial = TableTest<bytesForIntComplex2, 0, int, NonTrivialType>;
 TEST_F(PopulateIntNonTrivial, Populate)
 {
 
@@ -480,7 +491,7 @@ TEST_F(PopulateIntNonTrivial, Populate)
 
 }
 
-using PopulateIntDoubleNotAligned = TableTest<44, 4, int, double>;
+using PopulateIntDoubleNotAligned = TableTest<bytesForIntDouble2, 4, int, double>;
 TEST_F(PopulateIntDoubleNotAligned, Populate)
 {
 
@@ -499,7 +510,7 @@ TEST_F(PopulateIntDoubleNotAligned, Populate)
 
 }
 
-using PopulateDoubleIntNotAligned = TableTest<44, 4, double, int>;
+using PopulateDoubleIntNotAligned = TableTest<bytesForDoubleInt2, 4, double, int>;
 TEST_F(PopulateDoubleIntNotAligned, Populate)
 {
 
@@ -536,7 +547,7 @@ template <typename ... T>
 	return std::make_tuple(std::forward<std::vector<T>>(values)...);
 };
 
-using PopulateIntNonTrivialMoveOnly = TableTest<136, 0, int, NonTrivialMoveOnlyType>;
+using PopulateIntNonTrivialMoveOnly = TableTest<bytesForIntComplex2, 0, int, NonTrivialMoveOnlyType>;
 TEST_F(PopulateIntNonTrivialMoveOnly, Populate)
 {
 
@@ -570,7 +581,7 @@ TEST_F(PopulateIntNonTrivialMoveOnly, Populate)
 
 }
 
-using GetIntFloat = TableTest<36, 0, int, float>;
+using GetIntFloat = TableTest<bytesForIntFloat3, 0, int, float>;
 TEST_F(GetIntFloat, GetElements)
 {
 
@@ -592,7 +603,7 @@ TEST_F(GetIntFloat, GetElements)
 
 }
 
-using GetIntDouble = TableTest<56, 0, int, double>;
+using GetIntDouble = TableTest<bytesForIntDouble3, 0, int, double>;
 TEST_F(GetIntDouble, GetElements)
 {
 
@@ -614,7 +625,7 @@ TEST_F(GetIntDouble, GetElements)
 
 }
 
-using GetAllIntFloat = TableTest<36, 0, int, float>;
+using GetAllIntFloat = TableTest<bytesForIntFloat3, 0, int, float>;
 TEST_F(GetAllIntFloat, GetAllElements)
 {
 
@@ -633,7 +644,7 @@ TEST_F(GetAllIntFloat, GetAllElements)
 
 }
 
-using GetAllIntDouble = TableTest<40, 0, int, double>;
+using GetAllIntDouble = TableTest<bytesForIntDouble2, 0, int, double>;
 TEST_F(GetAllIntDouble, GetAllElements)
 {
 
@@ -670,11 +681,11 @@ public:
 
 };
 
-using AppendIntFloat = TableTest<68, 0, int, float>;
+using AppendIntFloat = TableTest<bytesForIntFloat7, 0, int, float>;
 TEST_F(AppendIntFloat, Append2Elements)
 {
 
-	TableToAppend<32, 0, int, float> srcTable(3);
+	TableToAppend<bytesForIntFloat3, 0, int, float> srcTable(3);
 
 	this->init(7);
 	srcTable.populate(1, 1, 2.f);
@@ -693,7 +704,7 @@ TEST_F(AppendIntFloat, Append2Elements)
 TEST_F(AppendIntFloat, Append3Elements)
 {
 
-	TableToAppend<36, 0, int, float> srcTable(3);
+	TableToAppend<bytesForIntFloat3, 0, int, float> srcTable(3);
 
 	this->init(7);
 	srcTable.populate(1, 1, 2.f);
@@ -717,7 +728,7 @@ TEST_F(AppendIntFloat, Append3Elements)
 TEST_F(AppendIntFloat, Append0Elements)
 {
 
-	TableToAppend<36, 0, int, float> srcTable(3);
+	TableToAppend<bytesForIntFloat3, 0, int, float> srcTable(3);
 
 	this->init(7);
 
@@ -731,11 +742,11 @@ TEST_F(AppendIntFloat, Append0Elements)
 
 }
 
-using AppendIntDouble = TableTest<72, 0, int, double>;
+using AppendIntDouble = TableTest<bytesForIntDouble4, 0, int, double>;
 TEST_F(AppendIntDouble, Append3Elements)
 {
 
-	TableToAppend<40, 0, int, double> srcTable(2);
+	TableToAppend<bytesForIntDouble2, 0, int, double> srcTable(2);
 
 	this->init(4);
 	srcTable.populate(1, 1, 2.);
@@ -755,11 +766,11 @@ TEST_F(AppendIntDouble, Append3Elements)
 
 }
 
-using AppendIntNonTrivial = TableTest<224, 0, int, NonTrivialType>;
+using AppendIntNonTrivial = TableTest<bytesForIntComplex4, 0, int, NonTrivialType>;
 TEST_F(AppendIntNonTrivial, Append2Elements)
 {
 
-	TableToAppend<192, 0, int, NonTrivialType> srcTable(3);
+	TableToAppend<bytesForIntComplex3, 0, int, NonTrivialType> srcTable(3);
 
 	this->init(4);
 	NonTrivialType::counter = 0;
@@ -788,7 +799,7 @@ TEST_F(AppendIntNonTrivial, Append2Elements)
 
 }
 
-using AppendIntNonTrivialMoveOnly = TableTest<224, 0, int, NonTrivialMoveOnlyType>;
+using AppendIntNonTrivialMoveOnly = TableTest<bytesForIntComplex4, 0, int, NonTrivialMoveOnlyType>;
 TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 {
 
@@ -803,7 +814,7 @@ TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 		return NonTrivialMoveOnlyType({ 30, 400 });
 	};
 
-	TableToAppend<192, 0, int, NonTrivialMoveOnlyType> srcTable1(3);
+	TableToAppend<bytesForIntComplex3, 0, int, NonTrivialMoveOnlyType> srcTable1(3);
 	srcTable1.populate(1, 1, genNonTrivial1());
 	srcTable1.populate(2, 3, genNonTrivial2());
 
@@ -813,7 +824,7 @@ TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 2);
 	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({1, 3}, genCheckVector(genNonTrivial1(), genNonTrivial2())));
 
-	TableToAppend<192, 0, int, NonTrivialMoveOnlyType> srcTable2(3);
+	TableToAppend<bytesForIntComplex3, 0, int, NonTrivialMoveOnlyType> srcTable2(3);
 	srcTable2.populate(1, 1, genNonTrivial1());
 	srcTable2.populate(2, 3, genNonTrivial2());
 
@@ -822,7 +833,7 @@ TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 4);
 	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({1, 3, 1, 3}, genCheckVector(genNonTrivial1(), genNonTrivial2(), genNonTrivial1(), genNonTrivial2())));
 
-	TableToAppend<192, 0, int, NonTrivialMoveOnlyType> srcTable3(3);
+	TableToAppend<bytesForIntComplex3, 0, int, NonTrivialMoveOnlyType> srcTable3(3);
 	srcTable3.populate(1, 1, genNonTrivial1());
 	srcTable3.populate(2, 3, genNonTrivial2());
 
@@ -833,7 +844,7 @@ TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
 
 }
 
-using FlushIntFloat = TableTest<36, 0, int, float>;
+using FlushIntFloat = TableTest<bytesForIntFloat3, 0, int, float>;
 TEST_F(FlushIntFloat, FlushAllElements)
 {
 
@@ -857,7 +868,7 @@ TEST_F(FlushIntFloat, FlushAllElements)
 
 }
 
-using FlushIntNonTrivial = TableTest<192, 0, int, NonTrivialType>;
+using FlushIntNonTrivial = TableTest<bytesForIntComplex3, 0, int, NonTrivialType>;
 TEST_F(FlushIntNonTrivial, FlushAllElements)
 {
 
@@ -895,7 +906,7 @@ TEST_F(FlushIntNonTrivial, FlushAllElements)
 
 }
 
-using FlushIntNonTrivialMoveOnly = TableTest<192, 0, int, NonTrivialMoveOnlyType>;
+using FlushIntNonTrivialMoveOnly = TableTest<bytesForIntComplex3, 0, int, NonTrivialMoveOnlyType>;
 TEST_F(FlushIntNonTrivialMoveOnly, FlushAllElements)
 {
 
@@ -934,7 +945,7 @@ TEST_F(FlushIntNonTrivialMoveOnly, FlushAllElements)
 
 }
 
-using RemoveElementsIntFloat = TableTest<36, 0, int, float>;
+using RemoveElementsIntFloat = TableTest<bytesForIntFloat3, 0, int, float>;
 TEST_F(RemoveElementsIntFloat, RemoveElements)
 {
 
@@ -973,7 +984,7 @@ TEST_F(RemoveElementsIntFloat, RemoveElements)
 
 }
 
-using RemoveElementsIntNonTrivial = TableTest<304, 0, int, NonTrivialType, NonTrivialNonMovableType>;
+using RemoveElementsIntNonTrivial = TableTest<bytesForIntComplexComplex3, 0, int, NonTrivialType, NonTrivialNonMovableType>;
 TEST_F(RemoveElementsIntNonTrivial, RemoveElements)
 {
 
@@ -1096,7 +1107,7 @@ TEST_F(RemoveElementsIntNonTrivial, RemoveElements)
 
 }
 
-using RemoveElementsIntNonTrivialMoveOnly = TableTest<192, 0, int, NonTrivialMoveOnlyType>;
+using RemoveElementsIntNonTrivialMoveOnly = TableTest<bytesForIntComplex3, 0, int, NonTrivialMoveOnlyType>;
 TEST_F(RemoveElementsIntNonTrivialMoveOnly, RemoveElements)
 {
 

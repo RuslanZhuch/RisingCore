@@ -192,7 +192,7 @@ def generate_context_load(handler, context_raw_data, context_file_path):
             for buffer in context_data.buffers_data:
                 buffer_name = buffer.name
                 type = buffer.data_type
-                generator.generate_line(handler, "const auto {}CapacityBytes{{ Engine::ContextUtils::getBufferCapacityBytes<{}>(loadingDataArray, {}) }};".format(buffer_name, type, buffer_id))
+                generator.generate_line(handler, "const auto {}Capacity{{ Engine::ContextUtils::getBufferCapacity<{}>(loadingDataArray, {}) }};".format(buffer_name, type, buffer_id))
                 buffer_id += 1
             generator.generate_empty(handler)                
                 
@@ -203,19 +203,19 @@ def generate_context_load(handler, context_raw_data, context_file_path):
             generator.generate_line(handler, "int32_t needBytes{};")
             for buffer in context_data.buffers_data:
                 buffer_name = buffer.name
-                generator.generate_line(handler, "needBytes += {}CapacityBytes;".format(buffer_name))
+                generator.generate_line(handler, "needBytes += {}Capacity.numOfBytes;".format(buffer_name))
                 buffer_id += 1
             generator.generate_empty(handler)
                         
             generator.generate_line(handler, "this->memory.allocate(needBytes);")
-            generator.generate_line(handler, "int32_t header{};")
+            generator.generate_line(handler, "Dod::MemTypes::capacity_t header{};")
             generator.generate_empty(handler)
             
             buffer_id = element_id
             for buffer in context_data.buffers_data:
                 buffer_name = buffer.name
-                generator.generate_line(handler, "Engine::ContextUtils::initBuffer(this->{0}, {0}CapacityBytes, this->memory, header);".format(buffer_name))
-                generator.generate_line(handler, "Engine::ContextUtils::loadBufferContent(this->{}, loadingDataArray, {});".format(buffer_name, buffer_id))
+                generator.generate_line(handler, "Engine::ContextUtils::initData(this->{0}, {0}Capacity, this->memory, header);".format(buffer_name))
+                generator.generate_line(handler, "Engine::ContextUtils::loadDataContent(this->{}, loadingDataArray, {});".format(buffer_name, buffer_id))
                 buffer_id += 1
             generator.generate_empty(handler)
         
@@ -230,7 +230,7 @@ def generate_context_reset(handler, context_raw_data):
             context_data = load_data(context_raw_data)
             for buffer in context_data.buffers_data:
                 buffer_name = buffer.name
-                generator.generate_line(handler, "Dod::BufferUtils::flush(this->{});".format(buffer_name))
+                generator.generate_line(handler, "Dod::DataUtils::flush(this->{});".format(buffer_name))
 
         generator.generate_struct_method(struct_handler, "reset", "void", [], False, load_body)
 
@@ -258,7 +258,7 @@ def generate_context_merge(handler, context_raw_data):
                 if buffer.merge_type == ContextData.MERGE_TYPE_NONE:
                     continue
                 buffer_name = buffer.name
-                generator.generate_line(handler, "Dod::BufferUtils::append(this->{0}, Dod::BufferUtils::createImFromBuffer(other.{0}));".format(buffer_name))
+                generator.generate_line(handler, "Dod::DataUtils::append(this->{0}, Dod::DataUtils::createImFromBuffer(other.{0}));".format(buffer_name))
 
         generator.generate_struct_method(struct_handler, "merge", "void", ["[[maybe_unused]] const Data& other"], False, load_body)
 

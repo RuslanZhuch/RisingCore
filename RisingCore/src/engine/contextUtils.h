@@ -26,7 +26,7 @@ namespace Engine::ContextUtils
 	
 	[[nodiscard]] rapidjson::Document loadFileDataRoot(const std::string_view filename) noexcept;
 	[[nodiscard]] std::optional<rapidjson::GenericArray<true, rapidjson::Value>> gatherContextData(const rapidjson::Document& doc, size_t numOfExpectedElements) noexcept;
-	
+
     void assignToVariable(auto& dest, const rapidjson::Value& src)
     {
 
@@ -81,8 +81,15 @@ namespace Engine::ContextUtils
 
     }
 
+    struct CapacityData
+    {
+        Dod::MemTypes::capacity_t numOfBytes{};
+        int32_t numOfElements{};
+        int32_t pad{};
+    };
+
     template <typename T>
-    [[nodiscard]] static int32_t getBufferCapacityBytes(
+    [[nodiscard]] static auto getBufferCapacity(
         rapidjson::GenericArray<true, rapidjson::Value> buffer,
         rapidjson::SizeType id
     ) noexcept
@@ -90,29 +97,72 @@ namespace Engine::ContextUtils
 
         using type_t = T;
 
+        CapacityData data;
+
         if (!buffer[id].IsObject())
-            return {};
+            return data;
 
         const auto& dataObject{ buffer[id].GetObject() };
 
         constexpr auto dataTypeSize{ sizeof(type_t) };
-        const auto capacity{ dataObject["capacity"].GetInt() };
-        const auto capacityBytes{ capacity * dataTypeSize };
+        const auto numOfElements{ dataObject["capacity"].GetInt() };
+        const auto capacityBytes{ numOfElements * dataTypeSize };
 
-        return static_cast<int32_t>(capacityBytes);
+        data.numOfBytes = capacityBytes;
+        data.numOfElements = numOfElements;
+        return data;
+
+    }
+
+    template <typename ... Types>
+    [[nodiscard]] static auto getDataCapacity(
+        rapidjson::GenericArray<true, rapidjson::Value> buffer,
+        rapidjson::SizeType id
+    ) noexcept
+    {
+
+        CapacityData data;
+
+        if (!buffer[id].IsObject())
+            return data;
+
+        using types_t = std::tuple<Types...>;
+
+        const auto& dataObject{ buffer[id].GetObject() };
+
+        const auto numOfElements{ dataObject["capacity"].GetInt() };
+        const auto capacityBytes{ Dod::DataUtils::computeCapacityInBytes<types_t>(numOfElements) };
+
+        data.numOfBytes = capacityBytes;
+        data.numOfElements = numOfElements;
+        return data;
 
     }
 
     template <typename T>
-    [[nodiscard]] static void initData(
+    static void initData(
         Dod::DBBuffer<T>& dest,
-        Dod::MemTypes::capacity_t capacityBytes,
+        CapacityData capacityData,
         Dod::MemPool& pool, 
         Dod::MemTypes::capacity_t& header
     ) noexcept
     {
 
-        Dod::DataUtils::initFromMemory(dest, Dod::MemUtils::stackAquire(pool, capacityBytes, alignof(T), header));
+        Dod::DataUtils::initFromMemory(dest, Dod::MemUtils::stackAquire(pool, capacityData.numOfBytes, alignof(T), header));
+
+    }
+
+    template <typename ... Types>
+    static void initData(
+        Dod::CommonData::CTable auto& dest,
+        CapacityData capacityData,
+        Dod::MemPool& pool,
+        Dod::MemTypes::capacity_t& header
+    ) noexcept
+    {
+
+        constexpr auto alignment{ RisingCore::Helpers::findLargestAlignment<RisingCore::Helpers::gatherTypes<Types...>>() };
+        Dod::DataUtils::initFromMemory(dest, capacityData.numOfElements, Dod::MemUtils::stackAquire(pool, capacityData.numOfBytes, alignment, header));
 
     }
 

@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include <dod/Buffers.h>
+#include <dod/Tables.h>
 #include <dod/DataUtils.h>
 #include <engine/contextUtils.cpp>
 
@@ -148,23 +149,28 @@ TEST(Context, LoadBufferCapacity)
 {
 
 	const auto doc{ Engine::ContextUtils::loadFileDataRoot("assets/sampleFileBuffers.json") };
-	const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 2) };
+	const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 3) };
 	ASSERT_TRUE(inputDataOpt.has_value());
 
 	const auto& data{ inputDataOpt.value() };
-	ASSERT_EQ(data.Size(), 2);
+	ASSERT_EQ(data.Size(), 3);
 
 	{
 		using type_t = float;
-		const auto capacity{ Engine::ContextUtils::getBufferCapacityBytes<type_t>(data, 0) };
+		const auto capacity{ Engine::ContextUtils::getBufferCapacity<type_t>(data, 0) };
 		EXPECT_EQ(capacity.numOfBytes, 41 * sizeof(type_t));
 		EXPECT_EQ(capacity.numOfElements, 41);
 	}
 	{
 		using type_t = int64_t;
-		const auto capacity{ Engine::ContextUtils::getBufferCapacityBytes<type_t>(data, 1) };
+		const auto capacity{ Engine::ContextUtils::getBufferCapacity<type_t>(data, 1) };
 		EXPECT_EQ(capacity.numOfBytes, 81 * sizeof(type_t));
 		EXPECT_EQ(capacity.numOfElements, 81);
+	}
+	{
+		const auto capacity{ Engine::ContextUtils::getDataCapacity<int, double>(data, 2) };
+		EXPECT_EQ(capacity.numOfBytes, 3100);
+		EXPECT_EQ(capacity.numOfElements, 256);
 	}
 
 }
@@ -173,11 +179,11 @@ TEST(Context, InitBuffer)
 {
 
 	const auto doc{ Engine::ContextUtils::loadFileDataRoot("assets/sampleFileBuffers.json") };
-	const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 2) };
+	const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 3) };
 	ASSERT_TRUE(inputDataOpt.has_value());
 
 	const auto& data{ inputDataOpt.value() };
-	ASSERT_EQ(data.Size(), 2);
+	ASSERT_EQ(data.Size(), 3);
 
 	{
 		Dod::MemPool memory;
@@ -185,7 +191,8 @@ TEST(Context, InitBuffer)
 		Dod::MemTypes::capacity_t header{};
 
 		Dod::DBBuffer<float> dst;
-		Engine::ContextUtils::initData(dst, sizeof(float) * 41, memory, header);
+		Engine::ContextUtils::CapacityData capacityData(sizeof(float) * 41, 0);
+		Engine::ContextUtils::initData(dst, capacityData, memory, header);
 		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 40);
 	}
 	{
@@ -194,8 +201,19 @@ TEST(Context, InitBuffer)
 		Dod::MemTypes::capacity_t header{};
 
 		Dod::DBBuffer<int64_t> dst;
-		Engine::ContextUtils::initData(dst, sizeof(int64_t) * 81, memory, header);
+		Engine::ContextUtils::CapacityData capacityData(sizeof(int64_t) * 81, 0);
+		Engine::ContextUtils::initData(dst, capacityData, memory, header);
 		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 80);
+	}
+	{
+		Dod::MemPool memory;
+		memory.allocate(3116);
+		Dod::MemTypes::capacity_t header{};
+
+		Dod::DBTable<int, double> dst;
+		Engine::ContextUtils::CapacityData capacityData(3100, 256);
+		Engine::ContextUtils::initData(dst, capacityData, memory, header);
+		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 256);
 	}
 
 }
@@ -245,7 +263,8 @@ protected:
 		Dod::MemTypes::capacity_t header{};
 
 		const auto destCapacity{ numOfDestElements + 1 };
-		Engine::ContextUtils::initData(this->dst, sizeof(DataType) * destCapacity, this->memory, header);
+		Engine::ContextUtils::CapacityData capacityData(sizeof(DataType) * destCapacity, 0);
+		Engine::ContextUtils::initData(this->dst, capacityData, this->memory, header);
 		ASSERT_EQ(Dod::DataUtils::getCapacity(this->dst), numOfDestElements);
 
 		Engine::ContextUtils::loadDataContent(this->dst, data.GetArray(), dataId);

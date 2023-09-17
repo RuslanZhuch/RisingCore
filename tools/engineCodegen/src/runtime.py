@@ -28,9 +28,9 @@ def _generate_commands(handler):
     def cycle_body(handler):
         def exit_body(handler):
             generator.generate_line(handler, "return 0;")
-        generator.generate_block(handler, "if (Dod::BufferUtils::get(sApplicationContext.context.commands, 0) == 1)", exit_body)
+        generator.generate_block(handler, "if (Dod::DataUtils::get(sApplicationContext.context.commands, 0) == 1)", exit_body)
         
-    generator.generate_block(handler, "for (int32_t cmdId{}; cmdId < Dod::BufferUtils::getNumFilledElements(sApplicationContext.context.commands); ++cmdId)", cycle_body)
+    generator.generate_block(handler, "for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.context.commands); ++cmdId)", cycle_body)
 
 def _generate_contexts_includes(handler, shared_context_instances : list[contexts.ContextUsage]):
     context_names = [instance.context_name for instance in shared_context_instances]

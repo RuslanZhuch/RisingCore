@@ -42,8 +42,11 @@ namespace Dod::DataUtils
 	}
 
 	template <typename Types>
-	[[nodiscard]] auto computeCapacityInBytes(const auto* memoryPoint, int32_t numOfElements) noexcept
+	[[nodiscard]] auto computeCapacityInBytes(int32_t numOfElements) noexcept
 	{
+
+		if (numOfElements == 0)
+			return MemTypes::capacity_t{};
 
 		using types_t = Types;
 		constexpr auto deadBucketSize{ computeDeadbucketSizeInBytes<types_t>() };
@@ -52,9 +55,15 @@ namespace Dod::DataUtils
 		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
 		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t columnId>() {
 			using type_t = std::tuple_element_t<columnId, types_t>;
-			const auto alignmentOffset{ static_cast<MemTypes::capacity_t>(MemUtils::getAlignOffset(memoryPoint + needBytes, alignof(type_t))) };
+			MemTypes::capacity_t alignmentSize{};
+			constexpr auto newAlignmentSize{ static_cast<MemTypes::capacity_t>(alignof(type_t)) };
+			if constexpr ((columnId == 0))
+				alignmentSize = newAlignmentSize;
+			else if constexpr (static_cast<MemTypes::capacity_t>(alignof(std::tuple_element_t<columnId - 1, types_t>)) < newAlignmentSize)
+				alignmentSize = newAlignmentSize;
+			
 			const auto pureBytesForColumn{ static_cast<MemTypes::capacity_t>(sizeof(type_t) * numOfElements) };
-			needBytes += alignmentOffset + pureBytesForColumn;
+			needBytes += alignmentSize + pureBytesForColumn;
 		});
 
 		return needBytes;
@@ -69,7 +78,7 @@ namespace Dod::DataUtils
 
 		dbTable.dataBegin = actualData.dataBegin;
 
-		const auto needBytes{ computeCapacityInBytes<types_t>(dbTable.dataBegin, numOfElements) };
+		const auto needBytes{ computeCapacityInBytes<types_t>(numOfElements) };
 
 		const auto capacityInBytes{ static_cast<MemTypes::capacity_t>(actualData.dataEnd - actualData.dataBegin) };
 		dbTable.capacityEls = numOfElements * (needBytes <= capacityInBytes);
