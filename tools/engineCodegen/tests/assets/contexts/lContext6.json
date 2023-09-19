@@ -10,19 +10,20 @@
         },
         {
             "type": "data",
-            "dataTypeList": [
-                "int32_t",
-                "float"
-            ],
+            "dataTypeList": {
+                "values1": "int32_t",
+                "values2": "float"
+            },
             "name": "data1",
             "capacity": 256
         },
         {
             "type": "data",
-            "dataTypeList": [
-                "Types::Cats::CryingCat",
-                "int64_t"
-            ],
+            "dataTypeList": {
+                "values3": "Types::Cats::CryingCat",
+                "values4": "float",
+                "values5": "int64_t"
+            },
             "name": "data2",
             "capacity": 128
         }

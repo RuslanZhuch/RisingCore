@@ -47,10 +47,12 @@ class ContextData:
             self.merge_type = merge_type
              
     class TableDataElement:
-        def __init__(self, el_id: int, name : str, data_type_list : list[str], capacity: int, merge_type: int):
+        def __init__(self, el_id: int, name : str, data_name_list : list[str], data_type_list : list[str], data_type_full_list : dict, capacity: int, merge_type: int):
             self.el_id = el_id
             self.name = name
+            self.data_name_list = data_name_list
             self.data_type_list = data_type_list
+            self.data_type_full_list = data_type_full_list
             self.capacity = capacity
             self.merge_type = merge_type
              
@@ -97,8 +99,10 @@ def load_data(context_raw_data : dict):
             capacity = variable["capacity"]
             merge_policy = variable.get("merge")
             merge_type = _get_merge_type_for_buffers(merge_policy if merge_policy is not None else "") 
-            data_type = variable["dataTypeList"]
-            tables_data.append(ContextData.TableDataElement(el_id, name, data_type, capacity, merge_type))
+            data_type : dict = variable["dataTypeList"]
+            type_names = data_type.keys()
+            types = data_type.values()
+            tables_data.append(ContextData.TableDataElement(el_id, name, type_names, types, data_type, capacity, merge_type))
         else:
             continue
         
@@ -106,14 +110,12 @@ def load_data(context_raw_data : dict):
     
     return ContextData(objects_data, buffers_data, tables_data)
 
-def generate_context_data(handler, context_raw_data):
-    
+def generate_context_data(handler, context_data : ContextData):
+        
     def struct_body(struct_handler):
         generator.generate_struct_method(struct_handler, "load", "void", [], False)
         generator.generate_struct_method(struct_handler, "reset", "void", [], False)
         generator.generate_struct_method(struct_handler, "merge", "void", ["const Data& other"], False)
-        
-        context_data = load_data(context_raw_data)
         
         for object in context_data.objects_data:
             initial = 0 if object.initial != 0 and object.initial is not None else object.initial
@@ -129,6 +131,47 @@ def generate_context_data(handler, context_raw_data):
             generator.generate_struct_variable(struct_handler, type, table.name, None)
             
     generator.generate_struct(handler, "Data", struct_body)
+
+def generate_context_getters(handler, context_data : ContextData):
+    
+    for table in context_data.tables_data:
+        data_name = table.name
+        data_name_capital = _to_class_name(data_name)
+        function_name = "[[nodiscard]] static auto get{0}(Data& context) noexcept".format(data_name_capital, data_name)
+        
+        def function_body(handler):
+            def struct_data(struct_handler):
+                for type_name in table.data_type_full_list:
+                    generator.generate_struct_variable(struct_handler, "Dod::MutBuffer<{}>".format(table.data_type_full_list[type_name]), type_name)
+
+            generator.generate_struct(handler, "Output", struct_data)
+            
+            generator.generate_line(handler, "const auto data{{ Dod::DataUtils::get(context.{}) }};".format(data_name))
+
+            output_values = ["std::get<{}>(data)".format(index) for index in range(0, len(table.data_type_list))]
+                
+            output = "return Output({});".format(", ".join(output_values))
+            generator.generate_line(handler, output)
+            
+        generator.generate_block(handler, function_name, function_body)
+        generator.generate_empty(handler)
+
+def generate_context_setters(handler, context_data : ContextData):
+    
+    for table in context_data.tables_data:
+        data_name = table.name
+        data_name_capital = _to_class_name(data_name)
+        parameters = ["{} {}".format(table.data_type_full_list[type_name], type_name) for type_name in table.data_type_full_list]
+        parameters.append("bool bStrobe = true")
+        function_name = "static void add{}(Data& context, {}) noexcept".format(data_name_capital, ", ".join(parameters))
+        
+        def function_body(handler):
+            arguments = ["context.{}".format(data_name), "bStrobe"]
+            arguments.extend(table.data_name_list)
+            generator.generate_line(handler, "Dod::DataUtils::populate({});".format(", ".join(arguments)))
+            
+        generator.generate_block(handler, function_name, function_body)
+        generator.generate_empty(handler)
 
 def generate_context_def(dest_path, context_file_path, types_cache):
     context_raw_data = loader.load_file_data(context_file_path)
@@ -156,6 +199,7 @@ def generate_context_def(dest_path, context_file_path, types_cache):
             
     generator.generate_line(handler, "#include <dod/Buffers.h>")
     generator.generate_line(handler, "#include <dod/Tables.h>")
+    generator.generate_line(handler, "#include <dod/TableUtils.h>")
     generator.generate_line(handler, "#include <dod/MemPool.h>")
     generator.generate_empty(handler)
     
@@ -166,7 +210,11 @@ def generate_context_def(dest_path, context_file_path, types_cache):
     generator.generate_empty(handler)
     
     def namespace_body(namespace_handler):
-        generate_context_data(namespace_handler, context_raw_data)
+        context_data = load_data(context_raw_data)
+        generate_context_data(namespace_handler, context_data)
+        generator.generate_empty(namespace_handler)
+        generate_context_getters(namespace_handler, context_data)
+        generate_context_setters(namespace_handler, context_data)
     generator.generate_block(handler, "namespace Game::Context::{}".format(context_name), namespace_body)
     
     generator.generate_empty(handler)
@@ -356,7 +404,7 @@ def load_shared_context_merge(workspace_data):
         
     return output
 
-def load_pool_context_merge(workspace_data):    
+def load_pool_context_merge(workspace_data):
     output = dict()
     
     merge_data_full = workspace_data.get("poolContextsMerge")

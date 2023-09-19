@@ -2,6 +2,7 @@
 
 #include <dod/Buffers.h>
 #include <dod/Tables.h>
+#include <dod/TableUtils.h>
 #include <dod/MemPool.h>
 
 #pragma warning(push)
@@ -23,6 +24,7 @@ namespace Game::Context::LContext2
         Dod::DBBuffer<float> dbvar0;
         Dod::DBBuffer<int64_t> dbvar1;
     };
+
 }
 
 #pragma warning(pop)

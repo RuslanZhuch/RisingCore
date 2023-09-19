@@ -3,6 +3,7 @@
 #include <assets/types/cpp/CustomData.h>
 #include <dod/Buffers.h>
 #include <dod/Tables.h>
+#include <dod/TableUtils.h>
 #include <dod/MemPool.h>
 
 #pragma warning(push)
@@ -25,6 +26,7 @@ namespace Game::Context::LContext1
         Dod::DBBuffer<float> dbvar1;
         Dod::DBBuffer<int64_t> dbvar2;
     };
+
 }
 
 #pragma warning(pop)

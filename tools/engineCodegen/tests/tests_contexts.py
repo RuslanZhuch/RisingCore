@@ -63,7 +63,8 @@ class TestContexts(unittest.TestCase):
         
         handler = generator.generate_file("dest", "gen_lContext1_data.cpp")
         self.assertIsNotNone(handler)
-        contexts.generate_context_data(handler, context_raw_data)
+        context_data = contexts.load_data(context_raw_data)
+        contexts.generate_context_data(handler, context_data)
         
         handler.close()
         
@@ -160,7 +161,9 @@ class TestContexts(unittest.TestCase):
         
         handler = generator.generate_file("dest", "gen_lContext6_data.cpp")
         self.assertIsNotNone(handler)
-        contexts.generate_context_data(handler, context_raw_data)
+    
+        context_data = contexts.load_data(context_raw_data)
+        contexts.generate_context_data(handler, context_data)
         
         handler.close()
         
@@ -208,6 +211,32 @@ class TestContexts(unittest.TestCase):
         handler.close()
         
         utils.assert_files(self, "dest/gen_lContext6_load.cpp", "assets/expected/gen_lContext6_load.cpp")
+        
+    def test_gen_context6_getters(self):
+        file_path = "assets/contexts/lContext6.json"
+        context_raw_data = loader.load_file_data(file_path)
+        
+        handler = generator.generate_file("dest", "gen_lContext6_getters.cpp")
+        self.assertIsNotNone(handler)
+        context_data = contexts.load_data(context_raw_data)
+        contexts.generate_context_getters(handler, context_data)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_lContext6_getters.cpp", "assets/expected/gen_lContext6_getters.cpp")
+      
+    def test_gen_context6_setters(self):
+        file_path = "assets/contexts/lContext6.json"
+        context_raw_data = loader.load_file_data(file_path)
+        
+        handler = generator.generate_file("dest", "gen_lContext6_setters.cpp")
+        self.assertIsNotNone(handler)
+        context_data = contexts.load_data(context_raw_data)
+        contexts.generate_context_setters(handler, context_data)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_lContext6_setters.cpp", "assets/expected/gen_lContext6_setters.cpp")
       
     def test_gen_context6_impl(self):
         contexts.generate_context_impl("dest", "assets/contexts/lContext6.json")

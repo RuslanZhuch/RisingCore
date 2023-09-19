@@ -4,10 +4,10 @@
     "data": [
         {
             "type": "data",
-            "dataTypeList": [
-                "int32_t",
-                "float"
-            ],
+            "dataTypeList": {
+                "values1": "int32_t",
+                "values2": "float"
+            },
             "name": "data1",
             "capacity": 256
         },
