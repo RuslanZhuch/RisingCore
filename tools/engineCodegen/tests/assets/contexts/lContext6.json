@@ -3,13 +3,28 @@
     "version": 1,
     "data": [
         {
+            "type": "dbbuffer",
+            "dataType": "int64_t",
+            "name": "dbvar2",
+            "capacity": 512
+        },
+        {
             "type": "data",
             "dataTypeList": [
-                "int",
-                "double"
+                "int32_t",
+                "float"
             ],
             "name": "data1",
             "capacity": 256
+        },
+        {
+            "type": "data",
+            "dataTypeList": [
+                "Types::Cats::CryingCat",
+                "int64_t"
+            ],
+            "name": "data2",
+            "capacity": 128
         }
     ]
 }

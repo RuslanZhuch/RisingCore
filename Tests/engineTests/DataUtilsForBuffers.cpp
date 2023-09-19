@@ -591,6 +591,35 @@ TEST(DataUtils, InitializationFromDBBuffer)
 
 }
 
+TEST(DataUtils, InitializationFromMutBuffer)
+{
+
+	using type_t = int32_t;
+	constexpr size_t totalElements{ 8 };
+	constexpr size_t totalBytes{ totalElements * sizeof(type_t) };
+
+	std::array<Dod::MemTypes::data_t, totalBytes> memory;
+
+	MemorySpan memSpan(memory.data(), memory.data() + memory.size());
+	Dod::MutBuffer<int32_t> srcBuffer;
+
+	Dod::DataUtils::initFromMemory(srcBuffer, memSpan);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(srcBuffer), 8);
+
+	for (int32_t id{}; id < Dod::DataUtils::getNumFilledElements(srcBuffer); ++id)
+		Dod::DataUtils::get(srcBuffer, id) = id + 1;
+
+	{
+		CommonBuffer<int32_t> imBuffer;
+
+		Dod::DataUtils::initFromBuffer(imBuffer, srcBuffer);
+		EXPECT_EQ(imBuffer.dataBegin, srcBuffer.dataBegin);
+		EXPECT_EQ(imBuffer.dataEnd, srcBuffer.dataEnd);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(imBuffer), Dod::DataUtils::getNumFilledElements(srcBuffer));
+	}
+
+}
+
 TEST(DataUtils, CreateImFromBuffer)
 {
 

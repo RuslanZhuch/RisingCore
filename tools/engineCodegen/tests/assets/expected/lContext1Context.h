@@ -2,6 +2,7 @@
 
 #include <assets/types/cpp/CustomData.h>
 #include <dod/Buffers.h>
+#include <dod/Tables.h>
 #include <dod/MemPool.h>
 
 #pragma warning(push)

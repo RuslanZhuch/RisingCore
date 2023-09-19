@@ -164,27 +164,27 @@ namespace Dod::DataUtils
 			MemTypes::dataPoint_t dataEnd{ rowMemPosition + table.numOfFilledEls * returnTypeSize };
 		};
 
-		Dod::ImBuffer<returnType_t> imBuffer;
-		initFromMemory(imBuffer, Span{});
+		Dod::MutBuffer<returnType_t> buffer;
+		initFromMemory(buffer, Span{});
 
-		return imBuffer;
+		return buffer;
 
 	}
 
 	template <typename Types, typename ... ExtractedTypes>
-	consteval auto createImBuffersPack()
+	consteval auto createBuffersPack()
 	{
 		constexpr auto numOfTypes{ std::tuple_size_v<Types> };
 		constexpr auto numOfExtractedTypes{ sizeof ... (ExtractedTypes) };
 		if constexpr (numOfExtractedTypes == numOfTypes)
 		{
-			return std::tuple<Dod::ImBuffer<ExtractedTypes>...>{};
+			return std::tuple<Dod::MutBuffer<ExtractedTypes>...>{};
 		}
 		else
 		{
 			constexpr auto elementId{ numOfTypes - 1 - numOfExtractedTypes };
 			using type_t = std::tuple_element_t<elementId, Types>;
-			return createImBuffersPack<Types, type_t, ExtractedTypes...>();
+			return createBuffersPack<Types, type_t, ExtractedTypes...>();
 		}
 	}
 
@@ -194,7 +194,7 @@ namespace Dod::DataUtils
 		using tableType = std::decay_t<decltype(table)>;
 		using types_t = tableType::types_t;
 
-		using returnType_t = decltype(createImBuffersPack<types_t>());
+		using returnType_t = decltype(createBuffersPack<types_t>());
 		returnType_t buffersPack;
 
 		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
@@ -210,8 +210,9 @@ namespace Dod::DataUtils
 				MemTypes::dataPoint_t dataEnd{ nullptr };
 			};
 
-			initFromMemory(bufferPack, Span(rowMemPosition, rowMemPosition + table.numOfFilledEls * columnTypeSize));
-			rowMemPosition += table.capacityEls * columnTypeSize;
+			const auto alignmentOffset{ MemUtils::getAlignOffset(rowMemPosition, alignof(packType_t)) };
+			initFromMemory(bufferPack, Span(rowMemPosition + alignmentOffset, rowMemPosition + alignmentOffset + table.numOfFilledEls * columnTypeSize));
+			rowMemPosition += alignmentOffset + table.capacityEls * columnTypeSize;
 
 		});
 

@@ -218,6 +218,39 @@ TEST(Context, InitBuffer)
 
 }
 
+TEST(Context, InitTable)
+{
+
+	const auto doc{ Engine::ContextUtils::loadFileDataRoot("assets/sampleFileTables.json") };
+	const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, 2) };
+	ASSERT_TRUE(inputDataOpt.has_value());
+
+	const auto& data{ inputDataOpt.value() };
+	ASSERT_EQ(data.Size(), 2);
+
+	{
+		Dod::MemPool memory;
+		memory.allocate(2048);
+		Dod::MemTypes::capacity_t header{};
+
+		Dod::DBTable<float, int> dst;
+		Engine::ContextUtils::CapacityData capacityData(340, 41);
+		Engine::ContextUtils::initData(dst, capacityData, memory, header);
+		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 41);
+	}
+	{
+		Dod::MemPool memory;
+		memory.allocate(2048);
+		Dod::MemTypes::capacity_t header{};
+
+		Dod::DBTable<double, int, bool> dst;
+		Engine::ContextUtils::CapacityData capacityData(1077, 81);
+		Engine::ContextUtils::initData(dst, capacityData, memory, header);
+		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 81);
+	}
+
+}
+
 struct BufferType1
 {
 	float x{};

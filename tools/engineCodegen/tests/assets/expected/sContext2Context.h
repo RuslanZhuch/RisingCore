@@ -1,6 +1,7 @@
 #pragma once
 
 #include <dod/Buffers.h>
+#include <dod/Tables.h>
 #include <dod/MemPool.h>
 
 #pragma warning(push)

@@ -342,7 +342,7 @@ protected:
 	template <int32_t columnId, typename T>
 	void check(std::vector<T>&& expectedValues)
 	{
-		Dod::ImBuffer<T> col{ Dod::DataUtils::get<columnId>(this->table) };
+		Dod::MutBuffer<T> col{ Dod::DataUtils::get<columnId>(this->table) };
 		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(col), expectedValues.size());
 
 		constexpr auto expectedAlignment{ alignof(T) };
@@ -359,10 +359,25 @@ protected:
 	{
 
 		const auto columns{ Dod::DataUtils::get(this->table) };
+		constexpr auto receivedNumOfColumns{ std::tuple_size_v<std::decay_t<decltype(columns)>> };
+		constexpr auto expectedNumOfColumns{ std::tuple_size_v<std::decay_t<decltype(expectedValues)>> };
+		ASSERT_EQ(receivedNumOfColumns, expectedNumOfColumns);
 
-		RisingCore::Helpers::constexprLoop<std::tuple_size_v<std::decay_t<decltype(expectedValues)>>>([&]<size_t columnId>() {
+		RisingCore::Helpers::constexprLoop<receivedNumOfColumns>([&]<size_t columnId>() {
+			auto&& col{ std::get<columnId>(columns) };
 			auto&& expectedColumn{ std::get<columnId>(expectedValues) };
-			this->check<columnId>(std::move(expectedColumn));
+			ASSERT_EQ(Dod::DataUtils::getNumFilledElements(col), expectedColumn.size());
+
+			using columnBufferType_t = std::decay_t<decltype(col)>;
+			using columnType_t = columnBufferType_t::type_t;
+
+			constexpr auto expectedAlignment{ alignof(columnType_t) };
+			for (int32_t id{}; auto && expected : expectedColumn)
+			{
+				auto&& value{ Dod::DataUtils::get(col, id++) };
+				EXPECT_EQ(value, expected);
+				EXPECT_EQ(reinterpret_cast<std::uintptr_t>(&value) % expectedAlignment, 0);
+			}
 		});
 
 	}

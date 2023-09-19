@@ -152,7 +152,6 @@ namespace Engine::ContextUtils
 
     }
 
-    template <typename ... Types>
     static void initData(
         Dod::CommonData::CTable auto& dest,
         CapacityData capacityData,
@@ -160,14 +159,15 @@ namespace Engine::ContextUtils
         Dod::MemTypes::capacity_t& header
     ) noexcept
     {
-
-        constexpr auto alignment{ RisingCore::Helpers::findLargestAlignment<RisingCore::Helpers::gatherTypes<Types...>>() };
+        using tableType_t = std::decay_t<decltype(dest)>;
+        using types_t = tableType_t::types_t;
+        constexpr auto alignment{ RisingCore::Helpers::findLargestAlignment<types_t>() };
         Dod::DataUtils::initFromMemory(dest, capacityData.numOfElements, Dod::MemUtils::stackAquire(pool, capacityData.numOfBytes, alignment, header));
 
     }
 
     template <typename T>
-    [[nodiscard]] static void loadDataContent(
+    static void loadDataContent(
         Dod::DBBuffer<T>& dest,
         rapidjson::GenericArray<true, rapidjson::Value> src, 
         int32_t id
@@ -194,6 +194,15 @@ namespace Engine::ContextUtils
             Dod::DataUtils::constructBack(dest);
             loadVariableFromList(Dod::DataUtils::get(dest, elId), initialData, elId);
         }
+
+    }
+
+    static void loadDataContent(
+        Dod::CommonData::CTable auto& dest,
+        rapidjson::GenericArray<true, rapidjson::Value> src,
+        int32_t id
+    ) noexcept
+    {
 
     }
 

@@ -217,13 +217,24 @@ namespace Dod::DataUtils
 		dest.dataEnd = src.dataBegin + 1 + elementEndId;
 	}
 
-	[[nodiscard]] auto createImFromBuffer(const auto& srcBuffer) noexcept
+	template<typename BufferType>
+	void initFromBuffer(BufferType& dest, const MutBuffer<typename BufferType::type_t>& src) noexcept
+	{
+		dest.dataBegin = src.dataBegin;
+		dest.dataEnd = src.dataEnd;
+	}
+
+	template <typename BufferType>
+	[[nodiscard]] auto createImFromBuffer(const BufferType& srcBuffer) noexcept
 	{
 
 		using type_t = std::remove_pointer_t<decltype(srcBuffer.dataBegin)>;
 
 		Dod::ImBuffer<type_t> imBuffer;
-		initFromBuffer(imBuffer, srcBuffer, 0, Dod::DataUtils::getNumFilledElements(srcBuffer));
+		if constexpr (std::is_same_v<BufferType, Dod::DBBuffer<type_t>>)
+			initFromBuffer(imBuffer, srcBuffer, 0, Dod::DataUtils::getNumFilledElements(srcBuffer));
+		else
+			initFromBuffer(imBuffer, srcBuffer);
 
 		return imBuffer;
 

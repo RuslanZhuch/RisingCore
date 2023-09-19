@@ -1,0 +1,26 @@
+{
+  "whoIAm": "Context",
+  "version": 1,
+  "contextType": "Local",
+  "data": [
+    {
+      "type": "data",
+      "dataTypeList": [
+        "float",
+        "int"
+      ],
+      "name": "data1",
+      "capacity": 41
+    },
+    {
+      "type": "data",
+      "dataTypeList": [
+        "double",
+        "int",
+        "bool"
+      ],
+      "name": "data2",
+      "capacity": 81
+    }
+  ]
+}
