@@ -35,10 +35,10 @@ namespace Game::ExecutionBlock
         Context::LContext1::Data target1Context;
         Context::LContext3::Data target2Context;
         Context::LContext3::Data target3Context;
-        const Dod::SharedContext::Controller<Context::SContext1::Data>* shared1Context{ nullptr };
-        const Dod::SharedContext::Controller<Context::SContext1::Data>* shared2Context{ nullptr };
-        const Dod::SharedContext::Controller<Context::SContext2::Data>* shared3Context{ nullptr };
-        const Dod::SharedContext::Controller<Context::SContext2::Data>* shared4Context{ nullptr };
+        Context::SContext1::CData shared1Context;
+        Context::SContext1::CData shared2Context;
+        Context::SContext2::CData shared3Context;
+        Context::SContext2::CData shared4Context;
     };
 }
 

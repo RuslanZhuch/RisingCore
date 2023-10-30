@@ -41,6 +41,7 @@
   <ItemGroup>
     <ClCompile Include="engineTests\Algorithms.cpp" />
     <ClCompile Include="engineTests\Buffers.cpp" />
+    <ClCompile Include="engineTests\DataStream.cpp" />
     <ClCompile Include="engineTests\DataUtilsForBuffers.cpp" />
     <ClCompile Include="engineTests\Contexts.cpp" />
     <ClCompile Include="engineTests\MemPool.cpp" />

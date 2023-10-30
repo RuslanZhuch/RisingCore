@@ -16,9 +16,10 @@ int main()
 
 
 
-        for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.context.commands); ++cmdId)
+
+        for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
         {
-            if (Dod::DataUtils::get(sApplicationContext.context.commands, 0) == 1)
+            if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
             {
                 return 0;
             }

@@ -20,6 +20,7 @@ int main()
     {
         const auto start{ std::chrono::high_resolution_clock::now() };
 
+
         executor1.update(deltaTime);
         executor2.update(deltaTime);
 
@@ -28,9 +29,9 @@ int main()
         executor1.flushSharedLocalContexts();
         executor2.flushSharedLocalContexts();
 
-        for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.context.commands); ++cmdId)
+        for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
         {
-            if (Dod::DataUtils::get(sApplicationContext.context.commands, 0) == 1)
+            if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
             {
                 return 0;
             }

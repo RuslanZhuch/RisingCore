@@ -31,6 +31,36 @@ class TestRuntime(unittest.TestCase):
         self.assertIsNotNone(handler)
         descriptor_file = open("dest/runtime.cpp")
                 
+    def test_gather_runtime_usage_for_executor(self):
+        runtime_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
+        shared_usage_list = runtime.gather_shared_usage_for_executor(runtime_data, "executor2")
+
+        self.assertEqual(len(shared_usage_list), 4)
+
+        self.assertEqual(shared_usage_list[0].executor_context_name, "shared1")
+        self.assertEqual(shared_usage_list[0].shared_context_instance_name, "sharedInst1")
+
+        self.assertEqual(shared_usage_list[1].executor_context_name, "shared2")
+        self.assertEqual(shared_usage_list[1].shared_context_instance_name, "sharedInst2")
+
+        self.assertEqual(shared_usage_list[2].executor_context_name, "shared3")
+        self.assertEqual(shared_usage_list[2].shared_context_instance_name, "sharedInst3")
+
+        self.assertEqual(shared_usage_list[3].executor_context_name, "shared4")
+        self.assertEqual(shared_usage_list[3].shared_context_instance_name, "sharedInst4")
+      
+    def test_gather_runtime_usage_for_executor_with_pools(self):
+        runtime_data = loader.load_runtime_data("assets/project3/ws_runtime.json")
+        shared_usage_list = runtime.gather_shared_usage_for_executor(runtime_data, "executor4")
+
+        self.assertEqual(len(shared_usage_list), 2)
+
+        self.assertEqual(shared_usage_list[0].executor_context_name, "pool2")
+        self.assertEqual(shared_usage_list[0].shared_context_instance_name, "poolInst2")
+
+        self.assertEqual(shared_usage_list[1].executor_context_name, "pool3")
+        self.assertEqual(shared_usage_list[1].shared_context_instance_name, "poolInst3")
+
     def test_generate_runtime_function(self):        
         executors_data = executors.load([
             "assets/executors/executor1.json",

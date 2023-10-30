@@ -169,6 +169,19 @@ class TestContexts(unittest.TestCase):
         
         utils.assert_files(self, "dest/gen_lContext6_data.cpp", "assets/expected/gen_lContext6_data.cpp")
         
+    def test_gen_context6_data_convertion(self):
+        context_raw_data = loader.load_file_data("assets/contexts/lContext6.json")
+        
+        handler = generator.generate_file("dest", "gen_lContext6_data_convertion.cpp")
+        self.assertIsNotNone(handler)
+    
+        context_data = contexts.load_data(context_raw_data)
+        contexts.generate_data_converter(handler, context_data)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_lContext6_data_convertion.cpp", "assets/expected/gen_lContext6_data_convertion.cpp")
+        
     def test_gen_context6_def(self):
         types_file_data = loader.load_file_data("assets/project1/types_contexts_data.json")
         types_cache = types_manager.cache_types([types_file_data])
@@ -321,6 +334,21 @@ class TestContexts(unittest.TestCase):
         handler.close()
         
         utils.assert_files(self, "dest/gen_scontexts_init.cpp", "assets/expected/gen_scontexts_init.cpp")
+        
+    def test_generate_shared_contexts_usage(self):
+        instances_data = contexts.load_shared_context_instances("assets/project3/ws_runtime.json")
+        handler = generator.generate_file("dest", "gen_scontexts_usage.cpp")
+        self.assertIsNotNone(handler)
+        pool_id = 1
+        contexts.generate_shared_usage(handler, instances_data, pool_id, [
+            "poolInst1",
+            "poolInst2",
+            "poolInst3"
+        ])
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_scontexts_usage.cpp", "assets/expected/gen_scontexts_usage.cpp")
         
     def test_get_shared_contexts_flush(self):
         workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")

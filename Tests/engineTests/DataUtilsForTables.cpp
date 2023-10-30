@@ -1,8 +1,9 @@
 #include "pch.h"
 
 #include <dod/MemTypes.h>
-#include <dod/DataUtils.h>
+#include <dod/TableUtils.h>
 #include <dod/Tables.h>
+#include <dod/MemPool.h>
 
 #include "utils/CommonStructures.h"
 
@@ -14,216 +15,21 @@
 #include <cassert>
 #pragma warning(pop)
 
-struct NonTrivialType
-{
+static constexpr Dod::MemTypes::alignment_t alignment{ 64 };
 
-	NonTrivialType(std::vector<int> initial) noexcept
-		:data(initial)
-	{
-		this->instanceCounter = new int(1);
-		++this->counter;
-	}
-	NonTrivialType(const NonTrivialType& other) noexcept
-	{
-		this->data = other.data;
-		++this->counter;
-		this->instanceCounter = other.instanceCounter;
-		++(*this->instanceCounter);
-	}
-	NonTrivialType(NonTrivialType&& other) noexcept
-	{
-		this->data = other.data;
-		++this->counter;
-		this->instanceCounter = other.instanceCounter;
-		other.instanceCounter = nullptr;
-	}
-	~NonTrivialType() noexcept
-	{
-		if (this->instanceCounter != nullptr && --(*this->instanceCounter) <= 0)
-			delete this->instanceCounter;
-		--this->counter;
-	}
-
-	NonTrivialType& operator=(const NonTrivialType& other) noexcept
-	{
-		this->data = other.data;
-		if (--(*this->instanceCounter) <= 0)
-		{
-			delete this->instanceCounter;
-			this->instanceCounter = nullptr;
-		}
-		this->instanceCounter = other.instanceCounter;
-		++(*this->instanceCounter);
-		return *this;
-	}
-
-	NonTrivialType& operator=(NonTrivialType&& other) noexcept
-	{
-		this->data = other.data;
-		if (--(*this->instanceCounter) <= 0)
-		{
-			delete this->instanceCounter;
-			this->instanceCounter = nullptr;
-		}
-		this->instanceCounter = other.instanceCounter;
-		other.instanceCounter = nullptr;
-		return *this;
-	}
-
-	static int counter;
-	int* instanceCounter{};
-	std::vector<int> data;
-
-	friend auto operator==(const NonTrivialType& left, const NonTrivialType& right) noexcept
-	{
-		return left.data == right.data;
-	}
-};
-int NonTrivialType::counter = 0;
-
-static_assert(std::is_trivial_v<NonTrivialType> == false);
-static_assert(std::is_move_assignable_v<NonTrivialType> == true);
-static_assert(std::is_move_constructible_v<NonTrivialType> == true);
-static_assert(std::is_copy_assignable_v<NonTrivialType> == true);
-static_assert(std::is_copy_constructible_v<NonTrivialType> == true);
-static_assert(sizeof(NonTrivialType) == 40);
-static_assert(alignof(NonTrivialType) == 8);
-
-struct NonTrivialNonMovableType
-{
-
-	NonTrivialNonMovableType(std::vector<int> initial) noexcept
-		:data(initial)
-	{
-		this->instanceCounter = new int(1);
-		++this->counter;
-	}
-	NonTrivialNonMovableType(const NonTrivialNonMovableType& other) noexcept
-	{
-		this->data = other.data;
-		++this->counter;
-		this->instanceCounter = other.instanceCounter;
-		++(*this->instanceCounter);
-	}
-	NonTrivialNonMovableType(NonTrivialNonMovableType&& other) noexcept = delete;
-	~NonTrivialNonMovableType() noexcept
-	{
-		if (this->instanceCounter != nullptr && --(*this->instanceCounter) <= 0)
-			delete this->instanceCounter;
-		--this->counter;
-	}
-
-	NonTrivialNonMovableType& operator=(const NonTrivialNonMovableType& other) noexcept
-	{
-		this->data = other.data;
-		if (--(*this->instanceCounter) <= 0)
-		{
-			delete this->instanceCounter;
-			this->instanceCounter = nullptr;
-		}
-		this->instanceCounter = other.instanceCounter;
-		++(*this->instanceCounter);
-		return *this;
-	}
-
-	NonTrivialNonMovableType& operator=(NonTrivialNonMovableType&& other) noexcept = delete;
-
-	static int counter;
-	int* instanceCounter{};
-	std::vector<int> data;
-
-	friend auto operator==(const NonTrivialNonMovableType& left, const NonTrivialNonMovableType& right) noexcept
-	{
-		return left.data == right.data;
-	}
-};
-int NonTrivialNonMovableType::counter = 0;
-
-static_assert(std::is_trivial_v<NonTrivialNonMovableType> == false);
-static_assert(std::is_move_assignable_v<NonTrivialNonMovableType> == false);
-static_assert(std::is_move_constructible_v<NonTrivialNonMovableType> == false);
-static_assert(std::is_copy_assignable_v<NonTrivialNonMovableType> == true);
-static_assert(std::is_copy_constructible_v<NonTrivialNonMovableType> == true);
-static_assert(sizeof(NonTrivialNonMovableType) == 40);
-static_assert(alignof(NonTrivialNonMovableType) == 8);
-
-struct NonTrivialMoveOnlyType
-{
-	std::vector<int> data;
-	int* instanceCounter{};
-	static int counter;
-
-	NonTrivialMoveOnlyType(std::vector<int> data) noexcept
-		:data(data)
-	{
-		++this->counter;
-		this->instanceCounter = new int(1);
-	}
-
-	NonTrivialMoveOnlyType(NonTrivialMoveOnlyType&& other) noexcept
-		:data(std::move(other.data))
-	{
-		++this->counter;
-		this->instanceCounter = other.instanceCounter;
-		other.instanceCounter = nullptr;
-	}
-
-	NonTrivialMoveOnlyType& operator=(NonTrivialMoveOnlyType&& other) noexcept
-	{
-		std::exchange(this->data, other.data);
-		if (--(*this->instanceCounter) <= 0)
-		{
-			delete this->instanceCounter;
-			this->instanceCounter = nullptr;
-		}
-		this->instanceCounter = other.instanceCounter;
-		other.instanceCounter = nullptr;
-		return *this;
-	};
-
-	~NonTrivialMoveOnlyType()
-	{
-		if (this->instanceCounter != nullptr)
-		{
-			--(*this->instanceCounter);
-			EXPECT_EQ(*this->instanceCounter, 0);
-			if (*this->instanceCounter == 0)
-				delete this->instanceCounter;
-		}
-		--this->counter;
-	}
-
-	NonTrivialMoveOnlyType(const NonTrivialMoveOnlyType&) noexcept = delete;
-	NonTrivialMoveOnlyType& operator=(const NonTrivialMoveOnlyType&) noexcept = delete;
-
-
-	friend auto operator==(const NonTrivialMoveOnlyType& left, const NonTrivialMoveOnlyType& right) noexcept
-	{
-		return left.data == right.data;
-	}
-};
-int NonTrivialMoveOnlyType::counter = 0;
-
-
-static_assert(std::is_trivial_v<NonTrivialMoveOnlyType> == false);
-static_assert(std::is_move_assignable_v<NonTrivialMoveOnlyType> == true);
-static_assert(std::is_move_constructible_v<NonTrivialMoveOnlyType> == true);
-static_assert(std::is_copy_assignable_v<NonTrivialMoveOnlyType> == false);
-static_assert(std::is_copy_constructible_v<NonTrivialMoveOnlyType> == false);
-static_assert(sizeof(NonTrivialMoveOnlyType) == 40);
-static_assert(alignof(NonTrivialMoveOnlyType) == 8);
-
-static constexpr size_t bytesForInt7{ 40 };
-static constexpr size_t bytesForIntFloat3{ 36 };
-static constexpr size_t bytesForIntFloat7{ 68 };
-static constexpr size_t bytesForIntDouble2{ 52 };
-static constexpr size_t bytesForIntDouble3{ 64 };
-static constexpr size_t bytesForIntDouble4{ 76 };
-static constexpr size_t bytesForDoubleInt2{ 48 };
-static constexpr size_t bytesForIntComplex2{ 148 };
-static constexpr size_t bytesForIntComplex3{ 192 };
-static constexpr size_t bytesForIntComplex4{ 236 };
-static constexpr size_t bytesForIntComplexComplex3{ 312 };
+static constexpr size_t bytesForInt7{ 64 };
+static constexpr size_t bytesForInt20{ 128 };
+static constexpr size_t bytesForIntFloat3{ 128 };
+static constexpr size_t bytesForIntFloat7{ 128 };
+static constexpr size_t bytesForIntDouble2{ 128 };
+static constexpr size_t bytesForIntDouble3{ 128 };
+static constexpr size_t bytesForIntDouble4{ 128 };
+static constexpr size_t bytesForIntDouble16{ 192 };
+static constexpr size_t bytesForDoubleInt2{ 128 };
+static constexpr size_t bytesForIntComplex2{ 196 };
+static constexpr size_t bytesForIntComplex3{ 196 };
+static constexpr size_t bytesForIntComplex4{ 256 };
+static constexpr size_t bytesForIntComplexComplex3{ 320 };
 
 template <typename ... Types>
 static void checkMemoryAlignment(auto&& memory)
@@ -234,20 +40,28 @@ static void checkMemoryAlignment(auto&& memory)
 	ASSERT_EQ(address % maxAlignment, 0);
 }
 
-template <size_t memorySize, Dod::MemTypes::alignment_t memoryAlignmentOffset, typename ... Types>
+template <size_t memorySize, typename ... Types>
 class InitDBTableFromMemoryTest : public ::testing::Test {
 
 protected:
 	void run(int32_t expectCapacityEls, Dod::MemTypes::capacity_t expectedBytesRequires)
+	{
+		this->runImpl(this->table, expectCapacityEls, expectedBytesRequires);
+//		this->runImpl(this->tableMut, expectCapacityEls, expectedBytesRequires);
+//		this->runImpl(this->tableIm, expectCapacityEls, expectedBytesRequires);
+	}
+
+private:
+	void runImpl(auto& table, int32_t expectCapacityEls, Dod::MemTypes::capacity_t expectedBytesRequires)
 	{
 
 		checkMemoryAlignment<Types...>(this->memory);
 
 		EXPECT_EQ(Dod::DataUtils::computeCapacityInBytes<RisingCore::Helpers::gatherTypes<Types...>>(expectCapacityEls), expectedBytesRequires);
 
-		MemorySpan memSpan(this->memory.data() + memoryAlignmentOffset, this->memory.data() + memoryAlignmentOffset + this->memory.size());
+		MemorySpan memSpan(this->memory.data(), this->memory.data() + this->memory.size());
 
-		Dod::DataUtils::initFromMemory(this->table, expectCapacityEls, memSpan);
+		Dod::DataUtils::initFromMemory(table, expectCapacityEls, memSpan);
 
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(table), 0);
 
@@ -256,43 +70,62 @@ protected:
 
 	}
 
-	alignas(RisingCore::Helpers::findLargestAlignmentFlat<Types...>()) std::array<Dod::MemTypes::data_t, memorySize + memoryAlignmentOffset> memory{};
-	Dod::DBTable<Types...> table;
+public:
+
+	alignas(alignment) std::array<Dod::MemTypes::data_t, memorySize + alignment> memory{};
+	Dod::DTable<Types...> table;
+	Dod::MutTable<Types...> tableMut;
+	Dod::ImTable<Types...> tableIm;
 
 };
 
-using InitDBTableFromMemory32BytesInt = InitDBTableFromMemoryTest<bytesForInt7, 0, int>;
+using InitDBTableFromMemory32BytesInt = InitDBTableFromMemoryTest<bytesForInt7, int>;
 TEST_F(InitDBTableFromMemory32BytesInt, InitFromMemory)
 {
 	this->run(0, 0);
-	this->run(1, 16);
-	this->run(7, 40);
+	this->run(1, 64);
+	this->run(7, 64);
 }
 
-using InitDBTableFromMemory32BytesIntFloat = InitDBTableFromMemoryTest<bytesForIntFloat3, 0, int, float>;
+using InitDBTableFromMemory128BytesInt = InitDBTableFromMemoryTest<bytesForInt20, int>;
+TEST_F(InitDBTableFromMemory128BytesInt, InitFromMemory)
+{
+	this->run(0, 0);
+	this->run(1, 64);
+	this->run(7, 64);
+	this->run(16, 64);
+	this->run(18, 128);
+	this->run(20, 128);
+}
+
+using InitDBTableFromMemory32BytesIntFloat = InitDBTableFromMemoryTest<bytesForIntFloat3, int, float>;
 TEST_F(InitDBTableFromMemory32BytesIntFloat, InitFromMemory)
 {
 
-	this->run(3, 36);
+	this->run(1, 128);
+	this->run(3, 128);
 
 }
 
-using InitDBTableFromMemory32BytesIntDouble = InitDBTableFromMemoryTest<bytesForIntDouble2, 0, int, double>;
+using InitDBTableFromMemory32BytesIntDouble = InitDBTableFromMemoryTest<bytesForIntDouble2, int, double>;
 TEST_F(InitDBTableFromMemory32BytesIntDouble, InitFromMemory)
 {
-	this->run(2, 52);
+	this->run(0, 0);
+	this->run(1, 128);
+	this->run(2, 128);
 }
 
-using InitDBTableFromMemory3IntDouble = InitDBTableFromMemoryTest<bytesForIntDouble3, 0, int, double>;
+using InitDBTableFromMemory3IntDouble = InitDBTableFromMemoryTest<bytesForIntDouble3, int, double>;
 TEST_F(InitDBTableFromMemory3IntDouble, InitFromMemory)
 {
-	this->run(3, 64);
+	this->run(0, 0);
+	this->run(2, 128);
+	this->run(3, 128);
 }
 
 template <size_t memorySize, Dod::MemTypes::alignment_t memoryAlignmentOffset, typename ... Types>
 class TableTest : public ::testing::Test {
 	using types_t = std::tuple<Types...>;
-	static constexpr auto deadBucketSize{ Dod::DataUtils::computeDeadbucketSizeInBytes<types_t>() };
 protected:
 	void init(int32_t expectCapacityEls)
 	{
@@ -301,19 +134,41 @@ protected:
 
 		Dod::DataUtils::initFromMemory(this->table, expectCapacityEls, memSpan);
 		ASSERT_EQ(Dod::DataUtils::getCapacity(this->table), expectCapacityEls);
+		ASSERT_GE(this->table.dataBegin, this->memory.data());
+
+		const auto address{ reinterpret_cast<std::uintptr_t>(this->table.dataBegin) };
+		EXPECT_EQ(address % alignment, 0);
 
 	}
 
-	void populate(int32_t expectedNumOfFilledEls, auto&& ... values)
+	void pushBack(int32_t expectedNumOfFilledEls, auto&& ... values)
 	{
-		Dod::DataUtils::populate(this->table, true, std::forward<decltype(values)>(values)...);
+		Dod::DataUtils::pushBack(this->table, true, std::forward<decltype(values)>(values)...);
+		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), expectedNumOfFilledEls);
+	}
+
+	void pushBackReject(int32_t expectedNumOfFilledEls, auto&& ... values)
+	{
+		Dod::DataUtils::pushBack(this->table, false, std::forward<decltype(values)>(values)...);
+		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), expectedNumOfFilledEls);
+	}
+
+	void pushBackDummy(int32_t expectedNumOfFilledEls, auto&& ... values)
+	{
+		Dod::DataUtils::pushBack(this->table, false, std::forward<decltype(values)>(values)...);
+		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), expectedNumOfFilledEls);
+	}
+
+	void populate(int32_t expectedNumOfFilledEls, int32_t numOfElementsToFill, auto&& ... fillers)
+	{
+		Dod::DataUtils::populate(this->table, numOfElementsToFill, std::forward<decltype(fillers)>(fillers)...);
 		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(table), expectedNumOfFilledEls);
 	}
 
 	template <typename T>
 	void checkInternal(std::vector<T> expectedValues, int32_t offset)
 	{
-		const auto populatedPtr{ reinterpret_cast<T*>(table.dataBegin + deadBucketSize + static_cast<size_t>(offset)) };
+		const auto populatedPtr{ reinterpret_cast<T*>(table.dataBegin + static_cast<size_t>(offset)) };
 
 		for (int32_t id{}; const auto expected : expectedValues)
 		{
@@ -326,273 +181,429 @@ protected:
 		}
 	}
 
-	template <typename T>
-	void checkDeadBucket(T expectedValue, int32_t offset)
-	{
-		const auto populatedPtr{ reinterpret_cast<T*>(table.dataBegin + static_cast<size_t>(offset)) };
-
-		const auto point{ populatedPtr };
-		EXPECT_EQ(*point, expectedValue);
-
-		const auto address{ reinterpret_cast<std::uintptr_t>(point) };
-		constexpr auto expectedAlignment{ alignof(T) };
-		EXPECT_EQ(address % expectedAlignment, 0);
-	}
-
 	template <int32_t columnId, typename T>
-	void check(std::vector<T>&& expectedValues)
+	void check(std::vector<T>&& expectedValues, int32_t offset)
 	{
-		Dod::MutBuffer<T> col{ Dod::DataUtils::get<columnId>(this->table) };
-		ASSERT_EQ(Dod::DataUtils::getNumFilledElements(col), expectedValues.size());
 
-		constexpr auto expectedAlignment{ alignof(T) };
-		for (int32_t id{}; auto && expected : expectedValues)
-		{
-			auto&& value{ Dod::DataUtils::get(col, id++) };
-			EXPECT_EQ(value, expected);
-			EXPECT_EQ(reinterpret_cast<std::uintptr_t>(&value) % expectedAlignment, 0);
-		}
+		this->checkInternal<T>(expectedValues, offset);
+
+		const auto impl = [&]<typename TBuffer>(auto&& table) {
+
+			const auto checker = [&](auto&& data) {
+				ASSERT_EQ(Dod::DataUtils::getNumFilledElements(data), expectedValues.size());
+
+				constexpr auto expectedAlignment{ alignof(T) };
+				for (int32_t id{}; auto && expected : expectedValues)
+				{
+					auto&& value{ Dod::DataUtils::get(data, id++) };
+					EXPECT_EQ(value, expected);
+					EXPECT_EQ(reinterpret_cast<std::uintptr_t>(&value) % expectedAlignment, 0);
+				}
+			};
+
+			if constexpr (Dod::CommonData::CMonoData<std::decay_t<decltype(table)>>)
+			{
+				checker(table);
+			}
+			else
+			{
+				TBuffer col{ Dod::DataUtils::get<columnId>(table) };
+				checker(col);
+			}
+
+		};
+
+		impl.operator()<Dod::MutTable<T>>(this->table);
+		impl.operator()<Dod::MutTable<T>>(Dod::MutTable(this->table));
+		impl.operator()<Dod::ImTable<T>>(Dod::ImTable(this->table));
+
 	}
 
 	template <typename ... T>
-	void checkTable(std::tuple<std::vector<T>...>&& expectedValues)
+	void checkTable(std::tuple<std::vector<T>...>&& expectedValues) requires requires(T ... t) {
+		{std::tuple_size_v<std::tuple<T...>> > 1 };
+	}
 	{
 
-		const auto columns{ Dod::DataUtils::get(this->table) };
-		constexpr auto receivedNumOfColumns{ std::tuple_size_v<std::decay_t<decltype(columns)>> };
-		constexpr auto expectedNumOfColumns{ std::tuple_size_v<std::decay_t<decltype(expectedValues)>> };
-		ASSERT_EQ(receivedNumOfColumns, expectedNumOfColumns);
+		const auto impl = [&](auto&& data) {
+			const auto columns{ Dod::DataUtils::get(data) };
+			constexpr auto receivedNumOfColumns{ std::tuple_size_v<std::decay_t<decltype(columns)>> };
+			constexpr auto expectedNumOfColumns{ std::tuple_size_v<std::decay_t<decltype(expectedValues)>> };
+			ASSERT_EQ(receivedNumOfColumns, expectedNumOfColumns);
 
-		RisingCore::Helpers::constexprLoop<receivedNumOfColumns>([&]<size_t columnId>() {
-			auto&& col{ std::get<columnId>(columns) };
-			auto&& expectedColumn{ std::get<columnId>(expectedValues) };
-			ASSERT_EQ(Dod::DataUtils::getNumFilledElements(col), expectedColumn.size());
+			RisingCore::Helpers::constexprLoop<receivedNumOfColumns>([&]<size_t columnId>() {
+				auto&& col{ std::get<columnId>(columns) };
+				auto&& expectedColumn{ std::get<columnId>(expectedValues) };
+				ASSERT_EQ(Dod::DataUtils::getNumFilledElements(col), expectedColumn.size());
 
-			using columnBufferType_t = std::decay_t<decltype(col)>;
-			using columnType_t = columnBufferType_t::type_t;
+				using columnBufferType_t = std::decay_t<decltype(col)>;
+				using columnType_t = columnBufferType_t::types_t;
 
-			constexpr auto expectedAlignment{ alignof(columnType_t) };
-			for (int32_t id{}; auto && expected : expectedColumn)
-			{
-				auto&& value{ Dod::DataUtils::get(col, id++) };
-				EXPECT_EQ(value, expected);
-				EXPECT_EQ(reinterpret_cast<std::uintptr_t>(&value) % expectedAlignment, 0);
-			}
-		});
+				constexpr auto expectedAlignment{ alignof(columnType_t) };
+				for (int32_t id{}; auto && expected : expectedColumn)
+				{
+					auto&& value{ Dod::DataUtils::get(col, id++) };
+					EXPECT_EQ(value, expected);
+					EXPECT_EQ(reinterpret_cast<std::uintptr_t>(&value) % expectedAlignment, 0);
+				}
+			});
+		};
+
+		impl(this->table);
+		impl(Dod::MutTable(this->table));
+		impl(Dod::ImTable(this->table));
+
 
 	}
 
-	void remove(int32_t expectedEls, std::vector<int32_t> indicesMem)
+	template <typename... Ts>
+	struct AllSameType : std::conjunction<std::is_same<Ts, typename std::tuple_element<0, std::tuple<Ts...>>::type>...> {};
+
+	template <typename T, typename ... TOther>
+	[[nodiscard]] auto genCheckVector(T&& first, TOther&& ... other) -> std::vector<T> {
+		static_assert(AllSameType<T, TOther...>{});
+		std::vector<T> out;
+		out.emplace_back(std::forward<T>(first));
+
+		(out.emplace_back(std::forward<TOther>(other)), ...);
+		return out;
+	};
+
+	template <typename ... T>
+	[[nodiscard]] auto genCheckTuple(std::vector<T>&& ... values) -> std::tuple<std::vector<T>...> {
+		return std::make_tuple(std::forward<std::vector<T>>(values)...);
+	};
+
+	void remove(int32_t expectedEls, std::vector<int32_t> indices)
 	{
-		Dod::ImBuffer<int32_t> indicesToRemove;
-		Dod::DataUtils::initFromArray(indicesToRemove, indicesMem);
+		Dod::MemPool memory;
+		memory.allocate(1024 + alignment);
+		const auto memorySpan{ Dod::MemUtils::acquire(memory, 0, 1024, alignment) };
+		Dod::ImTable<int32_t> indicesToRemove;
+		std::memcpy(memorySpan.dataBegin, indices.data(), indices.size() * sizeof(int32_t));
+		Dod::DataUtils::initFromMemory(indicesToRemove, indices.size(), memorySpan);
 		Dod::DataUtils::remove(this->table, indicesToRemove);
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), expectedEls);
 	}
 
-	alignas(RisingCore::Helpers::findLargestAlignmentFlat<Types...>()) std::array<Dod::MemTypes::data_t, memorySize + memoryAlignmentOffset> memory{};
-	Dod::DBTable<Types...> table;
+	alignas(alignment) std::array<Dod::MemTypes::data_t, memorySize + memoryAlignmentOffset> memory{};
+	Dod::DTable<Types...> table;
 
 };
 
-using PopulateIntFloat = TableTest<bytesForIntFloat3, 0, int, float>;
-TEST_F(PopulateIntFloat, Populate)
+using PushBackInt20 = TableTest<bytesForInt20, 0, int>;
+TEST_F(PushBackInt20, PushBack)
+{
+
+	this->init(20);
+
+	this->pushBack(1, 1);
+	this->check<0, int>({ 1 }, 0);
+
+	this->pushBack(2, 2);
+	this->check<0, int>({ 1, 2 }, 0);
+
+	this->pushBackReject(2, 3);
+	this->check<0, int>({ 1, 2 }, 0);
+
+	this->pushBack(3, 4);
+	this->check<0, int>({ 1, 2, 4 }, 0);
+
+}
+
+using PushBackIntFloat = TableTest<bytesForIntFloat3, 0, int, float>;
+TEST_F(PushBackIntFloat, PushBack)
 {
 
 	this->init(3);
 
-	this->populate(1, 1, 2.f);
-	this->checkInternal<int>({ 1 }, 0);
-	this->checkInternal<float>({ 2.f }, 12);
+	this->pushBack(1, 1, 2.f);
+	this->check<0, int>({ 1 }, 0);
+	this->check<1, float>({ 2.f }, 64);
 
-	this->populate(2, 3, 4.f);
-	this->checkInternal<int>({ 1, 3 }, 0);
-	this->checkInternal<float>({ 2.f, 4.f }, 12);
+	this->pushBack(2, 3, 4.f);
+	this->check<0, int>({ 1, 3 }, 0);
+	this->check<1, float>({ 2.f, 4.f }, 64);
 
-	this->populate(3, 5, 6.f);
-	this->checkInternal<int>({ 1, 3, 5 }, 0);
-	this->checkInternal<float>({ 2.f, 4.f, 6 }, 12);
+	this->pushBackReject(2, 5, 6.f);
+	this->check<0, int>({ 1, 3 }, 0);
+	this->check<1, float>({ 2.f, 4.f }, 64);
 
-	this->populate(3, 7, 8.f);
-	this->checkDeadBucket(8.f, 0);
+	this->pushBack(3, 7, 8.f);
+	this->check<0, int>({ 1, 3, 7 }, 0);
+	this->check<1, float>({ 2.f, 4.f, 8 }, 64);
 
-}
-
-using PopulateIntDouble = TableTest<bytesForIntDouble2, 0, int, double>;
-TEST_F(PopulateIntDouble, Populate)
-{
-
-	this->init(2);
-
-	this->populate(1, 1, 2.);
-	this->checkInternal<int>({ 1 }, 0);
-	this->checkInternal<double>({ 2. }, 8);
-
-	this->populate(2, 3, 4.);
-	this->checkInternal<int>({ 1, 3 }, 0);
-	this->checkInternal<double>({ 2., 4. }, 8);
-
-	this->populate(2, 5, 6.);
-	this->checkDeadBucket(6., 0);
+	this->pushBack(3, 9, 10.f);
 
 }
 
-using PopulateIntDoubleAlignment = TableTest<bytesForIntDouble3, 0, int, double>;
-TEST_F(PopulateIntDoubleAlignment, Populate)
+using PushBackIntDoubleAlignment = TableTest<bytesForIntDouble3, 0, int, double>;
+TEST_F(PushBackIntDoubleAlignment, PushBack)
 {
 
 	this->init(3);
 
-	this->populate(1, 1, 2.);
-	this->checkInternal<int>({ 1 }, 0);
-	this->checkInternal<double>({ 2. }, 16);
+	this->pushBack(1, 1, 2.);
+	this->check<0, int>({ 1 }, 0);
+	this->check<1, double>({ 2. }, 64);
 
-	this->populate(2, 3, 4.);
-	this->checkInternal<int>({ 1, 3 }, 0);
-	this->checkInternal<double>({ 2., 4. }, 16);
+	this->pushBack(2, 3, 4.);
+	this->check<0, int>({ 1, 3 }, 0);
+	this->check<1, double>({ 2., 4. }, 64);
 
-	this->populate(3, 5, 6.);
-	this->checkInternal<int>({ 1, 3, 5 }, 0);
-	this->checkInternal<double>({ 2., 4., 6. }, 16);
+	this->pushBack(3, 5, 6.);
+	this->check<0, int>({ 1, 3, 5 }, 0);
+	this->check<1, double>({ 2., 4., 6. }, 64);
 
-	this->populate(3, 7, 8.);
-	this->checkDeadBucket(8., 0);
+	this->pushBack(3, 7, 8.);
 
 }
 
-using PopulateDoubleInt = TableTest<bytesForDoubleInt2, 0, double, int>;
-TEST_F(PopulateDoubleInt, Populate)
+using PushBackDoubleInt = TableTest<bytesForDoubleInt2, 0, double, int>;
+TEST_F(PushBackDoubleInt, PushBack)
 {
 
 	this->init(2);
 
-	this->populate(1, 1., 2);
-	this->checkInternal<double>({ 1. }, 0);
-	this->checkInternal<int>({ 2 }, 16);
+	this->pushBack(1, 1., 2);
+	this->check<0, double>({ 1. }, 0);
+	this->check<1, int>({ 2 }, 64);
 
-	this->populate(2, 3., 4);
-	this->checkInternal<double>({ 1., 3. }, 0);
-	this->checkInternal<int>({ 2, 4 }, 16);
+	this->pushBack(2, 3., 4);
+	this->check<0, double>({ 1., 3. }, 0);
+	this->check<1, int>({ 2, 4 }, 64);
 
-	this->populate(2, 5., 6);
-	this->checkDeadBucket(6, 0);
-
-}
-
-using PopulateIntNonTrivial = TableTest<bytesForIntComplex2, 0, int, NonTrivialType>;
-TEST_F(PopulateIntNonTrivial, Populate)
-{
-
-	this->init(2);
-	NonTrivialType::counter = 0;
-
-	NonTrivialType nonTrivial1({ 10, 20 });
-	this->populate(1, 1, nonTrivial1);
-	EXPECT_EQ(NonTrivialType::counter, 2);
-	this->check<0, int>({ 1 });
-	this->check<1, NonTrivialType>({ nonTrivial1 });
-
-	NonTrivialType nonTrivial2({ 30, 40, 50 });
-	this->populate(2, 3, nonTrivial2);
-	EXPECT_EQ(NonTrivialType::counter, 4);
-	this->check<0, int>({ 1, 3 });
-	this->check<1, NonTrivialType>({ nonTrivial1, nonTrivial2 });
-
-	NonTrivialType nonTrivial3({ 60, 70 });
-	this->populate(2, 5, nonTrivial3);
-	EXPECT_EQ(NonTrivialType::counter, 5);
-	this->check<0, int>({ 1, 3 });
-	this->check<1, NonTrivialType>({ nonTrivial1, nonTrivial2 });
+	this->pushBack(2, 5., 6);
 
 }
 
-using PopulateIntDoubleNotAligned = TableTest<bytesForIntDouble2, 4, int, double>;
-TEST_F(PopulateIntDoubleNotAligned, Populate)
+using PushBackIntDoubleNotAligned = TableTest<bytesForIntDouble2 + alignment, 4, int, double>;
+TEST_F(PushBackIntDoubleNotAligned, PushBack)
 {
 
 	this->init(2);
 
-	this->populate(1, 1, 2.);
-	this->checkInternal<int>({ 1 }, 0);
-	this->checkInternal<double>({ 2. }, 12);
+	this->pushBack(1, 1, 2.);
+	this->check<0, int>({ 1 }, 0);
+	this->check<1, double>({ 2. }, 64);
 
-	this->populate(2, 3, 4.);
-	this->checkInternal<int>({ 1, 3 }, 0);
-	this->checkInternal<double>({ 2., 4. }, 12);
+	this->pushBack(2, 3, 4.);
+	this->check<0, int>({ 1, 3 }, 0);
+	this->check<1, double>({ 2., 4. }, 64);
 
-	this->populate(2, 5, 6.);
-	this->checkDeadBucket(6., 4);
+	this->pushBack(2, 5, 6.);
 
 }
 
-using PopulateDoubleIntNotAligned = TableTest<bytesForDoubleInt2, 4, double, int>;
-TEST_F(PopulateDoubleIntNotAligned, Populate)
+using PushBackDoubleIntNotAligned = TableTest<bytesForDoubleInt2 + alignment, 4, double, int>;
+TEST_F(PushBackDoubleIntNotAligned, PushBack)
 {
 
 	this->init(2);
 
-	this->populate(1, 1., 2);
-	this->checkInternal<double>({ 1. }, 4);
-	this->checkInternal<int>({ 2 }, 20);
+	this->pushBack(1, 1., 2);
+	this->check<0, double>({ 1. }, 0);
+	this->check<1, int>({ 2 }, 64);
 
-	this->populate(2, 3., 4);
-	this->checkInternal<double>({ 1., 3. }, 4);
-	this->checkInternal<int>({ 2, 4 }, 20);
+	this->pushBack(2, 3., 4);
+	this->check<0, double>({ 1., 3. }, 0);
+	this->check<1, int>({ 2, 4 }, 64);
 
-	this->populate(2, 5., 6);
-	this->checkDeadBucket(6, 0);
+	this->pushBack(2, 5., 6);
 
 }
 
-template <typename... Ts>
-struct AllSameType : std::conjunction<std::is_same<Ts, typename std::tuple_element<0, std::tuple<Ts...>>::type>...> {};
-
-template <typename T, typename ... TOther>
-[[nodiscard]] auto genCheckVector(T&& first, TOther&& ... other) -> std::vector<T> {
-	static_assert(AllSameType<T, TOther...>{});
-	std::vector<T> out;
-	out.emplace_back(std::forward<T>(first));
-
-	(out.emplace_back(std::forward<TOther>(other)), ...);
-	return out;
-};
-
-template <typename ... T>
-[[nodiscard]] auto genCheckTuple(std::vector<T>&& ... values) -> std::tuple<std::vector<T>...> {
-	return std::make_tuple(std::forward<std::vector<T>>(values)...);
-};
-
-using PopulateIntNonTrivialMoveOnly = TableTest<bytesForIntComplex2, 0, int, NonTrivialMoveOnlyType>;
-TEST_F(PopulateIntNonTrivialMoveOnly, Populate)
+using GetInt20 = TableTest<bytesForInt20, 0, int>;
+TEST_F(GetInt20, Get)
 {
 
-	this->init(2);
-	NonTrivialMoveOnlyType::counter = 0;
+	this->init(20);
 
-	const auto genNonTrivial1 = []() noexcept {
-		return NonTrivialMoveOnlyType({ 10, 20 });
-	};
-	const auto genNonTrivial2 = []() noexcept {
-		return NonTrivialMoveOnlyType({ 30, 40, 50 });
-	};
-	const auto genNonTrivial3 = []() noexcept {
-		return NonTrivialMoveOnlyType({ 60, 70 });
-	};
+	for (int32_t id{}; id < Dod::DataUtils::getCapacity(this->table); ++id)
+		Dod::DataUtils::pushBack(this->table, true, id + 1);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 20);
 
-	this->populate(1, 1, genNonTrivial1());
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 1);
-	this->check<0, int>({ 1 });
-	this->check<1, NonTrivialMoveOnlyType>(genCheckVector(genNonTrivial1()));
+	for (int32_t id{}; id < Dod::DataUtils::getCapacity(this->table); ++id)
+		EXPECT_EQ(Dod::DataUtils::get(this->table, id), id + 1);
 
-	this->populate(2, 3, genNonTrivial2());
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 2);
-	this->check<0, int>({ 1, 3 });
-	this->check<1, NonTrivialMoveOnlyType>(genCheckVector(genNonTrivial1(), genNonTrivial2()));
+}
 
-	this->populate(2, 5, genNonTrivial3());
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 2);
-	this->check<0, int>({ 1, 3 });
-	this->check<1, NonTrivialMoveOnlyType>(genCheckVector(genNonTrivial1(), genNonTrivial2()));
+using PopulateInt7 = TableTest<bytesForInt7, 0, int>;
+TEST_F(PopulateInt7, Populate)
+{
+
+	this->init(7);
+	this->populate(7, 7, [](int32_t id) {
+		return id + 1;
+	});
+	this->checkTable<int>({ {1, 2, 3, 4, 5, 6, 7} });
+	Dod::DataUtils::flush(this->table);
+
+	this->init(7);
+	this->populate(3, 3, [](int32_t id) {
+		return id + 1 + 10;
+	});
+	this->checkTable<int>({ {11, 12, 13} });
+	this->populate(5, 2, [](int32_t id) {
+		return id + 1 + 20;
+	});
+	this->checkTable<int>({ {11, 12, 13, 21, 22} });
+	this->populate(7, 2, [](int32_t id) {
+		return id + 1 + 30;
+		});
+	this->checkTable<int>({ {11, 12, 13, 21, 22, 31, 32} });
+
+	this->init(7);
+	this->populate(0, 10, [](int32_t id) {
+		return id + 1 + 40;
+	});
+	this->populate(2, 2, [](int32_t id) {
+		return id + 1 + 50;
+	});
+	this->checkTable<int>({ {51, 52} });
+	this->populate(2, 7, [](int32_t id) {
+		return id + 1 + 60;
+	});
+	this->checkTable<int>({ {51, 52} });
+	this->populate(7, 5, [](int32_t id) {
+		return id + 1 + 70;
+	});
+	this->checkTable<int>({ {51, 52, 71, 72, 73, 74, 75} });
+	this->populate(7, 1, [](int32_t id) {
+		return id + 1 + 2 + 40;
+		});
+	this->checkTable<int>({ {51, 52, 71, 72, 73, 74, 75} });
+
+}
+
+using PopulateIntDouble16 = TableTest<bytesForIntDouble16, 0, int, double>;
+TEST_F(PopulateIntDouble16, Populate)
+{
+
+	this->init(16);
+	this->populate(16, 16, [](int32_t id) {
+		return id + 1;
+	}, [](int32_t id) {
+		return static_cast<double>(id) + 20. + 1.;
+	});
+	this->checkTable<int, double>({ 
+		{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+		{21., 22., 23., 24., 25., 26., 27., 28., 29., 30., 31., 32., 33., 34., 35., 36.} 
+	});
+	Dod::DataUtils::flush(this->table);
+
+	this->init(16);
+	this->populate(5, 5, [](int32_t id) {
+		return id + 1 + 40;
+	}, [](int32_t id) {
+		return static_cast<double>(id) + 60. + 1.;
+	});
+	this->checkTable<int, double>({
+		{41, 42, 43, 44, 45},
+		{61., 62., 63., 64., 65.}
+	});
+	this->populate(11, 6, [](int32_t id) {
+		return id + 1 + 70;
+	}, [](int32_t id) {
+		return static_cast<double>(id) + 90. + 1.;
+	});
+	this->checkTable<int, double>({
+		{41, 42, 43, 44, 45, 71, 72, 73, 74, 75, 76},
+		{61., 62., 63., 64., 65., 91., 92., 93., 94., 95., 96.}
+	});
+	this->populate(16, 5, [](int32_t id) {
+		return id + 1 + 100;
+	}, [](int32_t id) {
+		return static_cast<double>(id) + 120. + 1.;
+	});
+	this->checkTable<int, double>({
+		{41, 42, 43, 44, 45, 71, 72, 73, 74, 75, 76, 101, 102, 103, 104, 105},
+		{61., 62., 63., 64., 65., 91., 92., 93., 94., 95., 96., 121., 122., 123., 124., 125.}
+	});
+	Dod::DataUtils::flush(this->table);
+	
+	this->init(16);
+	this->populate(0, 17, [](int32_t id) {
+		return id + 1 + 140;
+	}, [](int32_t id) {
+		return static_cast<double>(id) + 160. + 1.;
+	});
+	this->populate(2, 2, [](int32_t id) {
+		return id + 1 + 180;
+	}, [](int32_t id) {
+		return static_cast<double>(id) + 200. + 1.;
+	});
+	this->checkTable<int, double>({
+		{181, 182},
+		{201., 202.}
+	});
+	this->populate(2, 16, [](int32_t id) {
+		return id + 1 + 220;
+	}, [](int32_t id) {
+		return static_cast<double>(id) + 240. + 1.;
+	});
+	this->checkTable<int, double>({
+		{181, 182},
+		{201., 202.}
+	});
+	this->populate(16, 14, [](int32_t id) {
+		return id + 1 + 260;
+	}, [](int32_t id) {
+		return static_cast<double>(id) + 280. + 1.;
+	});
+	this->checkTable<int, double>({
+		{181, 182, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274},
+		{201., 202., 281., 282., 283., 284., 285., 286., 287., 288., 289., 290., 291., 292., 293., 294.}
+	});
+	this->populate(16, 1, [](int32_t id) {
+		return id + 1 + 300;
+	}, [](int32_t id) {
+		return static_cast<double>(id) + 320. + 1.;
+	});
+	this->checkTable<int, double>({
+		{181, 182, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274},
+		{201., 202., 281., 282., 283., 284., 285., 286., 287., 288., 289., 290., 291., 292., 293., 294.}
+	});
+
+}
+
+using GetInt = TableTest<bytesForInt7, 0, int>;
+TEST_F(GetInt, GetElements)
+{
+
+	this->init(7);
+
+	this->pushBack(1, 1);
+	this->pushBack(2, 2);
+	this->pushBack(3, 3);
+	this->pushBack(4, 4);
+	this->pushBack(5, 5);
+	this->pushBack(6, 6);
+	this->pushBack(7, 7);
+
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 0), 1);
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 1), 2);
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 2), 3);
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 3), 4);
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 4), 5);
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 5), 6);
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 6), 7);
+
+	Dod::DataUtils::get(this->table, 0) = 11;
+	Dod::DataUtils::get(this->table, 1) = 12;
+	Dod::DataUtils::get(this->table, 2) = 13;
+	Dod::DataUtils::get(this->table, 3) = 14;
+	Dod::DataUtils::get(this->table, 4) = 15;
+	Dod::DataUtils::get(this->table, 5) = 16;
+	Dod::DataUtils::get(this->table, 6) = 17;
+
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 0), 11);
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 1), 12);
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 2), 13);
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 3), 14);
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 4), 15);
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 5), 16);
+	EXPECT_EQ(Dod::DataUtils::get(this->table, 6), 17);
 
 }
 
@@ -602,19 +613,19 @@ TEST_F(GetIntFloat, GetElements)
 
 	this->init(3);
 
-	this->populate(1, 1, 2.f);
-	this->check<0, int>({ 1 });
-	this->check<1, float>({ 2.f });
+	this->pushBack(1, 1, 2.f);
+	this->check<0, int>({ 1 }, 0);
+	this->check<1, float>({ 2.f }, 64);
 
-	this->populate(2, 3, 4.f);
-	this->check<0, int>({ 1, 3 });
-	this->check<1, float>({ 2.f, 4.f });
+	this->pushBack(2, 3, 4.f);
+	this->check<0, int>({ 1, 3 }, 0);
+	this->check<1, float>({ 2.f, 4.f }, 64);
 
-	this->populate(3, 5, 6.f);
-	this->check<0, int>({ 1, 3, 5 });
-	this->check<1, float>({ 2.f, 4.f, 6.f });
+	this->pushBack(3, 5, 6.f);
+	this->check<0, int>({ 1, 3, 5 }, 0);
+	this->check<1, float>({ 2.f, 4.f, 6.f }, 64);
 
-	this->populate(3, 7, 8.f);
+	this->pushBack(3, 7, 8.f);
 
 }
 
@@ -624,19 +635,19 @@ TEST_F(GetIntDouble, GetElements)
 
 	this->init(3);
 
-	this->populate(1, 1, 2.);
-	this->check<0, int>({ 1 });
-	this->check<1, double>({ 2. });
+	this->pushBack(1, 1, 2.);
+	this->check<0, int>({ 1 }, 0);
+	this->check<1, double>({ 2. }, 64);
 
-	this->populate(2, 3, 4.);
-	this->check<0, int>({ 1, 3 });
-	this->check<1, double>({ 2., 4. });
+	this->pushBack(2, 3, 4.);
+	this->check<0, int>({ 1, 3 }, 0);
+	this->check<1, double>({ 2., 4. }, 64);
 
-	this->populate(3, 5, 6.);
-	this->check<0, int>({ 1, 3, 5 });
-	this->check<1, double>({ 2., 4., 6. });
+	this->pushBack(3, 5, 6.);
+	this->check<0, int>({ 1, 3, 5 }, 0);
+	this->check<1, double>({ 2., 4., 6. }, 64);
 
-	this->populate(3, 7, 8.f);
+	this->pushBack(3, 7, 8.f);
 
 }
 
@@ -646,16 +657,16 @@ TEST_F(GetAllIntFloat, GetAllElements)
 
 	this->init(3);
 
-	this->populate(1, 1, 2.f);
+	this->pushBack(1, 1, 2.f);
 	this->checkTable<int, float>({ {1}, {2.f} });
 
-	this->populate(2, 3, 4.f);
+	this->pushBack(2, 3, 4.f);
 	this->checkTable<int, float>({ {1, 3}, {2.f, 4.f} });
 
-	this->populate(3, 5, 6.f);
+	this->pushBack(3, 5, 6.f);
 	this->checkTable<int, float>({ {1, 3, 5}, {2.f, 4.f, 6.f} });
 
-	this->populate(3, 7, 8.f);
+	this->pushBack(3, 7, 8.f);
 
 }
 
@@ -665,13 +676,13 @@ TEST_F(GetAllIntDouble, GetAllElements)
 
 	this->init(2);
 
-	this->populate(1, 1, 2.);
+	this->pushBack(1, 1, 2.);
 	this->checkTable<int, double>({ {1}, {2.} });
 
-	this->populate(2, 3, 4.);
+	this->pushBack(2, 3, 4.);
 	this->checkTable<int, double>({ {1, 3}, {2., 4.} });
 
-	this->populate(2, 5, 6.f);
+	this->pushBack(2, 5, 6.f);
 
 }
 
@@ -686,13 +697,13 @@ public:
 		EXPECT_EQ(Dod::DataUtils::getCapacity(this->table), expectCapacityEls);
 	}
 
-	void populate(int32_t expectedNumOfFilledEls, auto&& ... values)
+	void pushBack(int32_t expectedNumOfFilledEls, auto&& ... values)
 	{
-		Dod::DataUtils::populate(this->table, true, std::forward<decltype(values)>(values)...);
+		Dod::DataUtils::pushBack(this->table, true, std::forward<decltype(values)>(values)...);
 	}
 
-	alignas(RisingCore::Helpers::findLargestAlignmentFlat<Types...>()) std::array<Dod::MemTypes::data_t, memorySize + memoryAlignmentOffset> memory{};
-	Dod::DBTable<Types...> table;
+	alignas(alignment) std::array<Dod::MemTypes::data_t, memorySize + memoryAlignmentOffset> memory{};
+	Dod::DTable<Types...> table;
 
 };
 
@@ -703,14 +714,14 @@ TEST_F(AppendIntFloat, Append2Elements)
 	TableToAppend<bytesForIntFloat3, 0, int, float> srcTable(3);
 
 	this->init(7);
-	srcTable.populate(1, 1, 2.f);
-	srcTable.populate(2, 3, 4.f);
+	srcTable.pushBack(1, 1, 2.f);
+	srcTable.pushBack(2, 3, 4.f);
 
-	Dod::DataUtils::append(this->table, srcTable.table);
+	Dod::DataUtils::append(this->table, Dod::ImTable(srcTable.table));
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 2);
 	this->checkTable<int, float>({ {1, 3}, {2.f, 4.f} });
 
-	Dod::DataUtils::append(this->table, srcTable.table);
+	Dod::DataUtils::append(this->table, Dod::ImTable(srcTable.table));
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 4);
 	this->checkTable<int, float>({ {1, 3, 1, 3}, {2.f, 4.f, 2.f, 4.f} });
 
@@ -722,19 +733,19 @@ TEST_F(AppendIntFloat, Append3Elements)
 	TableToAppend<bytesForIntFloat3, 0, int, float> srcTable(3);
 
 	this->init(7);
-	srcTable.populate(1, 1, 2.f);
-	srcTable.populate(2, 3, 4.f);
-	srcTable.populate(3, 5, 6.f);
+	srcTable.pushBack(1, 1, 2.f);
+	srcTable.pushBack(2, 3, 4.f);
+	srcTable.pushBack(3, 5, 6.f);
 
-	Dod::DataUtils::append(this->table, srcTable.table);
+	Dod::DataUtils::append(this->table, Dod::ImTable(srcTable.table));
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 3);
 	this->checkTable<int, float>({ {1, 3, 5}, {2.f, 4.f, 6.f} });
 
-	Dod::DataUtils::append(this->table, srcTable.table);
+	Dod::DataUtils::append(this->table, Dod::ImTable(srcTable.table));
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 6);
 	this->checkTable<int, float>({ {1, 3, 5, 1, 3, 5}, {2.f, 4.f, 6.f, 2.f, 4.f, 6.f} });
 
-	Dod::DataUtils::append(this->table, srcTable.table);
+	Dod::DataUtils::append(this->table, Dod::ImTable(srcTable.table));
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 7);
 	this->checkTable<int, float>({ {1, 3, 5, 1, 3, 5, 1}, {2.f, 4.f, 6.f, 2.f, 4.f, 6.f, 2.f} });
 
@@ -747,10 +758,10 @@ TEST_F(AppendIntFloat, Append0Elements)
 
 	this->init(7);
 
-	Dod::DataUtils::append(this->table, srcTable.table);
+	Dod::DataUtils::append(this->table, Dod::ImTable(srcTable.table));
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 0);
 	{
-		const auto [ints, floats] { Dod::DataUtils::get(this->table) };
+		auto [ints, floats] { Dod::DataUtils::get(this->table) };
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(ints), 0);
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(floats), 0);
 	}
@@ -764,98 +775,20 @@ TEST_F(AppendIntDouble, Append3Elements)
 	TableToAppend<bytesForIntDouble2, 0, int, double> srcTable(2);
 
 	this->init(4);
-	srcTable.populate(1, 1, 2.);
-	srcTable.populate(2, 3, 4.);
+	srcTable.pushBack(1, 1, 2.);
+	srcTable.pushBack(2, 3, 4.);
 
-	Dod::DataUtils::append(this->table, srcTable.table);
+	Dod::DataUtils::append(this->table, Dod::ImTable(srcTable.table));
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 2);
 	this->checkTable<int, double>({ {1, 3}, {2., 4.} });
 
-	Dod::DataUtils::append(this->table, srcTable.table);
+	Dod::DataUtils::append(this->table, Dod::ImTable(srcTable.table));
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 4);
 	this->checkTable<int, double>({ {1, 3, 1, 3}, {2., 4., 2., 4.} });
 
-	Dod::DataUtils::append(this->table, srcTable.table);
+	Dod::DataUtils::append(this->table, Dod::ImTable(srcTable.table));
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 4);
 	this->checkTable<int, double>({ {1, 3, 1, 3}, {2., 4., 2., 4.} });
-
-}
-
-using AppendIntNonTrivial = TableTest<bytesForIntComplex4, 0, int, NonTrivialType>;
-TEST_F(AppendIntNonTrivial, Append2Elements)
-{
-
-	TableToAppend<bytesForIntComplex3, 0, int, NonTrivialType> srcTable(3);
-
-	this->init(4);
-	NonTrivialType::counter = 0;
-
-	NonTrivialType nonTrivial1({ 10, 20 });
-	srcTable.populate(1, 1, nonTrivial1);
-	ASSERT_EQ(*nonTrivial1.instanceCounter, 2);
-	NonTrivialType nonTrivial2({ 30, 40 });
-	srcTable.populate(2, 3, nonTrivial2);
-	ASSERT_EQ(*nonTrivial2.instanceCounter, 2);
-
-	Dod::DataUtils::append(this->table, srcTable.table);
-	EXPECT_EQ(NonTrivialType::counter, 6);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 2);
-	this->checkTable<int, NonTrivialType>({ {1, 3}, {nonTrivial1, nonTrivial2} });
-
-	Dod::DataUtils::append(this->table, srcTable.table);
-	EXPECT_EQ(NonTrivialType::counter, 8);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 4);
-	this->checkTable<int, NonTrivialType>({ {1, 3, 1, 3}, {nonTrivial1, nonTrivial2, nonTrivial1, nonTrivial2} });
-
-	Dod::DataUtils::append(this->table, srcTable.table);
-	EXPECT_EQ(NonTrivialType::counter, 8);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 4);
-	this->checkTable<int, NonTrivialType>({ {1, 3, 1, 3}, {nonTrivial1, nonTrivial2, nonTrivial1, nonTrivial2} });
-
-}
-
-using AppendIntNonTrivialMoveOnly = TableTest<bytesForIntComplex4, 0, int, NonTrivialMoveOnlyType>;
-TEST_F(AppendIntNonTrivialMoveOnly, Append2Elements)
-{
-
-
-	this->init(4);
-	NonTrivialMoveOnlyType::counter = 0;
-
-	const auto genNonTrivial1 = []() noexcept {
-		return NonTrivialMoveOnlyType({ 10, 20 });
-	};
-	const auto genNonTrivial2 = []() noexcept {
-		return NonTrivialMoveOnlyType({ 30, 400 });
-	};
-
-	TableToAppend<bytesForIntComplex3, 0, int, NonTrivialMoveOnlyType> srcTable1(3);
-	srcTable1.populate(1, 1, genNonTrivial1());
-	srcTable1.populate(2, 3, genNonTrivial2());
-
-	Dod::DataUtils::append(this->table, srcTable1.table);
-	// Elements are moved, but not destroyed.
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 4);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 2);
-	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({1, 3}, genCheckVector(genNonTrivial1(), genNonTrivial2())));
-
-	TableToAppend<bytesForIntComplex3, 0, int, NonTrivialMoveOnlyType> srcTable2(3);
-	srcTable2.populate(1, 1, genNonTrivial1());
-	srcTable2.populate(2, 3, genNonTrivial2());
-
-	Dod::DataUtils::append(this->table, srcTable2.table);
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 8);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 4);
-	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({1, 3, 1, 3}, genCheckVector(genNonTrivial1(), genNonTrivial2(), genNonTrivial1(), genNonTrivial2())));
-
-	TableToAppend<bytesForIntComplex3, 0, int, NonTrivialMoveOnlyType> srcTable3(3);
-	srcTable3.populate(1, 1, genNonTrivial1());
-	srcTable3.populate(2, 3, genNonTrivial2());
-
-	Dod::DataUtils::append(this->table, srcTable3.table);
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 10);
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 4);
-	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({1, 3, 1, 3}, genCheckVector(genNonTrivial1(), genNonTrivial2(), genNonTrivial1(), genNonTrivial2())));
 
 }
 
@@ -864,99 +797,22 @@ TEST_F(FlushIntFloat, FlushAllElements)
 {
 
 	this->init(3);
-	this->populate(1, 1, 2.f);
+	this->pushBack(1, 1, 2.f);
 	this->checkTable<int, float>({ {1}, {2.f} });
 	Dod::DataUtils::flush(this->table);
 	EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 0);
 
-	this->populate(1, 3, 4.f);
-	this->populate(2, 5, 6.f);
-	this->populate(3, 7, 8.f);
-	this->populate(3, 9, 10.f);
+	this->pushBack(1, 3, 4.f);
+	this->pushBack(2, 5, 6.f);
+	this->pushBack(3, 7, 8.f);
+	this->pushBack(3, 9, 10.f);
 	this->checkTable<int, float>({ {3, 5, 7}, {4.f, 6.f, 8.f} });
 
 	Dod::DataUtils::flush(this->table);
 	EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 0);
-	this->populate(1, 11, 12.f);
-	this->populate(2, 13, 14.f);
+	this->pushBack(1, 11, 12.f);
+	this->pushBack(2, 13, 14.f);
 	this->checkTable<int, float>({ {11, 13}, {12.f, 14.f} });
-
-}
-
-using FlushIntNonTrivial = TableTest<bytesForIntComplex3, 0, int, NonTrivialType>;
-TEST_F(FlushIntNonTrivial, FlushAllElements)
-{
-
-	this->init(3);
-	NonTrivialType::counter = 0;
-	
-	NonTrivialType nonTrivial1({ 10, 20 });
-	this->populate(1, 1, nonTrivial1);
-	EXPECT_EQ(NonTrivialType::counter, 2);
-	this->checkTable<int, NonTrivialType>({ {1}, {nonTrivial1} });
-	Dod::DataUtils::flush(this->table);
-	EXPECT_EQ(NonTrivialType::counter, 1);
-	EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 0);
-
-	NonTrivialType nonTrivial2({ 30, 40 });
-	this->populate(1, 3, nonTrivial2);
-	NonTrivialType nonTrivial3({ 50, 60 });
-	this->populate(2, 5, nonTrivial3);
-	NonTrivialType nonTrivial4({ 70, 80 });
-	this->populate(3, 7, nonTrivial4);
-	NonTrivialType nonTrivial5({ 90, 100 });
-	this->populate(3, 9, nonTrivial5);
-	EXPECT_EQ(NonTrivialType::counter, 8);
-	this->checkTable<int, NonTrivialType>({ {3, 5, 7}, {nonTrivial2, nonTrivial3, nonTrivial4} });
-
-	Dod::DataUtils::flush(this->table);
-	EXPECT_EQ(NonTrivialType::counter, 5);
-	EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 0);
-	NonTrivialType nonTrivial6({ 110, 120 });
-	this->populate(1, 11, nonTrivial6);
-	NonTrivialType nonTrivial7({ 130, 140 });
-	this->populate(2, 13, nonTrivial7);
-	EXPECT_EQ(NonTrivialType::counter, 9);
-	this->checkTable<int, NonTrivialType>({ {11, 13}, {nonTrivial6, nonTrivial7} });
-
-}
-
-using FlushIntNonTrivialMoveOnly = TableTest<bytesForIntComplex3, 0, int, NonTrivialMoveOnlyType>;
-TEST_F(FlushIntNonTrivialMoveOnly, FlushAllElements)
-{
-
-	this->init(3);
-	NonTrivialMoveOnlyType::counter = 0;
-
-	const auto genNonTrivial1 = []() noexcept {	return NonTrivialMoveOnlyType({ 10, 20 }); };
-	const auto genNonTrivial2 = []() noexcept {	return NonTrivialMoveOnlyType({ 30, 40 }); };
-	const auto genNonTrivial3 = []() noexcept {	return NonTrivialMoveOnlyType({ 50, 60 }); };
-	const auto genNonTrivial4 = []() noexcept {	return NonTrivialMoveOnlyType({ 70, 80 }); };
-	const auto genNonTrivial5 = []() noexcept {	return NonTrivialMoveOnlyType({ 90, 100 }); };
-	const auto genNonTrivial6 = []() noexcept {	return NonTrivialMoveOnlyType({ 110, 120 }); };
-	const auto genNonTrivial7 = []() noexcept {	return NonTrivialMoveOnlyType({ 130, 140 }); };
-
-	this->populate(1, 1, genNonTrivial1());
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 1);
-	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({1}, genCheckVector(genNonTrivial1())));
-	Dod::DataUtils::flush(this->table);
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 0);
-	EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 0);
-
-	this->populate(1, 3, genNonTrivial2());
-	this->populate(2, 5, genNonTrivial3());
-	this->populate(3, 7, genNonTrivial4());
-	this->populate(3, 9, genNonTrivial5());
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 3);
-	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({3, 5, 7}, genCheckVector(genNonTrivial2(), genNonTrivial3(), genNonTrivial4())));
-
-	Dod::DataUtils::flush(this->table);
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 0);
-	EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), 0);
-	this->populate(1, 11, genNonTrivial6());
-	this->populate(2, 13, genNonTrivial7());
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 2);
-	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({11, 13}, genCheckVector(genNonTrivial6(), genNonTrivial7())));
 
 }
 
@@ -966,207 +822,107 @@ TEST_F(RemoveElementsIntFloat, RemoveElements)
 
 	this->init(3);
 
-	this->populate(1, 1, 2.f);
-	this->populate(2, 3, 4.f);
+	this->pushBack(1, 1, 2.f);
+	this->pushBack(2, 3, 4.f);
 	this->remove(1, { 1 });
 	this->checkTable<int, float>({ { 1 }, { 2.f } });
 
 	this->remove(0, { 0 });
 
-	this->populate(1, 5, 6.f);
-	this->populate(2, 7, 8.f);
+	this->pushBack(1, 5, 6.f);
+	this->pushBack(2, 7, 8.f);
 	this->remove(1, { 0 });
 	this->checkTable<int, float>({ { 7 }, { 8.f } });
 
 	this->remove(0, { 0 });
 
-	this->populate(1, 9, 10.f);
-	this->populate(2, 11, 12.f);
+	this->pushBack(1, 9, 10.f);
+	this->pushBack(2, 11, 12.f);
 	this->remove(0, { 0, 1 });
 
-	this->populate(1, 13, 14.f);
-	this->populate(2, 15, 16.f);
-	this->populate(3, 17, 18.f);
+	this->pushBack(1, 13, 14.f);
+	this->pushBack(2, 15, 16.f);
+	this->pushBack(3, 17, 18.f);
 	this->remove(1, { 0, 2 });
 	this->checkTable<int, float>({ { 15 }, { 16.f } });
 
-	this->populate(2, 19, 20.f);
-	this->populate(3, 21, 22.f);
+	this->pushBack(2, 19, 20.f);
+	this->pushBack(3, 21, 22.f);
 	this->checkTable<int, float>({ { 15, 19, 21 }, { 16.f, 20.f, 22.f } });
 
 	this->remove(3, { });
 	this->checkTable<int, float>({ { 15, 19, 21 }, { 16.f, 20.f, 22.f } });
 
-}
-
-using RemoveElementsIntNonTrivial = TableTest<bytesForIntComplexComplex3, 0, int, NonTrivialType, NonTrivialNonMovableType>;
-TEST_F(RemoveElementsIntNonTrivial, RemoveElements)
-{
-
-	this->init(3);
-	NonTrivialType::counter = 0;
-
-	NonTrivialType nonTrivial1({ 10, 20 });
-	NonTrivialNonMovableType nonTrivialNonMovable1({ 210, 220 });
-	this->populate(1, 1, nonTrivial1, nonTrivialNonMovable1);
-	NonTrivialType nonTrivial2({ 30, 40 });
-	NonTrivialNonMovableType nonTrivialNonMovable2({ 230, 240 });
-	this->populate(2, 3, nonTrivial2, nonTrivialNonMovable2);
-	this->remove(1, { 1 });
-	EXPECT_EQ(*nonTrivial1.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable1.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivialNonMovable2.instanceCounter, 1);
-	EXPECT_EQ(NonTrivialType::counter, 3);
-	EXPECT_EQ(NonTrivialNonMovableType::counter, 3);
-	this->checkTable<int, NonTrivialType, NonTrivialNonMovableType>({ { 1 }, { nonTrivial1 }, { nonTrivialNonMovable1 } });
-
-	this->remove(0, { 0 });
-	EXPECT_EQ(*nonTrivial1.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable1.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable2.instanceCounter, 1);
-	EXPECT_EQ(NonTrivialType::counter, 2);
-	EXPECT_EQ(NonTrivialNonMovableType::counter, 2);
-
-	NonTrivialType nonTrivial3({ 50, 60 });
-	NonTrivialNonMovableType nonTrivialNonMovable3({ 250, 260 });
-	this->populate(1, 5, nonTrivial3, nonTrivialNonMovable3);
-	NonTrivialType nonTrivial4({ 70, 80 });
-	NonTrivialNonMovableType nonTrivialNonMovable4({ 270, 280 });
-	this->populate(2, 7, nonTrivial4, nonTrivialNonMovable4);
-	EXPECT_EQ(*nonTrivial3.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial4.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivialNonMovable3.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivialNonMovable4.instanceCounter, 2);
-	this->remove(1, { 0 });
-	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial4.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivialNonMovable3.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable4.instanceCounter, 2);
-	EXPECT_EQ(NonTrivialType::counter, 5);
-	EXPECT_EQ(NonTrivialNonMovableType::counter, 5);
-	this->checkTable<int, NonTrivialType, NonTrivialNonMovableType>({ { 7 }, { nonTrivial4 }, { nonTrivialNonMovable4 } });
-
-	this->remove(0, { 0 });
-	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial4.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable3.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable4.instanceCounter, 1);
-	EXPECT_EQ(NonTrivialType::counter, 4);
-	EXPECT_EQ(NonTrivialNonMovableType::counter, 4);
-
-	NonTrivialType nonTrivial5({ 90, 100 });
-	NonTrivialNonMovableType nonTrivialNonMovable5({ 290, 300 });
-	this->populate(1, 9, nonTrivial5, nonTrivialNonMovable5);
-	NonTrivialType nonTrivial6({ 110, 120 });
-	NonTrivialNonMovableType nonTrivialNonMovable6({ 310, 320 });
-	this->populate(2, 11, nonTrivial6, nonTrivialNonMovable6);
-	EXPECT_EQ(*nonTrivial5.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial6.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivialNonMovable5.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivialNonMovable6.instanceCounter, 2);
-	this->remove(0, { 0, 1 });
-	EXPECT_EQ(*nonTrivial5.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial6.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable5.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable6.instanceCounter, 1);
-	EXPECT_EQ(NonTrivialType::counter, 6);
-	EXPECT_EQ(NonTrivialNonMovableType::counter, 6);
-
-	NonTrivialType nonTrivial7({ 130, 140 });
-	NonTrivialNonMovableType nonTrivialNonMovable7({ 330, 340 });
-	this->populate(1, 13, nonTrivial7, nonTrivialNonMovable7);
-	NonTrivialType nonTrivial8({ 150, 160 });
-	NonTrivialNonMovableType nonTrivialNonMovable8({ 350, 360 });
-	this->populate(2, 15, nonTrivial8, nonTrivialNonMovable8);
-	NonTrivialType nonTrivial9({ 170, 180 });
-	NonTrivialNonMovableType nonTrivialNonMovable9({ 370, 380 });
-	this->populate(3, 17, nonTrivial9, nonTrivialNonMovable9);
-	EXPECT_EQ(*nonTrivial7.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial9.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivialNonMovable7.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivialNonMovable8.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivialNonMovable9.instanceCounter, 2);
-	this->remove(1, { 0, 2 });
-	EXPECT_EQ(*nonTrivial7.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial9.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable7.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable8.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivialNonMovable9.instanceCounter, 1);
-	EXPECT_EQ(NonTrivialType::counter, 10);
-	EXPECT_EQ(NonTrivialNonMovableType::counter, 10);
-	this->checkTable<int, NonTrivialType, NonTrivialNonMovableType>({ { 15 }, { nonTrivial8 }, { nonTrivialNonMovable8 } });
-
-	EXPECT_EQ(*nonTrivial1.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial2.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial3.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial4.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial5.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial6.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial7.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivial8.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivial9.instanceCounter, 1);
-
-	EXPECT_EQ(*nonTrivialNonMovable1.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable2.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable3.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable4.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable5.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable6.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable7.instanceCounter, 1);
-	EXPECT_EQ(*nonTrivialNonMovable8.instanceCounter, 2);
-	EXPECT_EQ(*nonTrivialNonMovable9.instanceCounter, 1);
+	Dod::DataUtils::flush(this->table);
 
 }
 
-using RemoveElementsIntNonTrivialMoveOnly = TableTest<bytesForIntComplex3, 0, int, NonTrivialMoveOnlyType>;
-TEST_F(RemoveElementsIntNonTrivialMoveOnly, RemoveElements)
+TEST(DataUtils, CreateGuidedImTable)
 {
 
-	const auto genNonTrivial1 = []() noexcept {	return NonTrivialMoveOnlyType({ 10, 20 }); };
-	const auto genNonTrivial2 = []() noexcept {	return NonTrivialMoveOnlyType({ 30, 40 }); };
-	const auto genNonTrivial3 = []() noexcept {	return NonTrivialMoveOnlyType({ 50, 60 }); };
-	const auto genNonTrivial4 = []() noexcept {	return NonTrivialMoveOnlyType({ 70, 80 }); };
-	const auto genNonTrivial5 = []() noexcept {	return NonTrivialMoveOnlyType({ 90, 100 }); };
-	const auto genNonTrivial6 = []() noexcept {	return NonTrivialMoveOnlyType({ 110, 120 }); };
-	const auto genNonTrivial7 = []() noexcept {	return NonTrivialMoveOnlyType({ 130, 140 }); };
-	const auto genNonTrivial8 = []() noexcept {	return NonTrivialMoveOnlyType({ 150, 160 }); };
-	const auto genNonTrivial9 = []() noexcept {	return NonTrivialMoveOnlyType({ 170, 180 }); };
+	using type_t = int32_t;
+	alignas(alignment) std::array<type_t, 8> values{ {1, 2, 3, 4, 5, 6, 7, 8} };
 
-	this->init(3);
-	NonTrivialMoveOnlyType::counter = 0;
+	Dod::ImTable<int32_t> table;
 
-	this->populate(1, 1, genNonTrivial1());
-	this->populate(2, 3, genNonTrivial2());
-	this->remove(1, { 1 });
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 1);
-	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({ 1 }, genCheckVector(genNonTrivial1())));
+	struct Span
+	{
+		Dod::MemTypes::dataConstPoint_t dataBegin;
+		Dod::MemTypes::dataConstPoint_t dataEnd;
+	};
+	Dod::DataUtils::initFromMemory(table, values.size(), Span(
+		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data()),
+		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data() + 64)
+	));
 
-	this->remove(0, { 0 });
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 0);
+	alignas(alignment) std::array<type_t, values.size()> indices{ {7, 6, 5, 4, 3, 2, 1, 0} };
+	Dod::ImTable<int32_t> indicesBuffer;
+	Dod::DataUtils::initFromMemory(indicesBuffer, indices.size(), Span(
+		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data()),
+		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data() + 64)
+	));
 
-	this->populate(1, 5, genNonTrivial3());
-	this->populate(2, 7, genNonTrivial4());
-	this->remove(1, { 0 });
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 1);
-	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({ 7 }, genCheckVector(genNonTrivial4())));
+	Dod::ImTableGuided<int32_t> guidedTable{ Dod::DataUtils::createGuidedImTable(table, indicesBuffer) };
 
-	this->remove(0, { 0 });
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(guidedTable), 8);
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 0), static_cast<type_t>(8));
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 1), static_cast<type_t>(7));
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 2), static_cast<type_t>(6));
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 3), static_cast<type_t>(5));
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 4), static_cast<type_t>(4));
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 5), static_cast<type_t>(3));
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 6), static_cast<type_t>(2));
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 7), static_cast<type_t>(1));
 
-	this->populate(1, 9, genNonTrivial5());
-	this->populate(2, 11, genNonTrivial6());
-	this->remove(0, { 0, 1 });
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 0);
+}
 
-	this->populate(1, 13, genNonTrivial7());
-	this->populate(2, 15, genNonTrivial8());
-	this->populate(3, 17, genNonTrivial9());
-	this->remove(1, { 0, 2 });
-	EXPECT_EQ(NonTrivialMoveOnlyType::counter, 1);
-	this->checkTable(genCheckTuple<int, NonTrivialMoveOnlyType>({ 15 }, genCheckVector(genNonTrivial8())));
+TEST(DataUtils, CreateGuidedImTableFailed)
+{
+
+	using type_t = int32_t;
+	alignas(alignment) std::array<type_t, 8> values{ {1, 2, 3, 4, 5, 6, 7, 8} };
+
+	Dod::ImTable<int32_t> table;
+
+	struct Span
+	{
+		Dod::MemTypes::dataConstPoint_t dataBegin;
+		Dod::MemTypes::dataConstPoint_t dataEnd;
+	};
+	Dod::DataUtils::initFromMemory(table, values.size(), Span(
+		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data()),
+		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data() + 64)
+	));
+
+	alignas(alignment) std::array<type_t, 4> indices{ {7, 6, 5, 4} };
+	Dod::ImTable<int32_t> indicesBuffer;
+	Dod::DataUtils::initFromMemory(indicesBuffer, indices.size(), Span(
+		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data()),
+		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data() + 64)
+	));
+
+	Dod::ImTableGuided<int32_t> guidedTable{ Dod::DataUtils::createGuidedImTable(table, indicesBuffer) };
+
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(guidedTable), 0);
 
 }

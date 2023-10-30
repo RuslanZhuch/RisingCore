@@ -64,16 +64,27 @@ protected:
 		EXPECT_EQ(acquiredBegin, acquiredEnd);
 
 	}
+
 	void runFailedNoMem(Dod::MemTypes::capacity_t beginIndex, Dod::MemTypes::capacity_t numOfBytes, Dod::MemTypes::alignment_t alignment)
 	{
+		DataHolder holder;
 
 		const auto [acquiredBegin, acquiredEnd] { Dod::MemUtils::acquire(holder, beginIndex, numOfBytes, alignment) };
 		EXPECT_EQ(acquiredBegin, nullptr);
 		EXPECT_EQ(acquiredEnd, nullptr);
 	}
 
+	void runFailedNoSpace(Dod::MemTypes::capacity_t beginIndex, Dod::MemTypes::capacity_t numOfBytes, Dod::MemTypes::alignment_t alignment)
+	{
+		DataHolder holder;
+		holder.dataBegin = data.data() + 1;
+		holder.dataEnd = data.data() + data.size();
+
+		const auto [acquiredBegin, acquiredEnd] { Dod::MemUtils::acquire(holder, beginIndex, numOfBytes, alignment) };
+		EXPECT_EQ(acquiredBegin, acquiredEnd);
+	}
+
 	alignas(8) std::array<Dod::MemTypes::data_t, 32> data{};
-	DataHolder holder;
 
 };
 
@@ -115,6 +126,8 @@ TEST_F(AcquireMemory, Acquiring)
 	this->runFailed(32, 0, 8);
 	this->runFailed(15, -10, 8);
 	this->runFailedNoMem(0, 10, 8);
+
+	this->runFailedNoSpace(0, 32, 8);
 
 }
 

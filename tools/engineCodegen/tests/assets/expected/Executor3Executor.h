@@ -26,8 +26,8 @@ namespace Game::ExecutionBlock
 
     public:
         Dod::MemPool memory;
-        const Dod::SharedContext::Controller<Context::SContext1::Data>* shared1Context{ nullptr };
-        const Dod::SharedContext::Controller<Context::SContext2::Data>* shared3Context{ nullptr };
+        Context::SContext1::CData shared1Context;
+        Context::SContext2::CData shared3Context;
     };
 }
 

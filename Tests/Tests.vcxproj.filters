@@ -36,6 +36,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="engineTests\TypeHelpers.cpp" />
+    <ClCompile Include="engineTests\DataStream.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

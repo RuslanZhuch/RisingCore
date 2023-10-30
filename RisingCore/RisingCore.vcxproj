@@ -151,6 +151,7 @@
     <ClInclude Include="src\dod\BufferUtils.h" />
     <ClInclude Include="src\dod\CommonData.h" />
     <ClInclude Include="src\dod\ConditionTable.h" />
+    <ClInclude Include="src\dod\DataStream.h" />
     <ClInclude Include="src\dod\DataUtils.h" />
     <ClInclude Include="src\dod\MemPool.h" />
     <ClInclude Include="src\dod\MemTypes.h" />

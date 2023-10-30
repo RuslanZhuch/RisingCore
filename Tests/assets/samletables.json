@@ -1,0 +1,18 @@
+
+{
+    "type": "data",
+    "dataTypeList": {
+      "data3_1": "int",
+      "data3_2": {
+        "type": "data",
+        "dataTypeList": {
+          "x": "float",
+          "y": "double"
+        }
+      },
+      "data3_3": "double"
+    },
+    "name": "data3",
+    "capacity": 16
+  }
+  

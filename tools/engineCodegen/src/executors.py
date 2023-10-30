@@ -85,13 +85,19 @@ def gen_inits(handler, executors_data, workspace_data):
         class_name = "Game::ExecutionBlock::" + _to_class_name(name)
         generator.generate_variable(handler, class_name, name)
         generator.generate_line(handler, name + ".loadContext();")
-        gen_shared_context_init(handler, data, workspace_data)
+        #gen_shared_context_init(handler, data, workspace_data)
         generator.generate_line(handler, name + ".initiate();")
         
 def gen_updates(handler, executors_data):
     for data in executors_data:
         name = get_name(data)
         generator.generate_line(handler, name + ".update(deltaTime);")
+
+def gen_shared_setup(handler, executor_data, setup_desc_list : list[SharedUsage], pool_index : int):
+    executor_name = get_name(executor_data)
+    
+    for desc in setup_desc_list:
+        generator.generate_line(handler, executor_name + ".{}Context = computedP{}_{}Context;".format(desc.executor_scontext, pool_index, desc.shared_instance))
         
 def gen_flush(handler, executors_data):
     for data in executors_data:
@@ -146,10 +152,10 @@ def gen_contexts_decl(handler, executor_data):
     contexts_shared = executor_data.get("contextsShared")
     if contexts_shared is not None:
         for context in contexts_shared:
-            class_name = "const Dod::SharedContext::Controller<Context::{}::Data>*".format(_to_class_name(context["type"]))
+            class_name = "Context::{}::CData".format(_to_class_name(context["type"]))
             for element in context["list"]:
                 field_name = "{}Context".format(element)
-                generator.generate_class_variable(handler, class_name, field_name, "nullptr")
+                generator.generate_class_variable(handler, class_name, field_name)
         
 def gen_header(folder, executor_data):
     executor_name = get_name(executor_data)

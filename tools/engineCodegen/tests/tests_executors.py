@@ -194,6 +194,26 @@ class TestExecutors(unittest.TestCase):
         
         utils.assert_files(self, "dest/runtime.cpp", "assets/expected/executorsUpdates.cpp")
         
+    def test_gen_executor_shared_setup(self):
+        executors_data = load_executors()
+        self.assertEqual(len(executors_data), EXPECT_NUM_OF_EXECUTORS)
+        
+        handler = generator.generate_file("dest", "executorsSetup.cpp")
+        self.assertIsNotNone(handler)
+        
+        setup_desc : list[executors.SharedUsage] = [
+            executors.SharedUsage("sharedInst1", "shared1"),
+            executors.SharedUsage("sharedInst2", "shared2"),
+            executors.SharedUsage("sharedInst3", "shared3"),
+        ]
+
+        pool_id = 1
+        executors.gen_shared_setup(handler, executors_data[0], setup_desc, pool_id)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/executorsSetup.cpp", "assets/expected/executorsSetup.cpp")
+        
     def test_gen_executor_flush(self):
         executors_data = load_executors()
         self.assertEqual(len(executors_data), EXPECT_NUM_OF_EXECUTORS)

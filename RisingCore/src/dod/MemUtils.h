@@ -35,10 +35,10 @@ namespace Dod::MemUtils
 
 		const auto sourceCapacity{ source.dataEnd - source.dataBegin };
 		const auto bCanAcquire{ 
-			alignedSourceBegin != nullptr &&
+			source.dataBegin != nullptr &&
 			source.dataEnd != nullptr &&
-			beginIndex < sourceCapacity && 
-			beginIndex + numOfBytes <= sourceCapacity &&
+			beginIndex + alignOffset < sourceCapacity &&
+			beginIndex + numOfBytes + alignOffset <= sourceCapacity &&
 			numOfBytes > 0
 		};
 		Output output(source.dataBegin + (beginIndex + alignOffset) * bCanAcquire, source.dataBegin + (beginIndex + numOfBytes + alignOffset) * bCanAcquire);

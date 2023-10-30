@@ -3,14 +3,14 @@
 #include "MemTypes.h"
 #include "MemUtils.h"
 
-#include "Buffers.h"
-#include "BufferUtils.h"
 #include "CommonData.h"
+#include "Tables.h"
 
 #include "Helpers.h"
 
 #include <type_traits>
 #include <concepts>
+#include <cmath>
 
 namespace Dod::DataUtils
 {
@@ -27,11 +27,11 @@ namespace Dod::DataUtils
 	}
 
 
-	template <typename Types>
-	[[nodiscard]] consteval auto computeDeadbucketSizeInBytes() noexcept
-	{
-		return RisingCore::Helpers::findLargestTypeSize<Types>() + RisingCore::Helpers::findLargestAlignment<Types>();
-	}
+//	template <typename Types>
+//	[[nodiscard]] consteval auto computeDeadbucketSizeInBytes() noexcept
+//	{
+//		return RisingCore::Helpers::findLargestTypeSize<Types>() + RisingCore::Helpers::findLargestAlignment<Types>();
+//	}
 
 	template <typename Type>
 	[[nodiscard]] constexpr auto computeTypeOffset(const Type* ptr) noexcept
@@ -49,25 +49,27 @@ namespace Dod::DataUtils
 			return MemTypes::capacity_t{};
 
 		using types_t = Types;
-		constexpr auto deadBucketSize{ computeDeadbucketSizeInBytes<types_t>() };
+//		constexpr auto deadBucketSize{ computeDeadbucketSizeInBytes<types_t>() };
 
-		MemTypes::capacity_t needBytes{ deadBucketSize };
+		MemTypes::capacity_t needBytes{ 0 };
 		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
 		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t columnId>() {
 			using type_t = std::tuple_element_t<columnId, types_t>;
-			MemTypes::capacity_t alignmentSize{};
-			constexpr auto newAlignmentSize{ static_cast<MemTypes::capacity_t>(alignof(type_t)) };
-			if constexpr ((columnId == 0))
-				alignmentSize = newAlignmentSize;
-			else if constexpr (static_cast<MemTypes::capacity_t>(alignof(std::tuple_element_t<columnId - 1, types_t>)) < newAlignmentSize)
-				alignmentSize = newAlignmentSize;
 			
-			const auto pureBytesForColumn{ static_cast<MemTypes::capacity_t>(sizeof(type_t) * numOfElements) };
-			needBytes += alignmentSize + pureBytesForColumn;
+			const auto rawBytesForColumn{ static_cast<MemTypes::capacity_t>(sizeof(type_t) * (numOfElements)) };
+			const auto numOfCellsForColumn{ static_cast<MemTypes::capacity_t>(std::ceilf(rawBytesForColumn / 64.f)) };
+			const auto pureBytesForColumn{ numOfCellsForColumn * 64 };
+			needBytes += pureBytesForColumn;
 		});
 
 		return needBytes;
 
+	}
+
+	[[nodiscard]] static auto roundToCells(MemTypes::capacity_t bytes) noexcept
+	{
+		const auto numOfCellsForColumn{ static_cast<MemTypes::capacity_t>(std::ceilf(bytes / 64.f)) };
+		return numOfCellsForColumn * 64;
 	}
 
 	void initTableFromMemoryImpl(CommonData::CTable auto& dbTable, int32_t numOfElements, auto&& actualData) noexcept
@@ -76,12 +78,13 @@ namespace Dod::DataUtils
 		using tableType_t = typename std::decay_t<decltype(dbTable)>;
 		using types_t = tableType_t::types_t;
 
-		dbTable.dataBegin = actualData.dataBegin;
-
 		const auto needBytes{ computeCapacityInBytes<types_t>(numOfElements) };
+		const auto alignmentOffset{ MemUtils::getAlignOffset(actualData.dataBegin, 64) };
+
+		dbTable.dataBegin = actualData.dataBegin + alignmentOffset;
 
 		const auto capacityInBytes{ static_cast<MemTypes::capacity_t>(actualData.dataEnd - actualData.dataBegin) };
-		dbTable.capacityEls = numOfElements * (needBytes <= capacityInBytes);
+		dbTable.capacityEls = numOfElements * (needBytes + alignmentOffset <= capacityInBytes);
 
 		if constexpr (requires { dbTable.numOfFilledEls; })
 			dbTable.numOfFilledEls = 0;
@@ -95,124 +98,88 @@ namespace Dod::DataUtils
 
 	}
 
-	[[nodiscard]] auto getNumFilledElements(CommonData::CTable auto table) noexcept
+	[[nodiscard]] auto getNumFilledElements(const CommonData::CTable auto& table) noexcept
 	{
 		if constexpr (requires { table.numOfFilledEls; })
 			return table.numOfFilledEls;
 		else
-			return static_cast<int32_t>(table.dataEnd - table.dataBegin);
-	}
-
-	void populate(CommonData::CTable auto& table, bool strobe, auto&& ... value) noexcept
-	{
-
-		const auto bCanAddValue{ (Dod::DataUtils::getNumFilledElements(table) + 1 <= table.capacityEls) && strobe };
-
-		table.numOfFilledEls += size_t(1) * bCanAddValue;
-		const auto elementPosition{ table.numOfFilledEls };
-
-		using tableType_t = typename std::decay_t<decltype(table)>;
-		using types_t = tableType_t::types_t;
-
-		constexpr auto deadBucketSize{ computeDeadbucketSizeInBytes<types_t>() };
-
-		size_t memoryOffset{ deadBucketSize };
-
-		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin };
-		(std::invoke([&] {
-			using valueType_t = std::decay_t<decltype(value)>;
-			const auto alignmentOffset{ MemUtils::getAlignOffset(table.dataBegin + memoryOffset * bCanAddValue, alignof(valueType_t)) };
-			const auto inColumnMemoryOffset{ memoryOffset + (elementPosition - 1) * sizeof(valueType_t) };
-			const auto memoryPosition{ reinterpret_cast<valueType_t*>(table.dataBegin + alignmentOffset + inColumnMemoryOffset * bCanAddValue) };
-			if constexpr (std::is_trivial_v<valueType_t>)
-			{
-				*memoryPosition = std::forward<decltype(value)>(value);
-			}
-			else 
-			{
-				if (bCanAddValue)
-					std::construct_at<valueType_t>(memoryPosition, std::forward<decltype(value)>(value));
-			}
-			memoryOffset += alignmentOffset + (table.capacityEls) * sizeof(valueType_t);
-		}), ...);
-
+			return static_cast<int32_t>(table.capacityEls);
 	}
 
 	template<int32_t collumnId>
 	[[nodiscard]] auto get(const CommonData::CTable auto& table) noexcept
 	{
 
-		using tableType = std::decay_t<decltype(table)>;
-		using types_t = tableType::types_t;
+		using tableType_t = std::decay_t<decltype(table)>;
+		using types_t = tableType_t::types_t;
 
-		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
+		decltype(table.dataBegin) rowMemPosition{ table.dataBegin + MemUtils::getAlignOffset(table.dataBegin, 64) };
 		RisingCore::Helpers::constexprLoop<collumnId>([&]<size_t currColId>() {
 			using columnType_t = std::tuple_element_t<currColId, types_t>;
 			constexpr auto columnTypeSize{ sizeof(columnType_t) };
-			const auto alignmentOffset{ MemUtils::getAlignOffset(rowMemPosition, alignof(columnType_t)) };
-			rowMemPosition += alignmentOffset + table.capacityEls * columnTypeSize;
-		});
 
+			const auto pureBytesForColumn{ roundToCells(table.capacityEls * columnTypeSize) };
+
+			rowMemPosition += pureBytesForColumn;
+		});
 
 		using returnType_t = std::tuple_element_t<static_cast<size_t>(collumnId), types_t>;
 		rowMemPosition += MemUtils::getAlignOffset(rowMemPosition, alignof(returnType_t));
 
 		constexpr auto returnTypeSize{ sizeof(returnType_t) };
+		const auto pureBytesForColumn{ roundToCells(table.capacityEls * returnTypeSize) };
 		struct Span
 		{
-			MemTypes::dataPoint_t dataBegin{ rowMemPosition };
-			MemTypes::dataPoint_t dataEnd{ rowMemPosition + table.numOfFilledEls * returnTypeSize };
+			decltype(rowMemPosition) dataBegin{ rowMemPosition };
+			decltype(rowMemPosition) dataEnd{ rowMemPosition + pureBytesForColumn };
 		};
 
-		Dod::MutBuffer<returnType_t> buffer;
-		initFromMemory(buffer, Span{});
-
-		return buffer;
-
-	}
-
-	template <typename Types, typename ... ExtractedTypes>
-	consteval auto createBuffersPack()
-	{
-		constexpr auto numOfTypes{ std::tuple_size_v<Types> };
-		constexpr auto numOfExtractedTypes{ sizeof ... (ExtractedTypes) };
-		if constexpr (numOfExtractedTypes == numOfTypes)
+		if constexpr (Dod::CommonData::CDTable<tableType_t>)
 		{
-			return std::tuple<Dod::MutBuffer<ExtractedTypes>...>{};
+			Dod::MutTable<returnType_t> out;
+			initFromMemory(out, table.numOfFilledEls, Span{});
+			return out;
+		}
+		else if constexpr (Dod::CommonData::CImTable<std::decay_t<decltype(table)>>)
+		{
+			Dod::ImTable<returnType_t> out;
+			initFromMemory(out, table.capacityEls, Span{});
+			return out;
 		}
 		else
 		{
-			constexpr auto elementId{ numOfTypes - 1 - numOfExtractedTypes };
-			using type_t = std::tuple_element_t<elementId, Types>;
-			return createBuffersPack<Types, type_t, ExtractedTypes...>();
+			Dod::MutTable<returnType_t> out;
+			initFromMemory(out, table.capacityEls, Span{});
+			return out;
 		}
+
 	}
 
-	[[nodiscard]] auto get(const CommonData::CTable auto& table) noexcept
+	template<typename TReturn>
+	[[nodiscard]] auto getImpl(const CommonData::CTable auto& table, MemTypes::capacity_t beginElIndex, MemTypes::capacity_t numOfElements) noexcept
 	{
 
-		using tableType = std::decay_t<decltype(table)>;
-		using types_t = tableType::types_t;
+		TReturn buffersPack;
 
-		using returnType_t = decltype(createBuffersPack<types_t>());
-		returnType_t buffersPack;
-
-		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
-		RisingCore::Helpers::constexprLoop<std::tuple_size_v<returnType_t>>([&]<size_t columnId>() {
+		using dataPointType_t = decltype(table.dataBegin);
+		dataPointType_t rowMemPosition{ table.dataBegin + MemUtils::getAlignOffset(table.dataBegin, 64) };
+		RisingCore::Helpers::constexprLoop<std::tuple_size_v<TReturn>>([&]<size_t columnId>() {
 			auto& bufferPack{ std::get<columnId>(buffersPack) };
 			using pack_t = std::decay_t<decltype(bufferPack)>;
-			using packType_t = pack_t::type_t;
+			using packType_t = pack_t::types_t;
 
 			constexpr auto columnTypeSize{ sizeof(packType_t) };
 			struct Span
 			{
-				MemTypes::dataPoint_t dataBegin{ nullptr };
-				MemTypes::dataPoint_t dataEnd{ nullptr };
+				dataPointType_t dataBegin{ nullptr };
+				dataPointType_t dataEnd{ nullptr };
 			};
 
-			const auto alignmentOffset{ MemUtils::getAlignOffset(rowMemPosition, alignof(packType_t)) };
-			initFromMemory(bufferPack, Span(rowMemPosition + alignmentOffset, rowMemPosition + alignmentOffset + table.numOfFilledEls * columnTypeSize));
-			rowMemPosition += alignmentOffset + table.capacityEls * columnTypeSize;
+			const auto spanBeginOffset{ beginElIndex * columnTypeSize };
+
+			const auto pureBytesForColumn{ roundToCells(table.capacityEls * columnTypeSize) };
+			initFromMemory(bufferPack, numOfElements, Span(rowMemPosition + spanBeginOffset, rowMemPosition + spanBeginOffset + pureBytesForColumn));
+			rowMemPosition += pureBytesForColumn;
 
 		});
 
@@ -220,31 +187,202 @@ namespace Dod::DataUtils
 
 	}
 
-	void destroyRange(CommonData::CTable auto& table, int32_t beginElementId, int32_t endElementId)
+	template <typename TReturn>
+	[[nodiscard]] auto get(const CommonData::CTable auto& table, MemTypes::capacity_t beginElIndex, MemTypes::capacity_t numOfElements) noexcept
+	{
+
+		using tableType = std::decay_t<decltype(table)>;
+		using types_t = tableType::types_t;
+		if constexpr (Dod::CommonData::CImTable<decltype(table)>)
+			return getImpl<TReturn>(table, beginElIndex, numOfElements);
+		else
+			return getImpl<TReturn>(table, beginElIndex, numOfElements);
+
+	}
+
+	template <CommonData::CTable Table>
+	[[nodiscard]] auto get(const Table& table) noexcept -> Table::innerTables_t
+	{
+		if constexpr (CommonData::CImTable<Table>)
+			return get<typename Table::innerTables_t>(table, 0, table.capacityEls);
+		else if constexpr (CommonData::CDTable<Table>)
+			return get<typename Table::innerTables_t>(table, 0, table.numOfFilledEls);
+		else if constexpr (CommonData::CMutTable<Table>)
+			return get<typename Table::innerTables_t>(table, 0, table.capacityEls);
+	}
+
+//	template <CommonData::CDTable Table>
+//	[[nodiscard]] auto get(const Table& table) noexcept -> Table::innerTables_t
+//	{
+//		return get<typename Table::innerTables_t>(table, 0, table.numOfFilledEls);
+//	}
+//
+//	template <CommonData::CMutTable Table>
+//	[[nodiscard]] auto get(const Table& table) noexcept -> Table::innerTables_t
+//	{
+//		return get<typename Table::innerTables_t>(table, 0, table.capacityEls);
+//	}
+//
+//	template <CommonData::CImTable Table>
+//	[[nodiscard]] auto get(const Table& table) noexcept -> Table::innerTables_t
+//	{
+//		return get<typename Table::innerTables_t>(table, 0, table.capacityEls);
+//	}
+
+	template <CommonData::CMonoTable TableType>
+	[[nodiscard]] auto& get(const TableType& table, int32_t elId) noexcept
+	{
+
+		if constexpr (Dod::CommonData::CDataGuided<TableType>)
+			elId = Dod::DataUtils::get(table.guid, elId);
+
+		using type_t = std::tuple_element_t<0, typename TableType::types_t>;
+		if constexpr (CommonData::CMonoImTable<std::decay_t<decltype(table)>>)
+		{
+			return *(reinterpret_cast<const type_t*>(table.dataBegin) + elId);
+		}
+		else
+		{
+			return *(reinterpret_cast<type_t*>(table.dataBegin) + elId);
+		}
+
+	}
+
+	void pushBack(CommonData::CDTable auto& table, bool strobe, auto&& ... value) noexcept requires
+		CommonData::CTrivialTable<decltype(table)>
+	{
+
+		if (Dod::DataUtils::getNumFilledElements(table) >= table.capacityEls)
+			return;
+
+		const auto elementPosition{ table.numOfFilledEls };
+		table.numOfFilledEls += int32_t(1) * strobe;
+
+		using tableType_t = typename std::decay_t<decltype(table)>;
+		using types_t = tableType_t::types_t;
+
+		size_t memoryOffset{ MemUtils::getAlignOffset(table.dataBegin, 64) };
+
+		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin };
+		(std::invoke([&] {
+			using valueType_t = std::decay_t<decltype(value)>;
+			const auto inColumnMemoryOffset{ memoryOffset + elementPosition * sizeof(valueType_t) };
+			const auto memoryPosition{ reinterpret_cast<valueType_t*>(table.dataBegin + inColumnMemoryOffset) };
+
+			*memoryPosition = std::move(value);
+
+			const auto pureBytesForColumn{ roundToCells((table.capacityEls) * sizeof(valueType_t)) };
+			memoryOffset += pureBytesForColumn;
+		}), ...);
+
+	}
+
+	void populate(CommonData::CDTable auto& table, int32_t numOfElements, std::invocable<int32_t> auto&& ... filler) noexcept requires
+		CommonData::CTrivialTable<decltype(table)>
+	{
+
+
+		if (table.numOfFilledEls + numOfElements > table.capacityEls)
+			return;
+
+		using tableType_t = typename std::decay_t<decltype(table)>;
+		using types_t = tableType_t::types_t;
+		static_assert(sizeof...(filler) == std::tuple_size_v<types_t>, "Filler args don't match table types");
+		const auto elementPosition{ table.numOfFilledEls };
+		size_t memoryOffset{ MemUtils::getAlignOffset(table.dataBegin, 64) };
+		(std::invoke([&] {
+			using valueType_t = std::invoke_result_t<decltype(filler), int32_t>;
+			for (int32_t elId{}; elId < numOfElements; ++elId)
+			{
+				const auto inColumnMemoryOffset{ memoryOffset + (elementPosition + elId) * sizeof(valueType_t) };
+				const auto memoryPosition{ reinterpret_cast<valueType_t*>(table.dataBegin + inColumnMemoryOffset) };
+				*memoryPosition = std::invoke(filler, elId);
+			}
+			const auto pureBytesForColumn{ roundToCells((table.capacityEls) * sizeof(valueType_t)) };
+			memoryOffset += pureBytesForColumn;
+		}), ...);
+		table.numOfFilledEls += numOfElements;
+	}
+
+//	auto construct(CommonData::CDTable auto& table, int32_t numOfElements) noexcept requires 
+//		CommonData::CTrivialTable<decltype(table)>
+//	{
+//
+//		if (table.numOfFilledEls + numOfElements > table.capacityEls)
+//			return get(table, 0, 0);
+//
+//		using tableType_t = typename std::decay_t<decltype(table)>;
+//		using types_t = tableType_t::types_t;
+//		const auto elementPosition{ table.numOfFilledEls };
+//		size_t memoryOffset{ MemUtils::getAlignOffset(table.dataBegin, 64) };
+//		RisingCore::Helpers::constexprLoop<std::tuple_size_v<types_t>>([&]<size_t currColId>() {
+//			using columnType_t = std::tuple_element_t<currColId, types_t>;
+//
+//			const auto inColumnMemoryOffset{ memoryOffset + (elementPosition) * sizeof(columnType_t) };
+//			const auto memoryPosition{ reinterpret_cast<columnType_t*>(table.dataBegin + inColumnMemoryOffset) };
+//			std::memset(memoryPosition, 0, numOfElements * sizeof(columnType_t));
+//
+//			const auto pureBytesForColumn{ roundToCells((table.capacityEls) * sizeof(columnType_t)) };
+//			memoryOffset += pureBytesForColumn;
+//		});
+//
+//		const auto prevNumOfEls{ table.numOfFilledEls };
+//		table.numOfFilledEls += numOfElements; 
+//		return get(table, prevNumOfEls, numOfElements);
+//
+//	}
+
+	template <typename Types, typename ... ExtractedTypes>
+	consteval auto createMutTablePack()
+	{
+		constexpr auto numOfTypes{ std::tuple_size_v<Types> };
+		constexpr auto numOfExtractedTypes{ sizeof ... (ExtractedTypes) };
+		if constexpr (numOfExtractedTypes == numOfTypes)
+		{
+			return std::tuple<Dod::MutTable<ExtractedTypes>...>{};
+		}
+		else
+		{
+			constexpr auto elementId{ numOfTypes - 1 - numOfExtractedTypes };
+			using type_t = std::tuple_element_t<elementId, Types>;
+			return createMutTablePack<Types, type_t, ExtractedTypes...>();
+		}
+	}
+
+	template <typename Types, typename ... ExtractedTypes>
+	consteval auto createImTablePack()
+	{
+		constexpr auto numOfTypes{ std::tuple_size_v<Types> };
+		constexpr auto numOfExtractedTypes{ sizeof ... (ExtractedTypes) };
+		if constexpr (numOfExtractedTypes == numOfTypes)
+		{
+			return std::tuple<Dod::ImTable<ExtractedTypes>...>{};
+		}
+		else
+		{
+			constexpr auto elementId{ numOfTypes - 1 - numOfExtractedTypes };
+			using type_t = std::tuple_element_t<elementId, Types>;
+			return createImTablePack<Types, type_t, ExtractedTypes...>();
+		}
+	}
+
+	void destroyRange(CommonData::CDTable auto& table, int32_t beginElementId, int32_t endElementId) requires 
+		CommonData::CTrivialTable<decltype(table)>
 	{
 		using tableType = std::decay_t<decltype(table)>;
 		using types_t = tableType::types_t;
 
-		auto memPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
+		auto memPosition{ table.dataBegin };
 		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
 		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t currColId>() {
 			using columnType_t = std::tuple_element_t<currColId, types_t>;
 			constexpr auto columnTypeSize{ sizeof(columnType_t) };
-			if constexpr (std::is_trivial_v<columnType_t> == false)
-			{
-				memPosition += MemUtils::getAlignOffset(memPosition, alignof(columnType_t));
-				const auto destructBegin{ memPosition };
-				for (int32_t elId{ beginElementId }; elId < endElementId; ++elId)
-				{
-					const auto destructPoint = reinterpret_cast<columnType_t*>(memPosition) + elId;
-					std::destroy_at(destructPoint);
-				}
-			}
-			memPosition += table.capacityEls * columnTypeSize;
+			const auto offset{ roundToCells(table.capacityEls * columnTypeSize) };
+			memPosition += offset;
 		});
 	}
 
-	void flush(CommonData::CTable auto& table) noexcept
+	void flush(CommonData::CDTable auto& table) noexcept requires CommonData::CTrivialTable<decltype(table)>
 	{
 		
 		destroyRange(table, 0, table.numOfFilledEls);
@@ -257,7 +395,9 @@ namespace Dod::DataUtils
 		return table.capacityEls;
 	}
 
-	void append(CommonData::CTable auto& table, const CommonData::CTable auto& srcTable) noexcept
+	void append(CommonData::CDTable auto& table, const CommonData::CImTable auto& srcTable) noexcept requires 
+		CommonData::CTablesStructureIsSame<decltype(table), decltype(srcTable)> && 
+		CommonData::CTrivialTable<decltype(srcTable)>
 	{
 
 		const auto destSpaceLeft{ table.capacityEls - getNumFilledElements(table) };
@@ -267,66 +407,89 @@ namespace Dod::DataUtils
 		const auto startElementPosition{ getNumFilledElements(table) };
 		table.numOfFilledEls += numOfElementsToAppend;
 
-		using tableType = std::decay_t<decltype(table)>;
-		using types_t = tableType::types_t;
+		using destTableType_t = std::decay_t<decltype(table)>;
+		using destTypes_t = destTableType_t::types_t;
 
-		auto dstRowMemPosition{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
-		auto srcRowMemPosition{ srcTable.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
+		using srcTableType_t = std::decay_t<decltype(srcTable)>;
+		using srcTypes_t = srcTableType_t::types_t;
 
-		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
+		auto dstRowMemPosition{ table.dataBegin };
+		auto srcRowMemPosition{ srcTable.dataBegin };
+
+		constexpr auto numOfColumns{ std::tuple_size_v<destTypes_t> };
 		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t currColId>() {
-			using columnType_t = std::tuple_element_t<currColId, types_t>;
-			constexpr auto columnTypeSize{ sizeof(columnType_t) };
-			const auto dstAlignmentOffset{ MemUtils::getAlignOffset(dstRowMemPosition, alignof(columnType_t)) };
-			const auto dstBegin{ dstRowMemPosition + dstAlignmentOffset + startElementPosition * columnTypeSize };
-			const auto srcAlignmentOffset{ MemUtils::getAlignOffset(srcRowMemPosition, alignof(columnType_t)) };
-			const auto srcBegin{ srcRowMemPosition + srcAlignmentOffset };
-			if constexpr(std::is_trivial_v<columnType_t>)
-				std::memcpy(dstBegin, srcBegin, columnTypeSize * numOfElementsToAppend);
-			else
-			{
-				for (int32_t elId{}; elId < numOfElementsToAppend; ++elId)
-				{
-					const auto constructPoint = reinterpret_cast<columnType_t*>(dstBegin) + elId;
-					auto&& srcValue{ reinterpret_cast<columnType_t*>(srcBegin) + elId };
-					std::construct_at<columnType_t>(constructPoint, std::forward<columnType_t>(*srcValue));
-				}
-			}
-			dstRowMemPosition += dstAlignmentOffset + table.capacityEls * columnTypeSize;
-			srcRowMemPosition += srcAlignmentOffset + srcTable.capacityEls * columnTypeSize;
+			using destColumnType_t = std::tuple_element_t<currColId, destTypes_t>;
+			using srcColumnType_t = std::tuple_element_t<currColId, srcTypes_t>;
+			constexpr auto columnTypeSize{ sizeof(destColumnType_t) };
+			const auto dstBegin{ dstRowMemPosition + startElementPosition * columnTypeSize };
+			const auto srcBegin{ srcRowMemPosition };
+
+			std::memcpy(dstBegin, srcBegin, columnTypeSize * numOfElementsToAppend);
+
+			const auto destOffset{ roundToCells(table.capacityEls * columnTypeSize) };
+			dstRowMemPosition += destOffset;
+			const auto sourceOffset{ roundToCells(srcTable.capacityEls * columnTypeSize) };
+			srcRowMemPosition += sourceOffset;
 		});
 
 	}
 
-	void remove(CommonData::CTable auto& table, const ImBuffer<int32_t> indicesToRemove) noexcept
+	void remove(CommonData::CDTable auto& table, CommonData::CMonoImTable auto indicesToRemove) noexcept requires 
+		std::is_same_v<std::tuple_element_t<0, typename decltype(indicesToRemove)::types_t>, int32_t>
 	{
 
 		using tableType = std::decay_t<decltype(table)>;
 		using types_t = tableType::types_t;
 		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
 		const auto totalElements{ getNumFilledElements(table) };
-		auto columnDataBegin{ table.dataBegin + computeDeadbucketSizeInBytes<types_t>() };
+		auto columnDataBegin{ table.dataBegin };
 		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t currColId>() {
 			using columnType_t = std::tuple_element_t<currColId, types_t>;
 			constexpr auto columnTypeSize{ sizeof(columnType_t) };
-			const auto alignmentOffset{ MemUtils::getAlignOffset(columnDataBegin, alignof(columnType_t)) };
-			const auto columnTypedDataBegin{ reinterpret_cast<columnType_t*>(columnDataBegin + alignmentOffset) };
+			const auto columnTypedDataBegin{ reinterpret_cast<columnType_t*>(columnDataBegin) };
 			auto targetIdx{ totalElements - 1 };
 			for (int32_t idx{ Dod::DataUtils::getNumFilledElements(indicesToRemove) - 1 }; idx >= 0 ; --idx)
 			{
-				const auto removeId{ indicesToRemove.dataBegin[idx] };
+				const auto removeId{ DataUtils::get(indicesToRemove, idx) };
 				if constexpr (std::is_move_assignable_v<columnType_t>)
 					columnTypedDataBegin[removeId] = std::move(columnTypedDataBegin[targetIdx]);
 				else
 					columnTypedDataBegin[removeId] = columnTypedDataBegin[targetIdx];
 				--targetIdx;
 			}
-			columnDataBegin += alignmentOffset + table.capacityEls * columnTypeSize;
+			const auto offset{ roundToCells(table.capacityEls * columnTypeSize) };
+			columnDataBegin += offset;
 		});
 		const auto beginElementId{ table.numOfFilledEls - Dod::DataUtils::getNumFilledElements(indicesToRemove) };
 		const auto endElementId{ table.numOfFilledEls };
 		destroyRange(table, beginElementId, endElementId);
 		table.numOfFilledEls -= Dod::DataUtils::getNumFilledElements(indicesToRemove);
+
+	}
+
+	[[nodiscard]] auto createGuidedImTable(CommonData::CMonoImTable auto srcTable, CommonData::CMonoImTable auto indices) noexcept requires
+		std::is_same_v<std::tuple_element_t<0, typename decltype(indices)::types_t>, int32_t>
+	{
+
+		const auto bCanCreate{ Dod::DataUtils::getNumFilledElements(srcTable) == Dod::DataUtils::getNumFilledElements(indices) };
+
+		using table_t = decltype(srcTable);
+		using types_t = table_t::types_t;
+
+		const auto createSorted = [] <typename ... T> (std::tuple<T...>) {
+			return Dod::ImTableGuided<T...>{};
+		};
+
+		auto sortedTable{ createSorted(types_t{}) };
+		if (!bCanCreate)
+			return sortedTable;
+
+		sortedTable.dataBegin = srcTable.dataBegin;
+		sortedTable.capacityEls = srcTable.capacityEls;
+		sortedTable.guid.dataBegin = indices.dataBegin;
+		sortedTable.guid.capacityEls = indices.capacityEls;
+
+		return sortedTable;
 
 	}
 

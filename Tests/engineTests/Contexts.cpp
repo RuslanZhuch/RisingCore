@@ -169,9 +169,19 @@ TEST(Context, LoadBufferCapacity)
 	}
 	{
 		const auto capacity{ Engine::ContextUtils::getDataCapacity<int, double>(data, 2) };
-		EXPECT_EQ(capacity.numOfBytes, 3100);
+		EXPECT_EQ(capacity.numOfBytes, 3072);
 		EXPECT_EQ(capacity.numOfElements, 256);
 	}
+//	{
+//		Dod::MemPool memory;
+//		memory.allocate(2048);
+//		Dod::MemTypes::capacity_t header{};
+//
+//		Dod::DTable<double, int, bool> dst;
+//		Engine::ContextUtils::CapacityData capacityData(1077, 81);
+//		Engine::ContextUtils::initData(dst, capacityData, memory, header);
+//		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 81);
+//	}
 
 }
 
@@ -207,11 +217,11 @@ TEST(Context, InitBuffer)
 	}
 	{
 		Dod::MemPool memory;
-		memory.allocate(3116);
+		memory.allocate(3072+64);
 		Dod::MemTypes::capacity_t header{};
 
-		Dod::DBTable<int, double> dst;
-		Engine::ContextUtils::CapacityData capacityData(3100, 256);
+		Dod::DTable<int, double> dst;
+		Engine::ContextUtils::CapacityData capacityData(3072, 256);
 		Engine::ContextUtils::initData(dst, capacityData, memory, header);
 		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 256);
 	}
@@ -233,8 +243,8 @@ TEST(Context, InitTable)
 		memory.allocate(2048);
 		Dod::MemTypes::capacity_t header{};
 
-		Dod::DBTable<float, int> dst;
-		Engine::ContextUtils::CapacityData capacityData(340, 41);
+		Dod::DTable<float, int> dst;
+		Engine::ContextUtils::CapacityData capacityData(384, 41);
 		Engine::ContextUtils::initData(dst, capacityData, memory, header);
 		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 41);
 	}
@@ -243,8 +253,8 @@ TEST(Context, InitTable)
 		memory.allocate(2048);
 		Dod::MemTypes::capacity_t header{};
 
-		Dod::DBTable<double, int, bool> dst;
-		Engine::ContextUtils::CapacityData capacityData(1077, 81);
+		Dod::DTable<double, int, bool> dst;
+		Engine::ContextUtils::CapacityData capacityData(704+384+128, 81);
 		Engine::ContextUtils::initData(dst, capacityData, memory, header);
 		EXPECT_EQ(Dod::DataUtils::getCapacity(dst), 81);
 	}
@@ -253,8 +263,8 @@ TEST(Context, InitTable)
 
 struct BufferType1
 {
-	float x{};
-	int y{};
+	float x;
+	int y;
 
 	void setValueByName(std::string_view name, const rapidjson::Value& value)
 	{
@@ -421,5 +431,236 @@ TEST_F(ContextTestTrivial, LoadBufferContentDataIsTrivial)
 	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1), 2);
 	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2), 3);
 	EXPECT_EQ(Dod::DataUtils::get(this->dst, 3), 4);
+
+}
+
+template <typename ... DataTypes>
+class ContextTableTest : public ::testing::Test {
+
+protected:
+	void SetUp() override
+	{
+
+		this->doc = Engine::ContextUtils::loadFileDataRoot("assets/typeArray.json");
+		ASSERT_TRUE(doc.IsObject());
+
+	}
+
+	void run(int32_t numOfDestElements, int32_t dataId)
+	{
+
+		const auto obj{ this->doc.GetObject() };
+
+		const auto& data{ obj["data"] };
+		ASSERT_TRUE(data.IsArray());
+
+		this->memory.allocate(2048);
+		Dod::MemTypes::capacity_t header{};
+
+		const auto destCapacity{ Dod::DataUtils::computeCapacityInBytes<std::tuple<DataTypes...>>(numOfDestElements) };
+		Engine::ContextUtils::CapacityData capacityData(destCapacity, numOfDestElements);
+		Engine::ContextUtils::initData(this->dst, capacityData, this->memory, header);
+		ASSERT_EQ(Dod::DataUtils::getCapacity(this->dst), numOfDestElements);
+
+		Engine::ContextUtils::loadDataContent(this->dst, data.GetArray(), dataId);
+
+	}
+
+	Dod::MemPool memory;
+	rapidjson::Document doc;
+	Dod::DTable<DataTypes...> dst;
+
+};
+
+using ContextMonoTableTestTrivial = ContextTableTest<int32_t>;
+using ContextMonoTableTestComplex = ContextTableTest<BufferType1>;
+using ContextTableTestComplex = ContextTableTest<BufferType1, int32_t, float>;
+
+TEST_F(ContextMonoTableTestTrivial, LoadMonoTableContentDataIsTrivial)
+{
+
+	this->run(4, 4);
+
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 4);
+
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 0), 1);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1), 2);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2), 3);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 3), 4);
+
+}
+
+TEST_F(ContextMonoTableTestComplex, LoadMonoTableContent)
+{
+
+	this->run(4, 0);
+
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 4);
+
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 0).x, 1.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 0).y, 2);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1).x, 3.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 1).y, 4);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2).x, 5.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 2).y, 6);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 3).x, 7.f);
+	EXPECT_EQ(Dod::DataUtils::get(this->dst, 3).y, 8);
+
+}
+
+TEST_F(ContextTableTestComplex, LoadTableContent)
+{
+
+	this->run(4, 5);
+
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 4);
+
+	const auto col0{ Dod::DataUtils::get<0>(this->dst) };
+
+	EXPECT_EQ(Dod::DataUtils::get(col0, 0).x, 1.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 0).y, 2);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 1).x, 5.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 1).y, 6);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 2).x, 9.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 2).y, 10);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 3).x, 13.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 3).y, 14);
+
+	const auto col1{ Dod::DataUtils::get<1>(this->dst) };
+
+	EXPECT_EQ(Dod::DataUtils::get(col1, 0), 3);
+	EXPECT_EQ(Dod::DataUtils::get(col1, 1), 7);
+	EXPECT_EQ(Dod::DataUtils::get(col1, 2), 11);
+	EXPECT_EQ(Dod::DataUtils::get(col1, 3), 15);
+
+	const auto col2{ Dod::DataUtils::get<2>(this->dst) };
+
+	EXPECT_EQ(Dod::DataUtils::get(col2, 0), 4);
+	EXPECT_EQ(Dod::DataUtils::get(col2, 1), 8);
+	EXPECT_EQ(Dod::DataUtils::get(col2, 2), 12);
+	EXPECT_EQ(Dod::DataUtils::get(col2, 3), 16);
+
+}
+
+TEST_F(ContextTableTestComplex, LoadTableContentDestIsLarger)
+{
+
+	this->run(6, 5);
+
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 4);
+
+	const auto col0{ Dod::DataUtils::get<0>(this->dst) };
+
+	EXPECT_EQ(Dod::DataUtils::get(col0, 0).x, 1.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 0).y, 2);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 1).x, 5.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 1).y, 6);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 2).x, 9.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 2).y, 10);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 3).x, 13.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 3).y, 14);
+
+	const auto col1{ Dod::DataUtils::get<1>(this->dst) };
+
+	EXPECT_EQ(Dod::DataUtils::get(col1, 0), 3);
+	EXPECT_EQ(Dod::DataUtils::get(col1, 1), 7);
+	EXPECT_EQ(Dod::DataUtils::get(col1, 2), 11);
+	EXPECT_EQ(Dod::DataUtils::get(col1, 3), 15);
+
+	const auto col2{ Dod::DataUtils::get<2>(this->dst) };
+
+	EXPECT_EQ(Dod::DataUtils::get(col2, 0), 4);
+	EXPECT_EQ(Dod::DataUtils::get(col2, 1), 8);
+	EXPECT_EQ(Dod::DataUtils::get(col2, 2), 12);
+	EXPECT_EQ(Dod::DataUtils::get(col2, 3), 16);
+
+}
+
+TEST_F(ContextTableTestComplex, LoadTableContentDestIsSmaller)
+{
+
+	this->run(3, 5);
+
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 3);
+
+	const auto col0{ Dod::DataUtils::get<0>(this->dst) };
+
+	EXPECT_EQ(Dod::DataUtils::get(col0, 0).x, 1.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 0).y, 2);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 1).x, 5.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 1).y, 6);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 2).x, 9.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 2).y, 10);
+
+	const auto col1{ Dod::DataUtils::get<1>(this->dst) };
+
+	EXPECT_EQ(Dod::DataUtils::get(col1, 0), 3);
+	EXPECT_EQ(Dod::DataUtils::get(col1, 1), 7);
+	EXPECT_EQ(Dod::DataUtils::get(col1, 2), 11);
+
+	const auto col2{ Dod::DataUtils::get<2>(this->dst) };
+
+	EXPECT_EQ(Dod::DataUtils::get(col2, 0), 4);
+	EXPECT_EQ(Dod::DataUtils::get(col2, 1), 8);
+	EXPECT_EQ(Dod::DataUtils::get(col2, 2), 12);
+
+}
+
+TEST_F(ContextTableTestComplex, LoadTableContentDestIsEmpty)
+{
+
+	this->run(0, 5);
+
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 0);
+
+}
+
+TEST_F(ContextTableTestComplex, LoadTableContentDataIsEmpty)
+{
+
+	this->run(4, 1);
+
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 0);
+
+}
+
+TEST_F(ContextTableTestComplex, LoadTableContentDataNoField)
+{
+
+	this->run(4, 3);
+
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(this->dst), 0);
+
+}
+
+TEST_F(ContextTableTestComplex, LoadTableContentDataMissing)
+{
+
+	this->run(4, 6);
+
+	const auto col0{ Dod::DataUtils::get<0>(this->dst) };
+
+	EXPECT_EQ(Dod::DataUtils::get(col0, 0).x, 1.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 0).y, 0);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 1).x, 5.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 1).y, 6);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 2).x, 0.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 2).y, 10);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 3).x, 0.f);
+	EXPECT_EQ(Dod::DataUtils::get(col0, 3).y, 0);
+
+	const auto col1{ Dod::DataUtils::get<1>(this->dst) };
+
+	EXPECT_EQ(Dod::DataUtils::get(col1, 0), 3);
+	EXPECT_EQ(Dod::DataUtils::get(col1, 1), 7);
+	EXPECT_EQ(Dod::DataUtils::get(col1, 2), 11);
+	EXPECT_EQ(Dod::DataUtils::get(col1, 3), 15);
+
+	const auto col2{ Dod::DataUtils::get<2>(this->dst) };
+
+	EXPECT_EQ(Dod::DataUtils::get(col2, 0), 4);
+	EXPECT_EQ(Dod::DataUtils::get(col2, 1), 8);
+	EXPECT_EQ(Dod::DataUtils::get(col2, 2), 12);
+	EXPECT_EQ(Dod::DataUtils::get(col2, 3), 16);
 
 }

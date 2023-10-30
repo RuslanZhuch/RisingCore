@@ -37,9 +37,9 @@ namespace Game::ExecutionBlock
         Context::Type4::Data target1Context;
         Context::Type4::Data target2Context;
         Context::Type4::Data target3Context;
-        const Dod::SharedContext::Controller<Context::Type5::Data>* shared1Context{ nullptr };
-        const Dod::SharedContext::Controller<Context::Type5::Data>* shared2Context{ nullptr };
-        const Dod::SharedContext::Controller<Context::Type6::Data>* shared3Context{ nullptr };
+        Context::Type5::CData shared1Context;
+        Context::Type5::CData shared2Context;
+        Context::Type6::CData shared3Context;
     };
 }
 

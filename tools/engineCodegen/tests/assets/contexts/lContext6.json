@@ -26,6 +26,12 @@
             },
             "name": "data2",
             "capacity": 128
+        },
+        {
+            "type": "data",
+            "dataType": "float",
+            "name": "data3",
+            "capacity": 256
         }
     ]
 }

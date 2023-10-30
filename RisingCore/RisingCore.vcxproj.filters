@@ -60,6 +60,9 @@
     <ClInclude Include="src\dod\TableUtils.h" />
     <ClInclude Include="src\dod\BufferUtils.h" />
     <ClInclude Include="src\Helpers.h" />
+    <ClInclude Include="src\dod\DataStream.h">
+      <Filter>src\dod</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dod\MemPool.cpp">

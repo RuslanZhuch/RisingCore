@@ -28,7 +28,7 @@ struct TypeComplex1
 
 	int int1{};
 	float float1{};
-	Engine::String string1;
+	Engine::String string1{};
 	Type2f inner;
 
 };

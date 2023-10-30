@@ -2,7 +2,7 @@
 
 #include <dod/Buffers.h>
 #include <dod/Tables.h>
-#include <dod/TableUtils.h>
+#include <dod/DataUtils.h>
 #include <dod/MemPool.h>
 
 #pragma warning(push)
@@ -21,6 +21,17 @@ namespace Game::Context::LContext3
         Dod::MemPool memory;
         Dod::DBBuffer<int32_t> dbvar;
     };
+
+    struct CData
+    {
+
+        Dod::ImBuffer<int32_t> dbvar;
+    };
+
+    [[nodiscard]] static CData convertToConst(const Data& context) noexcept
+    {
+        return { Dod::DataUtils::createImFromBuffer(context.dbvar) };
+    }
 
 }
 

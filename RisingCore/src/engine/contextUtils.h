@@ -74,10 +74,19 @@ namespace Engine::ContextUtils
 
 	}
 
-    [[nodiscard]] static void loadVariableFromList(auto& dest, rapidjson::GenericArray<true, rapidjson::Value> src, int32_t id) noexcept
+    [[nodiscard]] static void loadVariableFromList(auto& dest, rapidjson::GenericArray<true, rapidjson::Value> src, int32_t rowId, int32_t colId) noexcept
     {
 
-        assignToVariable(dest, src[static_cast<rapidjson::SizeType>(id)]);
+        const auto& row{ src[static_cast<rapidjson::SizeType>(rowId)] };
+        if (row.IsArray())
+        {
+            const auto& rowData{ row.GetArray() };
+            if (rowData.Size() > colId)
+                assignToVariable(dest, rowData[static_cast<rapidjson::SizeType>(colId)]);
+            return;
+        }
+
+        assignToVariable(dest, row);
 
     }
 
@@ -148,7 +157,7 @@ namespace Engine::ContextUtils
     ) noexcept
     {
 
-        Dod::DataUtils::initFromMemory(dest, Dod::MemUtils::stackAquire(pool, capacityData.numOfBytes, alignof(T), header));
+        Dod::DataUtils::initFromMemory(dest, Dod::MemUtils::stackAquire(pool, capacityData.numOfBytes, 64, header));
 
     }
 
@@ -161,8 +170,7 @@ namespace Engine::ContextUtils
     {
         using tableType_t = std::decay_t<decltype(dest)>;
         using types_t = tableType_t::types_t;
-        constexpr auto alignment{ RisingCore::Helpers::findLargestAlignment<types_t>() };
-        Dod::DataUtils::initFromMemory(dest, capacityData.numOfElements, Dod::MemUtils::stackAquire(pool, capacityData.numOfBytes, alignment, header));
+        Dod::DataUtils::initFromMemory(dest, capacityData.numOfElements, Dod::MemUtils::stackAquire(pool, capacityData.numOfBytes, 64, header));
 
     }
 
@@ -192,7 +200,7 @@ namespace Engine::ContextUtils
         for (int32_t elId{}; elId < totalElements; ++elId)
         {
             Dod::DataUtils::constructBack(dest);
-            loadVariableFromList(Dod::DataUtils::get(dest, elId), initialData, elId);
+            loadVariableFromList(Dod::DataUtils::get(dest, elId), initialData, elId, 0);
         }
 
     }
@@ -204,6 +212,33 @@ namespace Engine::ContextUtils
     ) noexcept
     {
 
+        using types_t = std::decay_t<decltype(dest)>::types_t;
+
+        if (!src[static_cast<rapidjson::SizeType>(id)].IsObject())
+            return;
+        const auto& dataObject{ src[static_cast<rapidjson::SizeType>(id)].GetObject() };
+
+        const auto initialField{ dataObject.FindMember("initial") };
+        if (initialField == dataObject.end())
+            return;
+
+        const auto initialData{ initialField->value.GetArray() };
+
+        const auto numOfElementsToLoad{ static_cast<int32_t>(initialData.Size()) };
+        const auto bufferSize{ Dod::DataUtils::getCapacity(dest) };
+
+        const auto totalElements{ std::min(numOfElementsToLoad, bufferSize) };
+                
+        auto columnId{ static_cast<int32_t>(std::tuple_size_v<types_t> - 1) };
+        const auto executor = [&](auto&& ... values) {
+            static_assert(sizeof...(values) == std::tuple_size_v<types_t>);
+            Dod::DataUtils::populate(dest, totalElements, [cId = columnId--, &initialData, &values](int32_t elId) {
+                values = {};
+                loadVariableFromList(values, initialData, elId, cId);
+                return values;
+            }...);
+        };
+        std::apply(executor, types_t{});
     }
 
 }

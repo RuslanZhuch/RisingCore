@@ -7,7 +7,7 @@
 TEST(String, defaultCreation)
 {
 
-	Engine::String str;
+	Engine::String str{};
 	ASSERT_EQ(str.capacity, 64);
 
 	ASSERT_TRUE(str == "");
@@ -17,7 +17,7 @@ TEST(String, defaultCreation)
 TEST(String, Assignment)
 {
 
-	Engine::String str;
+	Engine::String str{};
 	ASSERT_EQ(str.capacity, 64);
 
 	ASSERT_TRUE(str == "");
