@@ -27,6 +27,9 @@ namespace Game::ExecutionBlock
     private:
         void initImpl() noexcept;
         void updateImpl(float dt) noexcept;
+        void modifyTarget1(Context::Type4::Data&) noexcept;
+        void modifyTarget2(Context::Type4::Data&) noexcept;
+        void modifyTarget3(Context::Type4::Data&) noexcept;
 
     public:
         Dod::MemPool memory;
@@ -34,9 +37,6 @@ namespace Game::ExecutionBlock
         Context::Type2::Data local2Context;
         Context::Type3::Data local3Context;
         Context::Type3::Data local4Context;
-        Context::Type4::Data target1Context;
-        Context::Type4::Data target2Context;
-        Context::Type4::Data target3Context;
         Context::Type5::CData shared1Context;
         Context::Type5::CData shared2Context;
         Context::Type6::CData shared3Context;

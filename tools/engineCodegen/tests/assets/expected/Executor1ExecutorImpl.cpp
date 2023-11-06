@@ -1,16 +1,13 @@
 #include "Executor1Executor.h"
 
-namespace Game::ExecutionBlock
+using namespace Game::ExecutionBlock;
+
+void Executor1::initImpl() noexcept
 {
 
-    void Executor1::initImpl() noexcept
-    {
+}
 
-    }
-
-    void Executor1::updateImpl([[maybe_unused]] float dt) noexcept
-    {
-
-    }
+void Executor1::updateImpl([[maybe_unused]] float dt) noexcept
+{
 
 }

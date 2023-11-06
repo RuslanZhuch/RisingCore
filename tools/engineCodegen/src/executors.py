@@ -141,14 +141,6 @@ def gen_contexts_decl(handler, executor_data):
                 field_name = "{}Context".format(element)
                 generator.generate_class_variable(handler, class_name, field_name)
     
-    contexts_write_to = executor_data.get("contextsWriteTo")
-    if contexts_write_to is not None:
-        for context in contexts_write_to:
-            class_name = "Context::{}::Data".format(_to_class_name(context["type"]))
-            for element in context["list"]:
-                field_name = "{}Context".format(element)
-                generator.generate_class_variable(handler, class_name, field_name)
-    
     contexts_shared = executor_data.get("contextsShared")
     if contexts_shared is not None:
         for context in contexts_shared:
@@ -202,6 +194,16 @@ def gen_header(folder, executor_data):
             generator.generate_class_public_method(class_handler, "flushSharedLocalContexts", "void", [], False)
             generator.generate_class_private_method(class_handler, "initImpl", "void", [], False)
             generator.generate_class_private_method(class_handler, "updateImpl", "void", ['float dt'], False)
+            
+            contexts_write_to = executor_data.get("contextsWriteTo")
+            if contexts_write_to is not None:
+                for context in contexts_write_to:
+                    context_type = _to_class_name(context["type"])
+                    class_name = "Context::{}::Data".format(context_type)
+                    for element in context["list"]:
+                        method_name = "modify{}".format(_to_class_name(element))
+                        argument = "{}&".format(class_name)
+                        generator.generate_class_private_method(class_handler, method_name, "void", [argument], False)
             
             generator.generate_class_variable(class_handler, "Dod::MemPool", "memory")
             
@@ -266,14 +268,11 @@ def gen_implementation(folder, executor_data):
 
     generator.generate_line(handler, "#include \"{}\"".format(file_name_header))
     generator.generate_empty(handler)
+    generator.generate_line(handler, "using namespace Game::ExecutionBlock;")
     
-    def namespace_block_data(handler):
-        def class_data(class_handler):
-            generator.generate_class_public_method(class_handler, "initImpl", "void", [], False)
-            generator.generate_class_public_method(class_handler, "updateImpl", "void", ['[[maybe_unused]] float dt'], False)
-       
-        generator.generate_class_impl(handler, class_name, class_data)
-        generator.generate_empty(handler)
-        
-    generator.generate_block(handler, "namespace Game::ExecutionBlock", namespace_block_data)
+    def class_data(class_handler):
+        generator.generate_class_public_method(class_handler, "initImpl", "void", [], False)
+        generator.generate_class_public_method(class_handler, "updateImpl", "void", ['[[maybe_unused]] float dt'], False)
+    
+    generator.generate_class_impl(handler, class_name, class_data)
     
