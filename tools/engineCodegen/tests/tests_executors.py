@@ -11,6 +11,7 @@ sys.path.append(root_dir)
 
 import sys
 sys.path.append("../src")
+import shutil
 
 import executors
 import generator
@@ -227,26 +228,6 @@ class TestExecutors(unittest.TestCase):
         
         utils.assert_files(self, "dest/runtime.cpp", "assets/expected/executorsFlush.cpp")
         
-#    def test_gen_executor_flush_with_pools(self):
-#        executors_data = executors.load([
-#            "assets/project3/executors/executor1.json",
-#            "assets/project3/executors/executor2.json",
-#            "assets/project3/executors/executor3.json",
-#            "assets/project3/executors/executor4.json",
-#            "assets/project3/executors/executor5.json",
-#            "assets/project3/executors/executor6.json"
-#        ])
-#        self.assertEqual(len(executors_data), 6)
-#        
-#        handler = generator.generate_file("dest", "gen_executor_flush_with_pools.cpp")
-#        self.assertIsNotNone(handler)
-#        
-#        executors.gen_flush(handler, executors_data)
-#        
-#        handler.close()
-#        
-#        utils.assert_files(self, "dest/gen_executor_flush_with_pools.cpp", "assets/expected/gen_executor_flush_with_pools.cpp")
-        
     def test_gen_executor_1_body_flush(self):
         executors_data = load_executors()
         self.assertEqual(len(executors_data), EXPECT_NUM_OF_EXECUTORS)
@@ -272,34 +253,6 @@ class TestExecutors(unittest.TestCase):
         handler.close()
         
         utils.assert_files(self, "dest/gen_executor_2_body_flush.cpp", "assets/expected/gen_executor_2_body_flush.cpp")
-        
-#    def test_gen_executor_1_body_memory(self):
-#        executors_data = load_executors()
-#        self.assertEqual(len(executors_data), EXPECT_NUM_OF_EXECUTORS)
-#        
-#        handler = generator.generate_file("dest", "gen_executor_1_body_memory.cpp")
-#        self.assertIsNotNone(handler)
-#        
-#        executors.gen_body_memory(handler, executors_data[0])
-#        handler.close()
-#        
-#        descriptor_file = open("dest/gen_executor_1_body_memory.cpp", "r")
-#        file_data = descriptor_file.read()
-#        self.assertEqual(file_data, "int32_t header{};\nthis->memory.allocate(2048);\n")
-#        
-#    def test_gen_executor_2_body_memory(self):
-#        executors_data = load_executors()
-#        self.assertEqual(len(executors_data), EXPECT_NUM_OF_EXECUTORS)
-#        
-#        handler = generator.generate_file("dest", "gen_executor_2_body_memory.cpp")
-#        self.assertIsNotNone(handler)
-#        
-#        executors.gen_body_memory(handler, executors_data[1])
-#        handler.close()
-#        
-#        descriptor_file = open("dest/gen_executor_2_body_memory.cpp", "r")
-#        file_data = descriptor_file.read()
-#        self.assertEqual(file_data, "int32_t header{};\nthis->memory.allocate(4096);\n")
         
     def test_gen_executor_1_body_contexts_load(self):
         executors_data = load_executors()
@@ -400,6 +353,29 @@ class TestExecutors(unittest.TestCase):
         executors.gen_source("dest", executors_data[0])
         
         utils.assert_files(self, "dest/Test1Executor.cpp", "assets/expected/Test1Executor.cpp")
+        
+    def test_gen_executor_one_segment(self):
+        executors_data = executors.load(["assets/executors/executorWithOneSegment.json"])
+        self.assertEqual(len(executors_data), 1)
+        
+        executors.gen_implementation("dest", executors_data[0])
+        executors.inject_modify_methods("dest", executors_data[0])
+        
+        utils.assert_files(self, "dest/ExecutorWithOneSegmentExecutorImpl.cpp", "assets/expected/injections/ExecutorWithOneSegmentExecutorImpl.cpp")
+        executors.inject_modify_methods("dest", executors_data[0])
+        utils.assert_files(self, "dest/ExecutorWithOneSegmentExecutorImpl.cpp", "assets/expected/injections/ExecutorWithOneSegmentExecutorImpl.cpp")
+        
+    def test_gen_executor_suspend_segment(self):
+        executors_data = executors.load(["assets/executors/ExecutorWithOneSegmentAndSuspend.json"])
+        self.assertEqual(len(executors_data), 1)
+
+        shutil.copyfile("assets/expected/injections/ExecutorWithTwoSegmentsExecutorImpl.cpp", "dest/ExecutorWithOneSegmentAndSuspendExecutorImpl.cpp")
+        
+        executors.inject_modify_methods("dest", executors_data[0])
+        
+        utils.assert_files(self, "dest/ExecutorWithOneSegmentAndSuspendExecutorImpl.cpp", "assets/expected/injections/ExecutorWithOneSegmentAndSuspendExecutorImpl.cpp")
+        executors.inject_modify_methods("dest", executors_data[0])
+        utils.assert_files(self, "dest/ExecutorWithOneSegmentAndSuspendExecutorImpl.cpp", "assets/expected/injections/ExecutorWithOneSegmentAndSuspendExecutorImpl.cpp")
         
     def test_gen_executor_test1_impl(self):
         file_full_path = "dest/Test1ExecutorImpl.cpp"

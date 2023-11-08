@@ -1,5 +1,6 @@
 import loader
 import generator
+import injectors
 
 class SharedUsage:
     def __init__(self, shared_instance, executor_scontext):
@@ -255,6 +256,62 @@ def gen_source(folder, executor_data):
         
     generator.generate_block(handler, "namespace Game::ExecutionBlock", namespace_block_data)
     
+def inject_modify_methods(folder, executor_data):
+    executor_name = get_name(executor_data)
+    class_name = _to_class_name(executor_name)
+    file_name_source = "{}ExecutorImpl.cpp".format(class_name)
+
+    if not generator.get_file_generated(folder, file_name_source):
+        return
+    
+    full_path = "{}/{}".format(folder, file_name_source)
+    content = injectors.load_content(full_path)
+    initial_desc = injectors.gather_desc(content)
+
+    contexts_names_list : list[str] = []
+    contexts_types_list : list[str] = []
+    contexts_write_to = executor_data.get("contextsWriteTo")
+    if contexts_write_to is not None:
+        for context in contexts_write_to:
+            context_type = _to_class_name(context["type"])
+            for element in context["list"]:
+                contexts_names_list.append(element)
+                contexts_types_list.append(context_type)
+
+    def inject(context_id : int, content : str):
+        context_name = contexts_names_list[context_id]
+        context_type = contexts_types_list[context_id]
+
+        data_to_inject = "void {}::modify{}([[maybe_unused]] Context::{}::Data& {}) noexcept\n{{\n\n}}".format(
+            class_name, _to_class_name(context_name), context_type, context_name)
+        
+        return injectors.inject(content, context_name, data_to_inject)
+
+    def restore(context_id : int, content : str):
+        context_name = contexts_names_list[context_id]
+        return injectors.restore(content, context_name)
+
+    for index in range(0, len(contexts_names_list)):
+        if contexts_names_list[index] in initial_desc.segment_names:
+            continue
+        if contexts_names_list[index] in initial_desc.suspended_segment_names:
+            content = restore(index, content)
+        else:
+            content = inject(index, content)
+
+    def suspend(context_id : int, content : str):
+        context_name = initial_desc.segment_names[context_id]
+        return injectors.suspend(content, context_name)
+
+    for index in range(0, len(initial_desc.segment_names)):
+        if initial_desc.segment_names[index] in contexts_names_list:
+            continue
+        if initial_desc.segment_names[index] in initial_desc.suspended_segment_names:
+            continue
+        content = suspend(index, content)
+    
+    generator.write_content(folder, file_name_source, content)
+
 def gen_implementation(folder, executor_data):
     executor_name = get_name(executor_data)
     class_name = _to_class_name(executor_name)
