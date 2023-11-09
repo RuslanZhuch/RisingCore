@@ -17,6 +17,9 @@ int main()
     Game::Context::SContext1::Data poolInst1Context;
     Game::Context::SContext1::Data poolInst2Context;
     Game::Context::SContext2::Data poolInst3Context;
+    poolInst1Context.load();
+    poolInst2Context.load();
+    poolInst3Context.load();
 
     Game::ExecutionBlock::Executor1 executor1;
     executor1.loadContext();
@@ -47,9 +50,9 @@ int main()
         executor1.update(deltaTime);
         executor2.update(deltaTime);
 
-        poolInst1Context.merge(executor1.pool1Context);
-        poolInst2Context.merge(executor1.pool2Context);
-        poolInst2Context.merge(executor2.pool2Context);
+        executor1.modifyPool1(poolInst1Context);
+        executor1.modifyPool2(poolInst2Context);
+        executor2.modifyPool2(poolInst2Context);
 
         const auto computedP2_poolInst1Context{ Game::Context::SContext1::convertToConst(poolInst1Context) };
         const auto computedP2_poolInst2Context{ Game::Context::SContext1::convertToConst(poolInst2Context) };
@@ -61,7 +64,7 @@ int main()
         executor4.pool3Context = computedP2_poolInst3Context;
         executor4.update(deltaTime);
 
-        poolInst3Context.merge(executor4.pool3Context);
+        executor4.modifyPool3(poolInst3Context);
 
         const auto computedP3_poolInst2Context{ Game::Context::SContext1::convertToConst(poolInst2Context) };
         const auto computedP3_poolInst3Context{ Game::Context::SContext2::convertToConst(poolInst3Context) };

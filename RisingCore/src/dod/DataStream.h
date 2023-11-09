@@ -9,44 +9,51 @@
 namespace Dod::DataStream
 {
 
+	using header_t = int32_t;
+
 	template <Dod::CommonData::CMonoMutTable TTable, typename TData> requires std::is_trivial_v<TData>
-	Dod::MemTypes::capacity_t serialize(TTable& dest, TData data, Dod::MemTypes::capacity_t header) noexcept
+	header_t serialize(TTable& dest, TData data) noexcept
 	{
-		constexpr auto dataSize{ static_cast<decltype(header)>(sizeof(TData)) };
+
+		constexpr auto dataSize{ static_cast<header_t>(sizeof(TData)) };
 		using destData_t = std::tuple_element_t<0, typename TTable::types_t>;
 
-		const auto destCapacityInBytes{ static_cast<Dod::MemTypes::capacity_t>(Dod::DataUtils::getCapacity(dest)) * sizeof(destData_t) };
-		const auto bHasSpace{ destCapacityInBytes - header >= dataSize };
-		if (!bHasSpace)
-			return header;
+		const auto destCapacityInBytes{ static_cast<header_t>(Dod::DataUtils::getCapacity(dest)) * sizeof(destData_t) };
+		const auto bHasSpace{ destCapacityInBytes - dest.numOfFilledEls >= dataSize };
+		
+		if (bHasSpace)
+		{
+			std::memcpy(dest.dataBegin + dest.numOfFilledEls, &data, dataSize);
+			dest.numOfFilledEls += dataSize;
+		}
+			
+		return dest.numOfFilledEls;
 
-		std::memcpy(dest.dataBegin + header, &data, dataSize);
-
-		return header + dataSize;
 	}
 
 	template <Dod::CommonData::CMonoMutTable TTable, typename TData> requires std::is_trivial_v<TData>
-	Dod::MemTypes::capacity_t serialize(TTable& dest, const TData* data, int32_t numOfElements, Dod::MemTypes::capacity_t header) noexcept
+	header_t serialize(TTable& dest, const TData* data, int32_t numOfElements) noexcept
 	{
 
-		const auto dataSize{ static_cast<decltype(header)>(sizeof(TData)) * numOfElements };
+		const auto dataSize{ static_cast<header_t>(sizeof(TData)) * numOfElements };
 		using destData_t = std::tuple_element_t<0, typename TTable::types_t>;
 
 		constexpr auto bytesForCounter{ sizeof(numOfElements) };
-		const auto destCapacityInBytes{ static_cast<Dod::MemTypes::capacity_t>(Dod::DataUtils::getCapacity(dest)) * sizeof(destData_t) };
-		const auto bHasSpace{ destCapacityInBytes - header >= dataSize + bytesForCounter };
-		if (!bHasSpace)
-			return header;
+		const auto destCapacityInBytes{ static_cast<header_t>(Dod::DataUtils::getCapacity(dest)) * sizeof(destData_t) };
+		const auto bHasSpace{ destCapacityInBytes - dest.numOfFilledEls >= dataSize + bytesForCounter };
 
-		std::memcpy(dest.dataBegin + header, &numOfElements, bytesForCounter);
-		std::memcpy(dest.dataBegin + header + bytesForCounter, data, dataSize);
-
-		return header + bytesForCounter + dataSize;
+		if (bHasSpace)
+		{
+			std::memcpy(dest.dataBegin + dest.numOfFilledEls, &numOfElements, bytesForCounter);
+			std::memcpy(dest.dataBegin + dest.numOfFilledEls + bytesForCounter, data, dataSize);
+			dest.numOfFilledEls += bytesForCounter + dataSize;
+		}
+		return dest.numOfFilledEls;
 
 	}
 
 	template <typename TData, Dod::CommonData::CMonoMutTable TTable> requires std::is_trivial_v<TData>
-	Dod::MemTypes::capacity_t deserialize(TTable& dest, Dod::MemTypes::capacity_t header, TData& data) noexcept
+	header_t deserialize(TTable& dest, header_t header, TData& data) noexcept
 	{
 
 		constexpr auto dataSize{ static_cast<decltype(header)>(sizeof(TData)) };
@@ -62,7 +69,7 @@ namespace Dod::DataStream
 	}
 
 	template <typename TData, Dod::CommonData::CMonoMutTable TTable> requires std::is_trivial_v<TData>
-	Dod::MemTypes::capacity_t deserialize(TTable& dest, Dod::MemTypes::capacity_t header, int32_t& numOfElements, TData*& data) noexcept
+	header_t deserialize(TTable& dest, header_t header, int32_t& numOfElements, TData*& data) noexcept
 	{
 
 		header = deserialize(dest, header, numOfElements);

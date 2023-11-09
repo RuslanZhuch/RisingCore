@@ -23,13 +23,13 @@ namespace Game::ExecutionBlock
         void initiate() noexcept;
         void update(float dt) noexcept;
         void flushSharedLocalContexts() noexcept;
+        void modifyTarget1(Context::Type4::Data&) noexcept;
+        void modifyTarget2(Context::Type4::Data&) noexcept;
+        void modifyTarget3(Context::Type4::Data&) noexcept;
 
     private:
         void initImpl() noexcept;
         void updateImpl(float dt) noexcept;
-        void modifyTarget1(Context::Type4::Data&) noexcept;
-        void modifyTarget2(Context::Type4::Data&) noexcept;
-        void modifyTarget3(Context::Type4::Data&) noexcept;
 
     public:
         Dod::MemPool memory;

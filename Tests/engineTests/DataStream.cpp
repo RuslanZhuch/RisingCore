@@ -25,7 +25,7 @@ protected:
 	void serialize(TData data, Dod::MemTypes::capacity_t expectedHeaderOffset, Dod::MemTypes::capacity_t expectedPages)
 	{
 		const auto prevHeader{ this->header };
-		this->header = Dod::DataStream::serialize(this->dest, data, this->header);
+		this->header = Dod::DataStream::serialize(this->dest, data);
 
 		const auto headerOffset{ this->header - prevHeader };
 		EXPECT_EQ(headerOffset, expectedHeaderOffset);
@@ -38,7 +38,7 @@ protected:
 	void serializeMultiple(std::vector<TData> data, Dod::MemTypes::capacity_t expectedHeaderOffset, Dod::MemTypes::capacity_t expectedPages)
 	{
 		const auto prevHeader{ this->header };
-		this->header = Dod::DataStream::serialize(this->dest, data.data(), data.size(), this->header);
+		this->header = Dod::DataStream::serialize(this->dest, data.data(), data.size());
 
 		const auto headerOffset{ this->header - prevHeader };
 		EXPECT_EQ(headerOffset, expectedHeaderOffset);
@@ -84,7 +84,7 @@ protected:
 	}
 
 	Dod::MemPool memory;
-	Dod::MemTypes::capacity_t header{};
+	Dod::DataStream::header_t header{};
 	Dod::DTable<TDest> dest;
 
 };

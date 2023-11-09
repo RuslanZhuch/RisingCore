@@ -403,7 +403,7 @@ def generate_context_merge(handler, context_raw_data):
             for table in context_data.tables_data:
                 if table.merge_type == ContextData.MERGE_TYPE_NONE:
                     continue
-                generator.generate_line(handler, "Dod::DataUtils::append(this->{0}, other.{0});".format(table.name))
+                generator.generate_line(handler, "Dod::DataUtils::append(this->{0}, Dod::ImTable(other.{0}));".format(table.name))
 
         generator.generate_struct_method(struct_handler, "merge", "void", ["[[maybe_unused]] const Data& other"], False, load_body)
 
@@ -494,6 +494,9 @@ def generate_shared_init(handler, contexts_data):
     for instance in contexts_data:
         class_name = _to_class_name(instance.context_name)
         generator.generate_line(handler, "Game::Context::{}::Data {}Context;".format(class_name, instance.instance_name))
+    for instance in contexts_data:
+        class_name = _to_class_name(instance.context_name)
+        generator.generate_line(handler, "{}Context.load();".format(instance.instance_name))
     
 def generate_shared_usage(handler, contexts_data : list[ContextUsage], pool_id : int, instance_names : list[str]):
     for instance_name in instance_names:
@@ -518,7 +521,8 @@ def generate_shared_merge(handler, workspace_data):
         for merge_context in merge_context_full:
             executor_name = merge_context.executor_name
             executor_scontext = merge_context.executor_scontext
-            generator.generate_line(handler, "{}Context.merge({}.{}Context);".format(instance_name, executor_name, executor_scontext))
+            generator.generate_line(handler, "{}.modify{}({}Context);".format(executor_name, _to_class_name(executor_scontext), instance_name))
+            #generator.generate_line(handler, "{}Context.merge({}.{}Context);".format(instance_name, executor_name, executor_scontext))
     
 def generate_pools_merge(handler, workspace_data : dict[any], block_id : int):
     merge_data = load_pool_context_merge(workspace_data)
@@ -551,4 +555,5 @@ def generate_pools_merge(handler, workspace_data : dict[any], block_id : int):
             if executor_name not in prev_block_executors:
                 continue
             executor_scontext = merge_context.executor_scontext
-            generator.generate_line(handler, "{}Context.merge({}.{}Context);".format(instance_name, executor_name, executor_scontext))
+            generator.generate_line(handler, "{}.modify{}({}Context);".format(executor_name, _to_class_name(executor_scontext), instance_name))
+            #generator.generate_line(handler, "{}Context.merge({}.{}Context);".format(instance_name, executor_name, executor_scontext))

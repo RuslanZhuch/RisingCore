@@ -123,13 +123,7 @@ def gen_body_contexts_load(handler, executor_data):
             for element in context["list"]:
                 generator.generate_line(handler, "this->{}Context.load();".format(element))
         generator.generate_empty(handler)
-    
-    contexts_write_to = executor_data.get("contextsWriteTo")
-    if contexts_write_to is not None:
-        for context in contexts_write_to:
-            for element in context["list"]:
-                generator.generate_line(handler, "this->{}Context.load();".format(element))
-        
+            
 def gen_body_update(handler, executor_data):   
     generator.generate_line(handler, "this->updateImpl(dt);")
         
@@ -204,7 +198,7 @@ def gen_header(folder, executor_data):
                     for element in context["list"]:
                         method_name = "modify{}".format(_to_class_name(element))
                         argument = "{}&".format(class_name)
-                        generator.generate_class_private_method(class_handler, method_name, "void", [argument], False)
+                        generator.generate_class_public_method(class_handler, method_name, "void", [argument], False)
             
             generator.generate_class_variable(class_handler, "Dod::MemPool", "memory")
             

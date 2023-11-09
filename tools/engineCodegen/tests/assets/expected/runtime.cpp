@@ -15,6 +15,10 @@ int main()
     Game::Context::SContext1::Data sharedInst2Context;
     Game::Context::SContext2::Data sharedInst3Context;
     Game::Context::SContext2::Data sharedInst4Context;
+    sharedInst1Context.load();
+    sharedInst2Context.load();
+    sharedInst3Context.load();
+    sharedInst4Context.load();
 
     Game::ExecutionBlock::Executor1 executor1;
     executor1.loadContext();
@@ -50,9 +54,9 @@ int main()
         sharedInst2Context.reset();
         sharedInst4Context.reset();
 
-        sharedInst1Context.merge(executor2.target1Context);
-        sharedInst1Context.merge(executor2.target2Context);
-        sharedInst3Context.merge(executor3.shared3Context);
+        executor2.modifyTarget1(sharedInst1Context);
+        executor2.modifyTarget2(sharedInst1Context);
+        executor3.modifyShared3(sharedInst3Context);
 
         executor1.flushSharedLocalContexts();
         executor2.flushSharedLocalContexts();
