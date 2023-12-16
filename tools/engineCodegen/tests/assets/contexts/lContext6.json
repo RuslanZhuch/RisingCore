@@ -3,11 +3,35 @@
     "version": 1,
     "data": [
         {
-            "type": "object",
-            "dataType": "int32_t",
-            "merge": "add",
-            "name": "var1",
-            "initial": 1
+            "type": "dbbuffer",
+            "dataType": "int64_t",
+            "name": "dbvar2",
+            "capacity": 512
+        },
+        {
+            "type": "data",
+            "dataTypeList": {
+                "values1": "int32_t",
+                "values2": "float"
+            },
+            "name": "data1",
+            "capacity": 256
+        },
+        {
+            "type": "data",
+            "dataTypeList": {
+                "values3": "Types::Cats::CryingCat",
+                "values4": "float",
+                "values5": "int64_t"
+            },
+            "name": "data2",
+            "capacity": 128
+        },
+        {
+            "type": "data",
+            "dataType": "float",
+            "name": "data3",
+            "capacity": 256
         }
     ]
 }

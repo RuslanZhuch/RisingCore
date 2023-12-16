@@ -1,0 +1,27 @@
+{
+    "whoIAm": "Context",
+    "version": 1,
+    "data": [
+        {
+            "type": "data",
+            "dataTypeList": {
+                "values1": "int32_t",
+                "values2": "float"
+            },
+            "name": "data1",
+            "capacity": 256
+        },
+        {
+            "type": "object",
+            "dataType": "int32_t",
+            "name": "var1",
+            "initial": 1
+        },
+        {
+            "type": "dbbuffer",
+            "dataType": "int64_t",
+            "name": "dbvar2",
+            "capacity": 512
+        }
+    ]
+}

@@ -4,38 +4,43 @@
 #include "MemUtils.h"
 
 #include "Buffers.h"
+#include "CommonData.h"
 
 #include <type_traits>
 #include <concepts>
 
-namespace Dod::BufferUtils
+namespace Dod::DataUtils
 {
 
-	void initFromMemory(auto& dbBuffer, const auto& memSpan) noexcept
+//	void initBufferFromMemoryImpl(CommonData::CBuffer auto& dbBuffer, auto&& actualData) noexcept
+//	{
+//		//TODO: Is it legal?
+//		dbBuffer.dataBegin = reinterpret_cast<decltype(dbBuffer.dataBegin)>(actualData.dataBegin);
+//		dbBuffer.dataEnd = reinterpret_cast<decltype(dbBuffer.dataEnd)>(actualData.dataEnd);
+//		if constexpr (requires {dbBuffer.numOfFilledEls; })
+//			dbBuffer.numOfFilledEls = 0;
+//	}
+
+	void initFromMemory(CommonData::CBuffer auto& dbBuffer, const auto& memSpan) noexcept
 	{
 
-		const auto actualData{ MemUtils::aquire(memSpan, 0, static_cast<int32_t>(memSpan.dataEnd - memSpan.dataBegin)) };
-
-		//TODO: Is it legal?
-		dbBuffer.dataBegin = reinterpret_cast<decltype(dbBuffer.dataBegin)>(actualData.dataBegin);
-		dbBuffer.dataEnd = reinterpret_cast<decltype(dbBuffer.dataEnd)>(actualData.dataEnd);
+		dbBuffer.dataBegin = reinterpret_cast<decltype(dbBuffer.dataBegin)>(memSpan.dataBegin);
+		dbBuffer.dataEnd = reinterpret_cast<decltype(dbBuffer.dataEnd)>(memSpan.dataEnd);
 		if constexpr (requires {dbBuffer.numOfFilledEls; })
 			dbBuffer.numOfFilledEls = 0;
 
-	}
-
-	void initFromMemory(auto& dbBuffer, const auto& memSpan, MemTypes::capacity_t beginIndex, MemTypes::capacity_t endIndex) noexcept
-	{
-
-		const auto actualData{ MemUtils::aquire(memSpan, beginIndex, endIndex) };
-
-		//TODO: Is it legal?
-		dbBuffer.dataBegin = reinterpret_cast<decltype(dbBuffer.dataBegin)>(actualData.dataBegin);
-		dbBuffer.dataEnd = reinterpret_cast<decltype(dbBuffer.dataEnd)>(actualData.dataEnd);
-		if constexpr (requires {dbBuffer.numOfFilledEls; })
-			dbBuffer.numOfFilledEls = 0;
+//		const auto actualData{ MemUtils::acquire(memSpan, 0, static_cast<int32_t>(memSpan.dataEnd - memSpan.dataBegin), 1) };
+//		initBufferFromMemoryImpl(dbBuffer, actualData);
 
 	}
+
+//	void initFromMemory(CommonData::CBuffer auto& dbBuffer, const auto& memSpan, MemTypes::capacity_t beginIndex, MemTypes::capacity_t endIndex) noexcept
+//	{
+//
+//		const auto actualData{ MemUtils::acquire(memSpan, beginIndex, endIndex, 1) };
+//		initBufferFromMemoryImpl(dbBuffer, actualData);
+//
+//	}
 
 	template <typename T>
 	[[nodiscard]] static auto initFromArray(DBBuffer<T>& dbBuffer, auto& src) noexcept
@@ -91,16 +96,13 @@ namespace Dod::BufferUtils
 
 	}
 
-	template <typename T>
-	[[nodiscard]] auto getNumFilledElements(const Dod::DBBuffer<T>& buffer) noexcept
-	{
-		return buffer.numOfFilledEls;
-	}
-
-	template<typename BufferType>
+	template<CommonData::CBuffer BufferType>
 	[[nodiscard]] auto getNumFilledElements(BufferType buffer) noexcept
 	{
-		return static_cast<int32_t>(buffer.dataEnd - buffer.dataBegin);
+		if constexpr (requires { buffer.numOfFilledEls; })
+			return buffer.numOfFilledEls;
+		else
+			return static_cast<int32_t>(buffer.dataEnd - buffer.dataBegin);
 	}
 
 	template<typename T>
@@ -108,10 +110,10 @@ namespace Dod::BufferUtils
 	{
 
 		const auto capacity{ buffer.dataEnd - buffer.dataBegin };
-		const auto bCanAddValue{ (Dod::BufferUtils::getNumFilledElements(buffer) + 1 < capacity) && strobe };
+		const auto bCanAddValue{ (Dod::DataUtils::getNumFilledElements(buffer) + 1 < capacity) && strobe };
 
 		buffer.numOfFilledEls += size_t(1) * bCanAddValue;
-		std::construct_at<T>(buffer.dataBegin + Dod::BufferUtils::getNumFilledElements(buffer) * bCanAddValue);
+		std::construct_at<T>(buffer.dataBegin + Dod::DataUtils::getNumFilledElements(buffer) * bCanAddValue);
 
 	}
 
@@ -120,10 +122,10 @@ namespace Dod::BufferUtils
 	{
 
 		const auto capacity{ buffer.dataEnd - buffer.dataBegin };
-		const auto bCanAddValue{ (Dod::BufferUtils::getNumFilledElements(buffer) + 1 < capacity) && strobe };
+		const auto bCanAddValue{ (Dod::DataUtils::getNumFilledElements(buffer) + 1 < capacity) && strobe };
 
 		buffer.numOfFilledEls += size_t(1) * bCanAddValue;
-		buffer.dataBegin[Dod::BufferUtils::getNumFilledElements(buffer) * bCanAddValue] = copy;
+		buffer.dataBegin[Dod::DataUtils::getNumFilledElements(buffer) * bCanAddValue] = copy;
 
 	}
 
@@ -132,23 +134,23 @@ namespace Dod::BufferUtils
 	{
 
 		const auto capacity{ buffer.dataEnd - buffer.dataBegin };
-		const auto bCanAddValue{ (Dod::BufferUtils::getNumFilledElements(buffer) + 1 < capacity) && strobe };
+		const auto bCanAddValue{ (Dod::DataUtils::getNumFilledElements(buffer) + 1 < capacity) && strobe };
 
 		buffer.numOfFilledEls += size_t(1) * bCanAddValue;
-		buffer.dataBegin[Dod::BufferUtils::getNumFilledElements(buffer) * bCanAddValue] = std::move(element);
+		buffer.dataBegin[Dod::DataUtils::getNumFilledElements(buffer) * bCanAddValue] = std::move(element);
 
 	}
 
 	template<typename T>
-	void populate(DBBuffer<T>& buffer, T value, bool strobe) noexcept 
+	void populate(DBBuffer<T>& buffer, T value, bool strobe) noexcept
 		requires requires() { requires std::is_trivially_constructible_v<T>; }
 	{
 
-		const auto capacity{ buffer.dataEnd - buffer.dataBegin };
-		const auto bCanAddValue{ (Dod::BufferUtils::getNumFilledElements(buffer) + 1 < capacity) && strobe };
+		const auto capacity{ static_cast<int32_t>(buffer.dataEnd - buffer.dataBegin) };
+		const auto bCanAddValue{ (Dod::DataUtils::getNumFilledElements(buffer) + 1 < capacity) && strobe };
 
 		buffer.numOfFilledEls += size_t(1) * bCanAddValue;
-		buffer.dataBegin[Dod::BufferUtils::getNumFilledElements(buffer) * bCanAddValue] = std::move(value);
+		buffer.dataBegin[Dod::DataUtils::getNumFilledElements(buffer) * bCanAddValue] = std::move(value);
 
 	}
 
@@ -157,10 +159,10 @@ namespace Dod::BufferUtils
 	{
 
 		const auto capacity{ buffer.dataEnd - buffer.dataBegin };
-		const auto bCanAddValue{ (Dod::BufferUtils::getNumFilledElements(buffer) + 1 < capacity) && strobe };
+		const auto bCanAddValue{ (Dod::DataUtils::getNumFilledElements(buffer) + 1 < capacity) && strobe };
 
 		buffer.numOfFilledEls += size_t(1) * bCanAddValue;
-		const auto position{ Dod::BufferUtils::getNumFilledElements(buffer) * bCanAddValue };
+		const auto position{ Dod::DataUtils::getNumFilledElements(buffer) * bCanAddValue };
 		std::construct_at<T>(buffer.dataBegin + position);
 		buffer.dataBegin[position] = std::move(value);
 
@@ -178,9 +180,9 @@ namespace Dod::BufferUtils
 	}
 
 	template <typename BufferType>
-	[[nodiscard]] auto& get(const BufferType& buffer, int32_t elId) noexcept requires requires(BufferType buff) { 
+	[[nodiscard]] auto& get(const BufferType& buffer, int32_t elId) noexcept requires requires(BufferType buff) {
 		buff.sortingDataBegin;
-		buff.sortingDataEnd;	
+		buff.sortingDataEnd;
 	}
 	{
 		return buffer.dataBegin[buffer.sortingDataBegin[elId]];
@@ -190,14 +192,14 @@ namespace Dod::BufferUtils
 	void remove(DBBuffer<T>& buffer, const ImBuffer<int32_t> indicesToRemove) noexcept
 	{
 
-		auto targetIdx{ Dod::BufferUtils::getNumFilledElements(buffer) };
-		for (int32_t idx{ 0 }; idx < Dod::BufferUtils::getNumFilledElements(indicesToRemove); ++idx)
+		auto targetIdx{ Dod::DataUtils::getNumFilledElements(buffer) };
+		for (int32_t idx{ 0 }; idx < Dod::DataUtils::getNumFilledElements(indicesToRemove); ++idx)
 		{
 			const auto removeId{ indicesToRemove.dataBegin[idx] };
 			std::swap(buffer.dataBegin[removeId + 1], buffer.dataBegin[targetIdx]);
 			--targetIdx;
 		}
-		buffer.numOfFilledEls -= Dod::BufferUtils::getNumFilledElements(indicesToRemove);
+		buffer.numOfFilledEls -= Dod::DataUtils::getNumFilledElements(indicesToRemove);
 
 	}
 
@@ -215,23 +217,34 @@ namespace Dod::BufferUtils
 		dest.dataEnd = src.dataBegin + 1 + elementEndId;
 	}
 
-	[[nodiscard]] auto createImFromBuffer(const auto& srcBuffer) noexcept
+	template<typename BufferType>
+	void initFromBuffer(BufferType& dest, const MutBuffer<typename BufferType::type_t>& src) noexcept
 	{
-	
+		dest.dataBegin = src.dataBegin;
+		dest.dataEnd = src.dataEnd;
+	}
+
+	template <typename BufferType>
+	[[nodiscard]] auto createImFromBuffer(const BufferType& srcBuffer) noexcept
+	{
+
 		using type_t = std::remove_pointer_t<decltype(srcBuffer.dataBegin)>;
 
 		Dod::ImBuffer<type_t> imBuffer;
-		initFromBuffer(imBuffer, srcBuffer, 0, Dod::BufferUtils::getNumFilledElements(srcBuffer));
+		if constexpr (std::is_same_v<BufferType, Dod::DBBuffer<type_t>>)
+			initFromBuffer(imBuffer, srcBuffer, 0, Dod::DataUtils::getNumFilledElements(srcBuffer));
+		else
+			initFromBuffer(imBuffer, srcBuffer);
 
 		return imBuffer;
 
-	}	
-	
+	}
+
 	template <typename T>
 	[[nodiscard]] auto createSortedImBuffer(ImBuffer<T> srcBuffer, ImBuffer<int32_t> indices) noexcept
 	{
-	
-		const auto bCanCreate{ Dod::BufferUtils::getNumFilledElements(srcBuffer) == Dod::BufferUtils::getNumFilledElements(indices) };
+
+		const auto bCanCreate{ Dod::DataUtils::getNumFilledElements(srcBuffer) == Dod::DataUtils::getNumFilledElements(indices) };
 
 		Dod::SortedImBuffer<T> sortedBuffer;
 		if (!bCanCreate)
@@ -241,7 +254,7 @@ namespace Dod::BufferUtils
 		sortedBuffer.dataEnd = srcBuffer.dataEnd;
 		sortedBuffer.sortingDataBegin = indices.dataBegin;
 		sortedBuffer.sortingDataEnd = indices.dataEnd;
-		
+
 		return sortedBuffer;
 
 	}
@@ -259,7 +272,7 @@ namespace Dod::BufferUtils
 		using type_t = std::remove_pointer_t<decltype(buffer.dataBegin)>;
 		if constexpr (std::is_same_v<BufferType, DBBuffer<type_t>>)
 			return Output(buffer.dataBegin + 1, buffer.dataEnd);
-		else 
+		else
 			return Output(buffer.dataBegin, buffer.dataEnd);
 
 	}
@@ -268,8 +281,6 @@ namespace Dod::BufferUtils
 	void flush(DBBuffer<T>& dest) noexcept
 	{
 		dest.numOfFilledEls = 0;
-		//		const auto numOfElements{ std::min(Dod::BufferUtils::getNumFilledElements(dest), Dod::BufferUtils::getNumFilledElements(src)) };
-		//		std::memcpy(dest.dataBegin, src.dataBegin, sizeof(BufferType::type_t) * numOfElements)
 	}
 
 	template<typename T>
@@ -279,29 +290,25 @@ namespace Dod::BufferUtils
 	}
 
 	template<typename T>
-	void append(DBBuffer<T>& dest, Dod::ImBuffer<T> src) noexcept 
+	void append(DBBuffer<T>& dest, Dod::ImBuffer<T> src) noexcept
 		requires requires() { requires std::is_trivially_copyable_v<T>; }
 	{
-		const auto spaceLeft{ Dod::BufferUtils::getCapacity(dest) - Dod::BufferUtils::getNumFilledElements(dest) };
+		const auto spaceLeft{ Dod::DataUtils::getCapacity(dest) - Dod::DataUtils::getNumFilledElements(dest) };
 		const auto allowToFill{ std::max(spaceLeft, 0) };
-		const auto numOfElements{ std::min(allowToFill, Dod::BufferUtils::getNumFilledElements(src)) };
-		const auto begin{ dest.dataBegin + 1 + Dod::BufferUtils::getNumFilledElements(dest) };
+		const auto numOfElements{ std::min(allowToFill, Dod::DataUtils::getNumFilledElements(src)) };
+		const auto begin{ dest.dataBegin + 1 + Dod::DataUtils::getNumFilledElements(dest) };
 		std::memcpy(begin, src.dataBegin, sizeof(T) * numOfElements);
 		dest.numOfFilledEls += numOfElements;
 	}
+
 	template<typename T>
 	void append(DBBuffer<T>& dest, Dod::ImBuffer<T> src) noexcept
 	{
-		const auto srcNumOfElements{ Dod::BufferUtils::getNumFilledElements(src) };
+		const auto srcNumOfElements{ Dod::DataUtils::getNumFilledElements(src) };
 		for (int32_t elId{}; elId < srcNumOfElements; ++elId)
 		{
-			Dod::BufferUtils::populate(dest, Dod::BufferUtils::get(src, elId), true);
+			Dod::DataUtils::populate(dest, Dod::DataUtils::get(src, elId), true);
 		}
 	}
-
-//	void f()
-//	{
-//		static_assert(std::is_trivially_copyable_v<int>);
-//	}
 
 };

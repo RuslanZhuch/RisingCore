@@ -1,6 +1,8 @@
 #pragma once
 
 #include <dod/Buffers.h>
+#include <dod/Tables.h>
+#include <dod/DataUtils.h>
 #include <dod/MemPool.h>
 
 #pragma warning(push)
@@ -18,6 +20,17 @@ namespace Game::Context::SContext1
 
         Dod::MemPool memory;
     };
+
+    struct CData
+    {
+
+    };
+
+    [[nodiscard]] static CData convertToConst(const Data& context) noexcept
+    {
+        return {  };
+    }
+
 }
 
 #pragma warning(pop)

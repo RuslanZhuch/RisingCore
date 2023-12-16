@@ -1,4 +1,4 @@
-Dod::SharedContext::merge(&poolInst1Context, executor1.pool1Context);
-Dod::SharedContext::merge(&poolInst2Context, executor1.pool2Context);
-Dod::SharedContext::merge(&poolInst2Context, executor2.pool2Context);
-Dod::SharedContext::merge(&poolInst3Context, executor4.pool3Context);
+executor1.modifyPool1(poolInst1Context);
+executor1.modifyPool2(poolInst2Context);
+executor2.modifyPool2(poolInst2Context);
+executor4.modifyPool3(poolInst3Context);

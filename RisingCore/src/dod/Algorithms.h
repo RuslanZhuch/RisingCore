@@ -1,36 +1,106 @@
 #pragma once
 
 #include "dod/Buffers.h"
+#include "dod/CommonData.h"
+
+#include <concepts>
 
 namespace Dod::Algorithms
 {
 
 	template <typename T>
-	static void leftUniques(DBBuffer<T>& buffer) noexcept
+	concept CImBuffer = requires(T t)
+	{
+		{Dod::DataUtils::get(t, int32_t{})} -> std::convertible_to<typename T::type_t>;
+	};
+
+	static void leftUniques(Dod::CommonData::CMonoDTable auto& buffer) noexcept
 	{
 
-		if (Dod::BufferUtils::getNumFilledElements(buffer) == 0)
+		if (Dod::DataUtils::getNumFilledElements(buffer) == 0)
 			return;
 
-		T prevElValue{ buffer.dataBegin[1] };
-		int32_t prevUniqueId{ 1 };
-		for (int32_t elId{ 2 }; elId < Dod::BufferUtils::getNumFilledElements(buffer) + 1; ++elId)
+		auto prevElValue{ Dod::DataUtils::get(buffer, 0) };
+		int32_t prevUniqueId{ 0 };
+		for (int32_t elId{ 1 }; elId < Dod::DataUtils::getNumFilledElements(buffer); ++elId)
 		{
-			const auto bIsUnique{ prevElValue != buffer.dataBegin[elId] };
-			prevElValue = buffer.dataBegin[elId];
+			const auto bIsUnique{ prevElValue != Dod::DataUtils::get(buffer, elId) };
+			prevElValue = Dod::DataUtils::get(buffer, elId);
 			if (bIsUnique)
 			{
 				const auto bGapExist{ elId - prevUniqueId >= 2 };
 				if (bGapExist)
 				{
-					buffer.dataBegin[prevUniqueId + 1] = buffer.dataBegin[elId];
+					Dod::DataUtils::get(buffer, prevUniqueId + 1) = Dod::DataUtils::get(buffer, elId);
 				}
 				++prevUniqueId;
 			}
 		}
 
-		buffer.numOfFilledEls = prevUniqueId;
+		buffer.numOfFilledEls = prevUniqueId + 1;
 
+	}
+
+	static void getSortedIndices(Dod::CommonData::CMonoDTable auto& sortedIndices, Dod::CommonData::CMonoImTable auto srcBuffer) noexcept requires
+		std::is_same_v<std::tuple_element_t<0, typename std::decay_t<decltype(sortedIndices)>::types_t>, int32_t>
+	{
+
+		if (Dod::DataUtils::getNumFilledElements(srcBuffer) == 0)
+			return;
+
+		for (int32_t id{}; id < Dod::DataUtils::getNumFilledElements(srcBuffer); ++id)
+			Dod::DataUtils::pushBack(sortedIndices, true, id);
+
+		const auto dataBegin{ &Dod::DataUtils::get(sortedIndices, 0) };
+		const auto endOffset{ Dod::DataUtils::getNumFilledElements(sortedIndices) };
+
+		std::sort(dataBegin, dataBegin + endOffset, [&](int32_t leftId, int32_t rightId) -> bool {
+			return Dod::DataUtils::get(srcBuffer, leftId) < Dod::DataUtils::get(srcBuffer, rightId);
+		});
+
+	}
+
+	static void getSortedUniqueElsIndices(Dod::CommonData::CMonoDTable auto& sortedUniques, Dod::CommonData::CMonoImTable auto buffer) noexcept requires
+		std::is_same_v<std::tuple_element_t<0, typename std::decay_t<decltype(sortedUniques)>::types_t>, int32_t>
+	{
+
+		if (Dod::DataUtils::getNumFilledElements(buffer) == 0)
+			return;
+
+		getSortedIndices(sortedUniques, buffer);
+		const auto sortedBuffer{ Dod::DataUtils::createGuidedImTable(buffer, Dod::ImTable(sortedUniques)) };
+
+		int32_t lastUniqueElId{ 0 };
+		for (int32_t currentElId{ 0 }; currentElId < Dod::DataUtils::getNumFilledElements(sortedBuffer); )
+		{
+			int32_t repeats{};
+			const auto lastElement{ Dod::DataUtils::get(sortedBuffer, currentElId) };
+			const auto groupElementId{ Dod::DataUtils::get(sortedUniques, currentElId) };
+			while (currentElId < Dod::DataUtils::getNumFilledElements(sortedBuffer))
+			{
+				const auto bEquals{ Dod::DataUtils::get(sortedBuffer, currentElId) == lastElement };
+				repeats += bEquals;
+				if (!bEquals)
+					break;
+				++currentElId;
+			}
+			Dod::DataUtils::get(sortedUniques, lastUniqueElId) = groupElementId;
+			++lastUniqueElId;
+		}
+
+		sortedUniques.numOfFilledEls = lastUniqueElId;
+
+	}
+
+	template <typename T>
+	static void getIndicesByValue(DBBuffer<int32_t>& indices, CImBuffer auto buffer, T value) noexcept
+	{
+		Dod::DataUtils::flush(indices);
+		for (int32_t elId{}; elId < Dod::DataUtils::getNumFilledElements(buffer); ++elId)
+		{
+			const auto bFound{ Dod::DataUtils::get(buffer, elId) == value };
+			Dod::DataUtils::populate(indices, elId, bFound);
+		}
 	}
 
 	template <typename T>
@@ -40,14 +110,14 @@ namespace Dod::Algorithms
 		int32_t srcLeftId{ 0 };
 		int32_t srcRightId{ 0 };
 
-		while (srcLeftId < Dod::BufferUtils::getNumFilledElements(srcLeft) && srcRightId < srcRight.numOfFilledEls)
+		while (srcLeftId < Dod::DataUtils::getNumFilledElements(srcLeft) && srcRightId < srcRight.numOfFilledEls)
 		{
 
-			const auto leftValue{ BufferUtils::get(srcLeft, srcLeftId) };
-			const auto rightValue{ BufferUtils::get(srcRight, srcRightId) };
+			const auto leftValue{ DataUtils::get(srcLeft, srcLeftId) };
+			const auto rightValue{ DataUtils::get(srcRight, srcRightId) };
 			if (leftValue == rightValue)
 			{
-				BufferUtils::populate(resultBuffer, leftValue, true);
+				DataUtils::populate(resultBuffer, leftValue, true);
 				++srcLeftId;
 				++srcRightId;
 			}
@@ -60,51 +130,30 @@ namespace Dod::Algorithms
 
 	}
 
-	template <typename T>
-	static void getSortedIndices(DBBuffer<int32_t>& sortedIndices, ImBuffer<T> srcBuffer) noexcept
+	static void countUniques(Dod::CommonData::CMonoDTable auto& counters, Dod::CommonData::CMonoImTable auto srcSortedBuffer) noexcept requires
+		std::is_same_v<std::tuple_element_t<0, typename std::decay_t<decltype(counters)>::types_t>, int32_t>
 	{
 
-		if (Dod::BufferUtils::getNumFilledElements(srcBuffer) == 0)
+		if (Dod::DataUtils::getNumFilledElements(srcSortedBuffer) == 0)
 			return;
 
-		for (int32_t id{}; id < Dod::BufferUtils::getNumFilledElements(srcBuffer); ++id)
-			Dod::BufferUtils::populate(sortedIndices, id, true);
+		using table_t = decltype(srcSortedBuffer);
+		using type_t = std::tuple_element_t<0, typename table_t::types_t>;
 
-		const auto beginOffset{ 1 };
-		const auto endOffset{ 1 + Dod::BufferUtils::getNumFilledElements(sortedIndices) };
-
-		std::sort(sortedIndices.dataBegin + beginOffset, sortedIndices.dataBegin + endOffset, [&](int32_t leftId, int32_t rightId) -> bool {
-			return Dod::BufferUtils::get(srcBuffer, leftId) < Dod::BufferUtils::get(srcBuffer, rightId);
-		});
-
-	}
-
-	template <typename BufferType>
-	static void countUniques(DBBuffer<int32_t>& counters, BufferType srcSortedBuffer) noexcept requires requires(BufferType) {
-		std::is_const_v<decltype(BufferType::dataBegin)>;
-		std::is_const_v<decltype(BufferType::dataEnd)>;
-	}
-	{
-
-		if (Dod::BufferUtils::getNumFilledElements(srcSortedBuffer) == 0)
-			return;
-
-		using type_t = BufferType::type_t;
-
-		type_t prevValue{ Dod::BufferUtils::get(srcSortedBuffer, 0) };
+		type_t prevValue{ Dod::DataUtils::get(srcSortedBuffer, 0) };
 		int32_t counter{ 1 };
-		for (int32_t id{ 1 }; id < Dod::BufferUtils::getNumFilledElements(srcSortedBuffer); ++id)
+		for (int32_t id{ 1 }; id < Dod::DataUtils::getNumFilledElements(srcSortedBuffer); ++id)
 		{
-			const auto currValue{ Dod::BufferUtils::get(srcSortedBuffer, id) };
+			const auto currValue{ Dod::DataUtils::get(srcSortedBuffer, id) };
 			const auto bDiffers{ currValue != prevValue };
 			prevValue = currValue;
 			counter += !bDiffers;
 
-			Dod::BufferUtils::populate(counters, counter, bDiffers);
+			Dod::DataUtils::pushBack(counters, bDiffers, counter);
 			counter -= (counter - 1) * bDiffers;
 		}
 
-		Dod::BufferUtils::populate(counters, counter, counter > 0);
+		Dod::DataUtils::pushBack(counters, counter > 0, counter);
 
 	}
 

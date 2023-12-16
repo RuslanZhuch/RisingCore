@@ -3,7 +3,7 @@
 #include <dod/MemPool.h>
 #include <dod/MemUtils.h>
 #include <dod/Buffers.h>
-#include <dod/BufferUtils.h>
+#include <dod/DataUtils.h>
 
 #include <engine/StringUtils.h>
 
@@ -26,7 +26,7 @@ namespace Engine::ContextUtils
 	
 	[[nodiscard]] rapidjson::Document loadFileDataRoot(const std::string_view filename) noexcept;
 	[[nodiscard]] std::optional<rapidjson::GenericArray<true, rapidjson::Value>> gatherContextData(const rapidjson::Document& doc, size_t numOfExpectedElements) noexcept;
-	
+
     void assignToVariable(auto& dest, const rapidjson::Value& src)
     {
 
@@ -74,15 +74,31 @@ namespace Engine::ContextUtils
 
 	}
 
-    [[nodiscard]] static void loadVariableFromList(auto& dest, rapidjson::GenericArray<true, rapidjson::Value> src, int32_t id) noexcept
+    [[nodiscard]] static void loadVariableFromList(auto& dest, rapidjson::GenericArray<true, rapidjson::Value> src, int32_t rowId, int32_t colId) noexcept
     {
 
-        assignToVariable(dest, src[static_cast<rapidjson::SizeType>(id)]);
+        const auto& row{ src[static_cast<rapidjson::SizeType>(rowId)] };
+        if (row.IsArray())
+        {
+            const auto& rowData{ row.GetArray() };
+            if (static_cast<int32_t>(rowData.Size()) > colId)
+                assignToVariable(dest, rowData[static_cast<rapidjson::SizeType>(colId)]);
+            return;
+        }
+
+        assignToVariable(dest, row);
 
     }
 
+    struct CapacityData
+    {
+        Dod::MemTypes::capacity_t numOfBytes{};
+        int32_t numOfElements{};
+        int32_t pad{};
+    };
+
     template <typename T>
-    [[nodiscard]] static int32_t getBufferCapacityBytes(
+    [[nodiscard]] static auto getBufferCapacity(
         rapidjson::GenericArray<true, rapidjson::Value> buffer,
         rapidjson::SizeType id
     ) noexcept
@@ -90,34 +106,76 @@ namespace Engine::ContextUtils
 
         using type_t = T;
 
+        CapacityData data;
+
         if (!buffer[id].IsObject())
-            return {};
+            return data;
 
         const auto& dataObject{ buffer[id].GetObject() };
 
         constexpr auto dataTypeSize{ sizeof(type_t) };
-        const auto capacity{ dataObject["capacity"].GetInt() };
-        const auto capacityBytes{ capacity * dataTypeSize };
+        const auto numOfElements{ dataObject["capacity"].GetInt() };
+        const auto capacityBytes{ numOfElements * dataTypeSize };
 
-        return static_cast<int32_t>(capacityBytes);
+        data.numOfBytes = capacityBytes;
+        data.numOfElements = numOfElements;
+        return data;
 
     }
 
-    template <typename T>
-    [[nodiscard]] static void initBuffer(
-        Dod::DBBuffer<T>& dest,
-        int32_t capacityBytes,
-        Dod::MemPool& pool, 
-        int32_t& header
+    template <typename ... Types>
+    [[nodiscard]] static auto getDataCapacity(
+        rapidjson::GenericArray<true, rapidjson::Value> buffer,
+        rapidjson::SizeType id
     ) noexcept
     {
 
-        Dod::BufferUtils::initFromMemory(dest, Dod::MemUtils::stackAquire(pool, capacityBytes, header));
+        CapacityData data;
+
+        if (!buffer[id].IsObject())
+            return data;
+
+        using types_t = std::tuple<Types...>;
+
+        const auto& dataObject{ buffer[id].GetObject() };
+
+        const auto numOfElements{ dataObject["capacity"].GetInt() };
+        const auto capacityBytes{ Dod::DataUtils::computeCapacityInBytes<types_t>(numOfElements) };
+
+        data.numOfBytes = capacityBytes;
+        data.numOfElements = numOfElements;
+        return data;
 
     }
 
     template <typename T>
-    [[nodiscard]] static void loadBufferContent(
+    static void initData(
+        Dod::DBBuffer<T>& dest,
+        CapacityData capacityData,
+        Dod::MemPool& pool, 
+        Dod::MemTypes::capacity_t& header
+    ) noexcept
+    {
+
+        Dod::DataUtils::initFromMemory(dest, Dod::MemUtils::stackAquire(pool, capacityData.numOfBytes, 64, header));
+
+    }
+
+    static void initData(
+        Dod::CommonData::CTable auto& dest,
+        CapacityData capacityData,
+        Dod::MemPool& pool,
+        Dod::MemTypes::capacity_t& header
+    ) noexcept
+    {
+        using tableType_t = std::decay_t<decltype(dest)>;
+        using types_t = tableType_t::types_t;
+        Dod::DataUtils::initFromMemory(dest, capacityData.numOfElements, Dod::MemUtils::stackAquire(pool, capacityData.numOfBytes, 64, header));
+
+    }
+
+    template <typename T>
+    static void loadDataContent(
         Dod::DBBuffer<T>& dest,
         rapidjson::GenericArray<true, rapidjson::Value> src, 
         int32_t id
@@ -135,16 +193,52 @@ namespace Engine::ContextUtils
         const auto initialData{ initialField->value.GetArray() };
 
         const auto numOfElementsToLoad{ static_cast<int32_t>(initialData.Size()) };
-        const auto bufferSize{ Dod::BufferUtils::getCapacity(dest) };
+        const auto bufferSize{ Dod::DataUtils::getCapacity(dest) };
 
         const auto totalElements{ std::min(numOfElementsToLoad, bufferSize) };
 
         for (int32_t elId{}; elId < totalElements; ++elId)
         {
-            Dod::BufferUtils::constructBack(dest);
-            loadVariableFromList(Dod::BufferUtils::get(dest, elId), initialData, elId);
+            Dod::DataUtils::constructBack(dest);
+            loadVariableFromList(Dod::DataUtils::get(dest, elId), initialData, elId, 0);
         }
 
+    }
+
+    static void loadDataContent(
+        Dod::CommonData::CTable auto& dest,
+        rapidjson::GenericArray<true, rapidjson::Value> src,
+        int32_t id
+    ) noexcept
+    {
+
+        using types_t = std::decay_t<decltype(dest)>::types_t;
+
+        if (!src[static_cast<rapidjson::SizeType>(id)].IsObject())
+            return;
+        const auto& dataObject{ src[static_cast<rapidjson::SizeType>(id)].GetObject() };
+
+        const auto initialField{ dataObject.FindMember("initial") };
+        if (initialField == dataObject.end())
+            return;
+
+        const auto initialData{ initialField->value.GetArray() };
+
+        const auto numOfElementsToLoad{ static_cast<int32_t>(initialData.Size()) };
+        const auto bufferSize{ Dod::DataUtils::getCapacity(dest) };
+
+        const auto totalElements{ std::min(numOfElementsToLoad, bufferSize) };
+                
+        auto columnId{ static_cast<int32_t>(std::tuple_size_v<types_t> - 1) };
+        const auto executor = [&](auto&& ... values) {
+            static_assert(sizeof...(values) == std::tuple_size_v<types_t>);
+            Dod::DataUtils::populate(dest, totalElements, [cId = columnId--, &initialData, &values](int32_t elId) {
+                values = {};
+                loadVariableFromList(values, initialData, elId, cId);
+                return values;
+            }...);
+        };
+        std::apply(executor, types_t{});
     }
 
 }

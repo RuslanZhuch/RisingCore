@@ -11,3 +11,10 @@ struct Data
     Dod::DBBuffer<float> dbvar1;
     Dod::DBBuffer<int64_t> dbvar2;
 };
+
+struct CData
+{
+
+    Dod::ImBuffer<float> dbvar1;
+    Dod::ImBuffer<int64_t> dbvar2;
+};

@@ -31,22 +31,36 @@ class ContextData:
     MERGE_TYPE_ASSIGN_NON_ZERO : int = 3
     
     class ObjectDataElement:
-        def __init__(self, name, data_type, initial, merge_type: int):
-             self.name = name
-             self.data_type = data_type
-             self.initial = initial
-             self.merge_type = merge_type
-             
+        def __init__(self, el_id: int, name, data_type, initial, merge_type: int):
+            self.el_id = el_id
+            self.name = name
+            self.data_type = data_type
+            self.initial = initial
+            self.merge_type = merge_type
+
     class BufferDataElement:
-        def __init__(self, name, data_type, capacity, merge_type: int):
-             self.name = name
-             self.data_type = data_type
-             self.capacity = capacity
-             self.merge_type = merge_type
+        def __init__(self, el_id: int, name, data_type, capacity, merge_type: int):
+            self.el_id = el_id
+            self.name = name
+            self.data_type = data_type
+            self.capacity = capacity
+            self.merge_type = merge_type
              
-    def __init__(self, objects_data, buffers_data):
+    class TableDataElement:
+        def __init__(self, el_id: int, name : str, data_name_list : list[str], data_type_list : list[str], data_type_full_list : dict, capacity: int, merge_type: int, flags: list[str]):
+            self.el_id = el_id
+            self.name = name
+            self.data_name_list = data_name_list
+            self.data_type_list = data_type_list
+            self.data_type_full_list = data_type_full_list
+            self.capacity = capacity
+            self.merge_type = merge_type
+            self.flags = flags
+             
+    def __init__(self, objects_data : list[ObjectDataElement], buffers_data : list[BufferDataElement], tables_data : list[TableDataElement]):
         self.objects_data = objects_data
         self.buffers_data = buffers_data
+        self.tables_data = tables_data
 
 def _get_merge_type_for_objects(merge_policy : str):
     if merge_policy == "simple":
@@ -62,34 +76,54 @@ def _get_merge_type_for_buffers(merge_policy : str):
         return ContextData.MERGE_TYPE_NONE
     return ContextData.MERGE_TYPE_ASSIGN
 
-def load_data(context_raw_data):
-    objects_data = []
-    buffers_data = []
+def load_data(context_raw_data : dict):
+    objects_data : list[ContextData.ObjectDataElement] = []
+    buffers_data : list[ContextData.BufferDataElement] = []
+    tables_data : list[ContextData.TableDataElement] = []
+    el_id = 0
     for variable in context_raw_data["data"]:
         type = variable["type"]
         name = variable["name"]
-        data_type = variable["dataType"]
         if type == "object":
             initial = variable.get("initial")
             merge_policy = variable.get("merge")
             merge_type = _get_merge_type_for_objects(merge_policy if merge_policy is not None else "") 
-            objects_data.append(ContextData.ObjectDataElement(name, data_type, initial, merge_type))
+            data_type = variable["dataType"]
+            objects_data.append(ContextData.ObjectDataElement(el_id, name, data_type, initial, merge_type))
         elif type == "dbbuffer":
             capacity = variable["capacity"]
             merge_policy = variable.get("merge")
             merge_type = _get_merge_type_for_buffers(merge_policy if merge_policy is not None else "") 
-            buffers_data.append(ContextData.BufferDataElement(name, data_type, capacity, merge_type))
+            data_type = variable["dataType"]
+            buffers_data.append(ContextData.BufferDataElement(el_id, name, data_type, capacity, merge_type))
+        elif type == "data":
+            capacity = variable["capacity"]
+            merge_policy = variable.get("merge")
+            merge_type = _get_merge_type_for_buffers(merge_policy if merge_policy is not None else "") 
+            data_type = dict()
+            if variable.get("dataTypeList"):
+                data_type = variable.get("dataTypeList")
+            else:
+                data_type["data"] = variable["dataType"]
+            type_names = data_type.keys()
+            types = data_type.values()
+            flags = variable.get("flags")
+            if flags is None:
+                flags = []
+            tables_data.append(ContextData.TableDataElement(el_id, name, type_names, types, data_type, capacity, merge_type, flags))
+        else:
+            continue
+        
+        el_id += 1
     
-    return ContextData(objects_data, buffers_data)
+    return ContextData(objects_data, buffers_data, tables_data)
 
-def generate_context_data(handler, context_raw_data):
-    
+def generate_context_data(handler, context_data : ContextData):
+        
     def struct_body(struct_handler):
         generator.generate_struct_method(struct_handler, "load", "void", [], False)
         generator.generate_struct_method(struct_handler, "reset", "void", [], False)
         generator.generate_struct_method(struct_handler, "merge", "void", ["const Data& other"], False)
-        
-        context_data = load_data(context_raw_data)
         
         for object in context_data.objects_data:
             initial = 0 if object.initial != 0 and object.initial is not None else object.initial
@@ -100,7 +134,100 @@ def generate_context_data(handler, context_raw_data):
             type = "Dod::DBBuffer<{}>".format(buffer.data_type)
             generator.generate_struct_variable(struct_handler, type, buffer.name, None)
             
+        for table in context_data.tables_data:
+            type = "Dod::DTable<{}>".format(", ".join(table.data_type_list))
+            generator.generate_struct_variable(struct_handler, type, table.name, None)
+            
     generator.generate_struct(handler, "Data", struct_body)
+    generator.generate_empty(handler)
+
+    def struct_body_const(struct_handler):
+        for buffer in context_data.buffers_data:
+            type = "Dod::ImBuffer<{}>".format(buffer.data_type)
+            generator.generate_struct_variable(struct_handler, type, buffer.name, None)
+            
+        for table in context_data.tables_data:
+            type = "Dod::ImTable<{}>".format(", ".join(table.data_type_list))
+            generator.generate_struct_variable(struct_handler, type, table.name, None)
+            
+    generator.generate_struct(handler, "CData", struct_body_const)
+
+def generate_data_converter(handler, context_data : ContextData):
+    function_name = "[[nodiscard]] static CData convertToConst(const Data& context) noexcept"
+
+    def function_body(handler):
+        convertion_list_buffers = [ "Dod::DataUtils::createImFromBuffer(context.{})".format(buffer.name) for buffer in context_data.buffers_data ]
+        convertion_list_tables = [ "Dod::ImTable<{}>(context.{})".format(", ".join(table.data_type_list), table.name) for table in context_data.tables_data ]
+
+        conversion_list = convertion_list_buffers + convertion_list_tables
+        conversion_list_str = ", ".join(conversion_list)
+        generator.generate_line(handler, "return {{ {} }};".format(conversion_list_str))
+
+    generator.generate_block(handler, function_name, function_body)    
+
+def generate_context_getters(handler, context_data : ContextData):
+    
+    for table in context_data.tables_data:
+        if "nohelpers" in table.flags or len(table.data_type_list) <= 1:
+            continue
+        data_name = table.name
+        data_name_capital = _to_class_name(data_name)
+        function_name = "[[nodiscard]] static auto get{0}(Data& context) noexcept".format(data_name_capital, data_name)
+        
+        def function_body(handler):
+            def struct_data(struct_handler):
+                for type_name in table.data_type_full_list:
+                    generator.generate_struct_variable(struct_handler, "Dod::MutTable<{}>".format(table.data_type_full_list[type_name]), type_name)
+
+            generator.generate_struct(handler, "Output", struct_data)
+            
+            generator.generate_line(handler, "const auto data{{ Dod::DataUtils::get(context.{}) }};".format(data_name))
+
+            output_values = ["std::get<{}>(data)".format(index) for index in range(0, len(table.data_type_list))]
+                
+            output = "return Output({});".format(", ".join(output_values))
+            generator.generate_line(handler, output)
+            
+        generator.generate_block(handler, function_name, function_body)
+        generator.generate_empty(handler)
+
+        function_name_const = "[[nodiscard]] static auto get{0}(const CData& context) noexcept".format(data_name_capital, data_name)
+        
+        def function_body_const(handler):
+            def struct_data(struct_handler):
+                for type_name in table.data_type_full_list:
+                    generator.generate_struct_variable(struct_handler, "Dod::ImTable<{}>".format(table.data_type_full_list[type_name]), type_name)
+
+            generator.generate_struct(handler, "Output", struct_data)
+            
+            generator.generate_line(handler, "const auto data{{ Dod::DataUtils::get(context.{}) }};".format(data_name))
+
+            output_values = ["std::get<{}>(data)".format(index) for index in range(0, len(table.data_type_list))]
+                
+            output = "return Output({});".format(", ".join(output_values))
+            generator.generate_line(handler, output)
+            
+        generator.generate_block(handler, function_name_const, function_body_const)
+        generator.generate_empty(handler)
+
+def generate_context_setters(handler, context_data : ContextData):
+    
+    for table in context_data.tables_data:
+        if "nohelpers" in table.flags or len(table.data_type_list) <= 1:
+            continue
+        data_name = table.name
+        data_name_capital = _to_class_name(data_name)
+        parameters = ["{} {}".format(table.data_type_full_list[type_name], type_name) for type_name in table.data_type_full_list]
+        parameters.append("bool bStrobe = true")
+        function_name = "static void add{}(Data& context, {}) noexcept".format(data_name_capital, ", ".join(parameters))
+        
+        def function_body(handler):
+            arguments = ["context.{}".format(data_name), "bStrobe"]
+            arguments.extend(table.data_name_list)
+            generator.generate_line(handler, "Dod::DataUtils::pushBack({});".format(", ".join(arguments)))
+            
+        generator.generate_block(handler, function_name, function_body)
+        generator.generate_empty(handler)
 
 def generate_context_def(dest_path, context_file_path, types_cache):
     context_raw_data = loader.load_file_data(context_file_path)
@@ -119,11 +246,16 @@ def generate_context_def(dest_path, context_file_path, types_cache):
     for buffer in context_data.buffers_data:
         list_of_types.append(buffer.data_type)
         
+    for table in context_data.tables_data:
+        list_of_types.extend(table.data_type_list)
+        
     types_manager.gen_includes(handler, types_cache, list_of_types)
         
     #generator.generate_line(handler, "#include <{}>".format(buffer.data_type))
             
     generator.generate_line(handler, "#include <dod/Buffers.h>")
+    generator.generate_line(handler, "#include <dod/Tables.h>")
+    generator.generate_line(handler, "#include <dod/DataUtils.h>")
     generator.generate_line(handler, "#include <dod/MemPool.h>")
     generator.generate_empty(handler)
     
@@ -134,7 +266,13 @@ def generate_context_def(dest_path, context_file_path, types_cache):
     generator.generate_empty(handler)
     
     def namespace_body(namespace_handler):
-        generate_context_data(namespace_handler, context_raw_data)
+        context_data = load_data(context_raw_data)
+        generate_context_data(namespace_handler, context_data)
+        generator.generate_empty(namespace_handler)
+        generate_data_converter(namespace_handler, context_data)
+        generator.generate_empty(namespace_handler)
+        generate_context_getters(namespace_handler, context_data)
+        generate_context_setters(namespace_handler, context_data)
     generator.generate_block(handler, "namespace Game::Context::{}".format(context_name), namespace_body)
     
     generator.generate_empty(handler)
@@ -167,7 +305,7 @@ def generate_context_load(handler, context_raw_data, context_file_path):
             generator.generate_empty(handler)
             
             context_data = load_data(context_raw_data)
-            total_elements = len(context_data.objects_data) + len(context_data.buffers_data)
+            total_elements = len(context_data.objects_data) + len(context_data.buffers_data) + len(context_data.tables_data)
             
             generator.generate_variable(handler, "const auto", "doc", "Engine::ContextUtils::loadFileDataRoot(\"{}\")".format(context_file_path))
             generator.generate_variable(handler, "const auto&", "inputDataOpt", "Engine::ContextUtils::gatherContextData(doc, {})".format(total_elements))
@@ -181,42 +319,44 @@ def generate_context_load(handler, context_raw_data, context_file_path):
             generator.generate_variable(handler, "const auto&", "loadingDataArray", "inputDataOpt.value()")
             generator.generate_empty(handler)
             
-            element_id = 0
             for object in context_data.objects_data:
                 variable_name = object.name
-                generator.generate_line(handler, "Engine::ContextUtils::loadVariable(this->{}, loadingDataArray, {});".format(variable_name, element_id))
-                element_id += 1
+                generator.generate_line(handler, "Engine::ContextUtils::loadVariable(this->{}, loadingDataArray, {});".format(variable_name, object.el_id))
             generator.generate_empty(handler)
             
-            buffer_id = element_id
             for buffer in context_data.buffers_data:
                 buffer_name = buffer.name
                 type = buffer.data_type
-                generator.generate_line(handler, "const auto {}CapacityBytes{{ Engine::ContextUtils::getBufferCapacityBytes<{}>(loadingDataArray, {}) }};".format(buffer_name, type, buffer_id))
-                buffer_id += 1
-            generator.generate_empty(handler)                
+                generator.generate_line(handler, "const auto {}Capacity{{ Engine::ContextUtils::getBufferCapacity<{}>(loadingDataArray, {}) }};".format(buffer_name, type, buffer.el_id))
+
+            for table in context_data.tables_data:
+                table_name = table.name
+                types = ", ".join(table.data_type_list)
+                generator.generate_line(handler, "const auto {}Capacity{{ Engine::ContextUtils::getDataCapacity<{}>(loadingDataArray, {}) }};".format(table_name, types, table.el_id))
+
+            generator.generate_empty(handler)
                 
-            if len(context_data.buffers_data) == 0:
+            if len(context_data.buffers_data) == 0 and len(context_data.tables_data) == 0:
                 return
             
-            buffer_id = element_id
-            generator.generate_line(handler, "int32_t needBytes{};")
+            generator.generate_line(handler, "int32_t needBytes{ 64 };")
             for buffer in context_data.buffers_data:
-                buffer_name = buffer.name
-                generator.generate_line(handler, "needBytes += {}CapacityBytes;".format(buffer_name))
-                buffer_id += 1
+                generator.generate_line(handler, "needBytes += {}Capacity.numOfBytes;".format(buffer.name))
+            for table in context_data.tables_data:
+                generator.generate_line(handler, "needBytes += {}Capacity.numOfBytes;".format(table.name))
             generator.generate_empty(handler)
                         
             generator.generate_line(handler, "this->memory.allocate(needBytes);")
-            generator.generate_line(handler, "int32_t header{};")
+            generator.generate_line(handler, "Dod::MemTypes::capacity_t header{};")
             generator.generate_empty(handler)
             
-            buffer_id = element_id
             for buffer in context_data.buffers_data:
-                buffer_name = buffer.name
-                generator.generate_line(handler, "Engine::ContextUtils::initBuffer(this->{0}, {0}CapacityBytes, this->memory, header);".format(buffer_name))
-                generator.generate_line(handler, "Engine::ContextUtils::loadBufferContent(this->{}, loadingDataArray, {});".format(buffer_name, buffer_id))
-                buffer_id += 1
+                generator.generate_line(handler, "Engine::ContextUtils::initData(this->{0}, {0}Capacity, this->memory, header);".format(buffer.name))
+                generator.generate_line(handler, "Engine::ContextUtils::loadDataContent(this->{}, loadingDataArray, {});".format(buffer.name, buffer.el_id))
+            
+            for table in context_data.tables_data:
+                generator.generate_line(handler, "Engine::ContextUtils::initData(this->{0}, {0}Capacity, this->memory, header);".format(table.name))
+                generator.generate_line(handler, "Engine::ContextUtils::loadDataContent(this->{}, loadingDataArray, {});".format(table.name, table.el_id))
             generator.generate_empty(handler)
         
         generator.generate_struct_method(struct_handler, "load", "void", [], False, load_body)
@@ -229,8 +369,9 @@ def generate_context_reset(handler, context_raw_data):
         def load_body(self, handler):
             context_data = load_data(context_raw_data)
             for buffer in context_data.buffers_data:
-                buffer_name = buffer.name
-                generator.generate_line(handler, "Dod::BufferUtils::flush(this->{});".format(buffer_name))
+                generator.generate_line(handler, "Dod::DataUtils::flush(this->{});".format(buffer.name))
+            for table in context_data.tables_data:
+                generator.generate_line(handler, "Dod::DataUtils::flush(this->{});".format(table.name))
 
         generator.generate_struct_method(struct_handler, "reset", "void", [], False, load_body)
 
@@ -257,8 +398,12 @@ def generate_context_merge(handler, context_raw_data):
             for buffer in context_data.buffers_data:
                 if buffer.merge_type == ContextData.MERGE_TYPE_NONE:
                     continue
-                buffer_name = buffer.name
-                generator.generate_line(handler, "Dod::BufferUtils::append(this->{0}, Dod::BufferUtils::createImFromBuffer(other.{0}));".format(buffer_name))
+                generator.generate_line(handler, "Dod::DataUtils::append(this->{0}, Dod::DataUtils::createImFromBuffer(other.{0}));".format(buffer.name))
+            
+            for table in context_data.tables_data:
+                if table.merge_type == ContextData.MERGE_TYPE_NONE:
+                    continue
+                generator.generate_line(handler, "Dod::DataUtils::append(this->{0}, Dod::ImTable(other.{0}));".format(table.name))
 
         generator.generate_struct_method(struct_handler, "merge", "void", ["[[maybe_unused]] const Data& other"], False, load_body)
 
@@ -290,7 +435,7 @@ def load_shared_context_to_flush(workspace_data):
 def generate_shared_flush(handler, workspace_data):
     flush_data = load_shared_context_to_flush(workspace_data)
     for context in flush_data:
-        generator.generate_line(handler, "Dod::SharedContext::flush(&{}Context);".format(context))
+        generator.generate_line(handler, "{}Context.reset();".format(context))
     
 def generate_pools_flush(handler, workspace_data):
     pools = workspace_data.get("poolContextsInstances")
@@ -298,7 +443,7 @@ def generate_pools_flush(handler, workspace_data):
         return
     flush_data = [pool["instanceName"] for pool in pools]
     for context in flush_data:
-        generator.generate_line(handler, "Dod::SharedContext::flush(&{}Context);".format(context))
+        generator.generate_line(handler, "{}Context.reset();".format(context))
     
 def load_shared_context_merge(workspace_data):    
     output = dict()
@@ -317,7 +462,7 @@ def load_shared_context_merge(workspace_data):
         
     return output
 
-def load_pool_context_merge(workspace_data):    
+def load_pool_context_merge(workspace_data):
     output = dict()
     
     merge_data_full = workspace_data.get("poolContextsMerge")
@@ -348,8 +493,24 @@ def get_validated_context_instances(contexts_data, shared_contexts_instances) ->
 def generate_shared_init(handler, contexts_data):
     for instance in contexts_data:
         class_name = _to_class_name(instance.context_name)
-        generator.generate_line(handler, "Dod::SharedContext::Controller<Game::Context::{}::Data> {}Context;".format(class_name, instance.instance_name))
+        generator.generate_line(handler, "Game::Context::{}::Data {}Context;".format(class_name, instance.instance_name))
+    for instance in contexts_data:
+        class_name = _to_class_name(instance.context_name)
+        generator.generate_line(handler, "{}Context.load();".format(instance.instance_name))
     
+def generate_shared_usage(handler, contexts_data : list[ContextUsage], pool_id : int, instance_names : list[str]):
+    for instance_name in instance_names:
+        for data in contexts_data:
+            if data.instance_name != instance_name:
+                continue
+            generator.generate_line(handler, "const auto computedP{}_{}Context{{ Game::Context::{}::convertToConst({}Context) }};".format(
+                pool_id,
+                instance_name,
+                _to_class_name(data.context_name),
+                data.instance_name
+            ))
+            break
+
 def generate_shared_merge(handler, workspace_data):
     merge_data = load_shared_context_merge(workspace_data)
     if merge_data is None:
@@ -360,7 +521,8 @@ def generate_shared_merge(handler, workspace_data):
         for merge_context in merge_context_full:
             executor_name = merge_context.executor_name
             executor_scontext = merge_context.executor_scontext
-            generator.generate_line(handler, "Dod::SharedContext::merge(&{}Context, {}.{}Context);".format(instance_name, executor_name, executor_scontext))
+            generator.generate_line(handler, "{}.modify{}({}Context);".format(executor_name, _to_class_name(executor_scontext), instance_name))
+            #generator.generate_line(handler, "{}Context.merge({}.{}Context);".format(instance_name, executor_name, executor_scontext))
     
 def generate_pools_merge(handler, workspace_data : dict[any], block_id : int):
     merge_data = load_pool_context_merge(workspace_data)
@@ -393,4 +555,5 @@ def generate_pools_merge(handler, workspace_data : dict[any], block_id : int):
             if executor_name not in prev_block_executors:
                 continue
             executor_scontext = merge_context.executor_scontext
-            generator.generate_line(handler, "Dod::SharedContext::merge(&{}Context, {}.{}Context);".format(instance_name, executor_name, executor_scontext))
+            generator.generate_line(handler, "{}.modify{}({}Context);".format(executor_name, _to_class_name(executor_scontext), instance_name))
+            #generator.generate_line(handler, "{}Context.merge({}.{}Context);".format(instance_name, executor_name, executor_scontext))

@@ -16,19 +16,19 @@ void Data::load() noexcept
     Engine::ContextUtils::loadVariable(this->cat, loadingDataArray, 1);
     Engine::ContextUtils::loadVariable(this->var2, loadingDataArray, 2);
 
-    const auto dbvar0CapacityBytes{ Engine::ContextUtils::getBufferCapacityBytes<float>(loadingDataArray, 3) };
-    const auto dbvar1CapacityBytes{ Engine::ContextUtils::getBufferCapacityBytes<int64_t>(loadingDataArray, 4) };
+    const auto dbvar0Capacity{ Engine::ContextUtils::getBufferCapacity<float>(loadingDataArray, 3) };
+    const auto dbvar1Capacity{ Engine::ContextUtils::getBufferCapacity<int64_t>(loadingDataArray, 4) };
 
-    int32_t needBytes{};
-    needBytes += dbvar0CapacityBytes;
-    needBytes += dbvar1CapacityBytes;
+    int32_t needBytes{ 64 };
+    needBytes += dbvar0Capacity.numOfBytes;
+    needBytes += dbvar1Capacity.numOfBytes;
 
     this->memory.allocate(needBytes);
-    int32_t header{};
+    Dod::MemTypes::capacity_t header{};
 
-    Engine::ContextUtils::initBuffer(this->dbvar0, dbvar0CapacityBytes, this->memory, header);
-    Engine::ContextUtils::loadBufferContent(this->dbvar0, loadingDataArray, 3);
-    Engine::ContextUtils::initBuffer(this->dbvar1, dbvar1CapacityBytes, this->memory, header);
-    Engine::ContextUtils::loadBufferContent(this->dbvar1, loadingDataArray, 4);
+    Engine::ContextUtils::initData(this->dbvar0, dbvar0Capacity, this->memory, header);
+    Engine::ContextUtils::loadDataContent(this->dbvar0, loadingDataArray, 3);
+    Engine::ContextUtils::initData(this->dbvar1, dbvar1Capacity, this->memory, header);
+    Engine::ContextUtils::loadDataContent(this->dbvar1, loadingDataArray, 4);
 
 }

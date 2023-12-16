@@ -1,3 +1,3 @@
-Dod::SharedContext::flush(&poolInst1Context);
-Dod::SharedContext::flush(&poolInst2Context);
-Dod::SharedContext::flush(&poolInst3Context);
+poolInst1Context.reset();
+poolInst2Context.reset();
+poolInst3Context.reset();

@@ -2,6 +2,8 @@
 
 #include <assets/types/cpp/CustomData.h>
 #include <dod/Buffers.h>
+#include <dod/Tables.h>
+#include <dod/DataUtils.h>
 #include <dod/MemPool.h>
 
 #pragma warning(push)
@@ -24,6 +26,19 @@ namespace Game::Context::LContext1
         Dod::DBBuffer<float> dbvar1;
         Dod::DBBuffer<int64_t> dbvar2;
     };
+
+    struct CData
+    {
+
+        Dod::ImBuffer<float> dbvar1;
+        Dod::ImBuffer<int64_t> dbvar2;
+    };
+
+    [[nodiscard]] static CData convertToConst(const Data& context) noexcept
+    {
+        return { Dod::DataUtils::createImFromBuffer(context.dbvar1), Dod::DataUtils::createImFromBuffer(context.dbvar2) };
+    }
+
 }
 
 #pragma warning(pop)

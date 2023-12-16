@@ -31,7 +31,7 @@ class TestGenerators(unittest.TestCase):
         open("dest/file1.cpp")
         self.assertIsNotNone(generator.generate_file("dest", "file2.cpp"))
         open("dest/file2.cpp")
-        
+
     def test_check_file_exist(self):
         file_full_path = "dest/temp_file.cpp"
         if os.path.isfile(file_full_path):
@@ -42,6 +42,23 @@ class TestGenerators(unittest.TestCase):
         self.assertIsNotNone(generator.generate_file("dest", "temp_file.cpp"))
         self.assertTrue(generator.get_file_generated("dest", "temp_file.cpp"))
                 
+    def test_write_content_to_file(self):
+        content_1 = "Content 1 file\n"
+        content_2 = "Content 2 file\n"
+
+        if not generator.get_file_generated("dest", "temp_file.cpp"):
+            generator.generate_file("dest", "temp_file.cpp")
+
+        generator.write_content("dest", "temp_file.cpp", content_1)
+        file = open("dest/temp_file.cpp")
+        self.assertIsNotNone(file)
+        self.assertEqual(file.read(), content_1)
+
+        generator.write_content("dest", "temp_file.cpp", content_2)
+        file = open("dest/temp_file.cpp", "r")
+        self.assertIsNotNone(file)
+        self.assertEqual(file.read(), content_2)
+
     def test_generate_line(self):
         handler = create_target_file()
         self.assertIsNotNone(handler)

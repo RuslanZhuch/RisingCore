@@ -1,5 +1,6 @@
 import loader
 import generator
+import injectors
 
 class SharedUsage:
     def __init__(self, shared_instance, executor_scontext):
@@ -85,13 +86,19 @@ def gen_inits(handler, executors_data, workspace_data):
         class_name = "Game::ExecutionBlock::" + _to_class_name(name)
         generator.generate_variable(handler, class_name, name)
         generator.generate_line(handler, name + ".loadContext();")
-        gen_shared_context_init(handler, data, workspace_data)
+        #gen_shared_context_init(handler, data, workspace_data)
         generator.generate_line(handler, name + ".initiate();")
         
 def gen_updates(handler, executors_data):
     for data in executors_data:
         name = get_name(data)
         generator.generate_line(handler, name + ".update(deltaTime);")
+
+def gen_shared_setup(handler, executor_data, setup_desc_list : list[SharedUsage], pool_index : int):
+    executor_name = get_name(executor_data)
+    
+    for desc in setup_desc_list:
+        generator.generate_line(handler, executor_name + ".{}Context = computedP{}_{}Context;".format(desc.executor_scontext, pool_index, desc.shared_instance))
         
 def gen_flush(handler, executors_data):
     for data in executors_data:
@@ -116,13 +123,7 @@ def gen_body_contexts_load(handler, executor_data):
             for element in context["list"]:
                 generator.generate_line(handler, "this->{}Context.load();".format(element))
         generator.generate_empty(handler)
-    
-    contexts_write_to = executor_data.get("contextsWriteTo")
-    if contexts_write_to is not None:
-        for context in contexts_write_to:
-            for element in context["list"]:
-                generator.generate_line(handler, "this->{}Context.load();".format(element))
-        
+            
 def gen_body_update(handler, executor_data):   
     generator.generate_line(handler, "this->updateImpl(dt);")
         
@@ -135,21 +136,13 @@ def gen_contexts_decl(handler, executor_data):
                 field_name = "{}Context".format(element)
                 generator.generate_class_variable(handler, class_name, field_name)
     
-    contexts_write_to = executor_data.get("contextsWriteTo")
-    if contexts_write_to is not None:
-        for context in contexts_write_to:
-            class_name = "Context::{}::Data".format(_to_class_name(context["type"]))
-            for element in context["list"]:
-                field_name = "{}Context".format(element)
-                generator.generate_class_variable(handler, class_name, field_name)
-    
     contexts_shared = executor_data.get("contextsShared")
     if contexts_shared is not None:
         for context in contexts_shared:
-            class_name = "const Dod::SharedContext::Controller<Context::{}::Data>*".format(_to_class_name(context["type"]))
+            class_name = "Context::{}::CData".format(_to_class_name(context["type"]))
             for element in context["list"]:
                 field_name = "{}Context".format(element)
-                generator.generate_class_variable(handler, class_name, field_name, "nullptr")
+                generator.generate_class_variable(handler, class_name, field_name)
         
 def gen_header(folder, executor_data):
     executor_name = get_name(executor_data)
@@ -196,6 +189,16 @@ def gen_header(folder, executor_data):
             generator.generate_class_public_method(class_handler, "flushSharedLocalContexts", "void", [], False)
             generator.generate_class_private_method(class_handler, "initImpl", "void", [], False)
             generator.generate_class_private_method(class_handler, "updateImpl", "void", ['float dt'], False)
+            
+            contexts_write_to = executor_data.get("contextsWriteTo")
+            if contexts_write_to is not None:
+                for context in contexts_write_to:
+                    context_type = _to_class_name(context["type"])
+                    class_name = "Context::{}::Data".format(context_type)
+                    for element in context["list"]:
+                        method_name = "modify{}".format(_to_class_name(element))
+                        argument = "{}&".format(class_name)
+                        generator.generate_class_public_method(class_handler, method_name, "void", [argument], False)
             
             generator.generate_class_variable(class_handler, "Dod::MemPool", "memory")
             
@@ -247,6 +250,62 @@ def gen_source(folder, executor_data):
         
     generator.generate_block(handler, "namespace Game::ExecutionBlock", namespace_block_data)
     
+def inject_modify_methods(folder, executor_data):
+    executor_name = get_name(executor_data)
+    class_name = _to_class_name(executor_name)
+    file_name_source = "{}ExecutorImpl.cpp".format(class_name)
+
+    if not generator.get_file_generated(folder, file_name_source):
+        return
+    
+    full_path = "{}/{}".format(folder, file_name_source)
+    content = injectors.load_content(full_path)
+    initial_desc = injectors.gather_desc(content)
+
+    contexts_names_list : list[str] = []
+    contexts_types_list : list[str] = []
+    contexts_write_to = executor_data.get("contextsWriteTo")
+    if contexts_write_to is not None:
+        for context in contexts_write_to:
+            context_type = _to_class_name(context["type"])
+            for element in context["list"]:
+                contexts_names_list.append(element)
+                contexts_types_list.append(context_type)
+
+    def inject(context_id : int, content : str):
+        context_name = contexts_names_list[context_id]
+        context_type = contexts_types_list[context_id]
+
+        data_to_inject = "void {}::modify{}([[maybe_unused]] Context::{}::Data& {}) noexcept\n{{\n\n}}".format(
+            class_name, _to_class_name(context_name), context_type, context_name)
+        
+        return injectors.inject(content, context_name, data_to_inject)
+
+    def restore(context_id : int, content : str):
+        context_name = contexts_names_list[context_id]
+        return injectors.restore(content, context_name)
+
+    for index in range(0, len(contexts_names_list)):
+        if contexts_names_list[index] in initial_desc.segment_names:
+            continue
+        if contexts_names_list[index] in initial_desc.suspended_segment_names:
+            content = restore(index, content)
+        else:
+            content = inject(index, content)
+
+    def suspend(context_id : int, content : str):
+        context_name = initial_desc.segment_names[context_id]
+        return injectors.suspend(content, context_name)
+
+    for index in range(0, len(initial_desc.segment_names)):
+        if initial_desc.segment_names[index] in contexts_names_list:
+            continue
+        if initial_desc.segment_names[index] in initial_desc.suspended_segment_names:
+            continue
+        content = suspend(index, content)
+    
+    generator.write_content(folder, file_name_source, content)
+
 def gen_implementation(folder, executor_data):
     executor_name = get_name(executor_data)
     class_name = _to_class_name(executor_name)
@@ -260,14 +319,11 @@ def gen_implementation(folder, executor_data):
 
     generator.generate_line(handler, "#include \"{}\"".format(file_name_header))
     generator.generate_empty(handler)
+    generator.generate_line(handler, "using namespace Game::ExecutionBlock;")
     
-    def namespace_block_data(handler):
-        def class_data(class_handler):
-            generator.generate_class_public_method(class_handler, "initImpl", "void", [], False)
-            generator.generate_class_public_method(class_handler, "updateImpl", "void", ['[[maybe_unused]] float dt'], False)
-       
-        generator.generate_class_impl(handler, class_name, class_data)
-        generator.generate_empty(handler)
-        
-    generator.generate_block(handler, "namespace Game::ExecutionBlock", namespace_block_data)
+    def class_data(class_handler):
+        generator.generate_class_public_method(class_handler, "initImpl", "void", [], False)
+        generator.generate_class_public_method(class_handler, "updateImpl", "void", ['[[maybe_unused]] float dt'], False)
+    
+    generator.generate_class_impl(handler, class_name, class_data)
     

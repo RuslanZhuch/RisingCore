@@ -63,7 +63,8 @@ class TestContexts(unittest.TestCase):
         
         handler = generator.generate_file("dest", "gen_lContext1_data.cpp")
         self.assertIsNotNone(handler)
-        contexts.generate_context_data(handler, context_raw_data)
+        context_data = contexts.load_data(context_raw_data)
+        contexts.generate_context_data(handler, context_data)
         
         handler.close()
         
@@ -155,6 +156,117 @@ class TestContexts(unittest.TestCase):
         
         utils.assert_files(self, "dest/gen_lContext5_merge.cpp", "assets/expected/gen_lContext5_merge.cpp")
           
+    def test_gen_context6_data(self):
+        context_raw_data = loader.load_file_data("assets/contexts/lContext6.json")
+        
+        handler = generator.generate_file("dest", "gen_lContext6_data.cpp")
+        self.assertIsNotNone(handler)
+    
+        context_data = contexts.load_data(context_raw_data)
+        contexts.generate_context_data(handler, context_data)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_lContext6_data.cpp", "assets/expected/gen_lContext6_data.cpp")
+        
+    def test_gen_context6_data_convertion(self):
+        context_raw_data = loader.load_file_data("assets/contexts/lContext6.json")
+        
+        handler = generator.generate_file("dest", "gen_lContext6_data_convertion.cpp")
+        self.assertIsNotNone(handler)
+    
+        context_data = contexts.load_data(context_raw_data)
+        contexts.generate_data_converter(handler, context_data)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_lContext6_data_convertion.cpp", "assets/expected/gen_lContext6_data_convertion.cpp")
+        
+    def test_gen_context6_def(self):
+        types_file_data = loader.load_file_data("assets/project1/types_contexts_data.json")
+        types_cache = types_manager.cache_types([types_file_data])
+        
+        contexts.generate_context_def("dest", "assets/contexts/lContext6.json", types_cache)
+        utils.assert_files(self, "dest/lContext6Context.h", "assets/expected/lContext6Context.h")
+
+    def test_gen_context6_reset(self):
+        file_path = "assets/contexts/lContext6.json"
+        context_raw_data = loader.load_file_data(file_path)
+        
+        handler = generator.generate_file("dest", "gen_lContext6_reset.cpp")
+        self.assertIsNotNone(handler)
+        contexts.generate_context_reset(handler, context_raw_data)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_lContext6_reset.cpp", "assets/expected/gen_lContext6_reset.cpp")
+          
+    def test_gen_context6_merge(self):
+        file_path = "assets/contexts/lContext6.json"
+        context_raw_data = loader.load_file_data(file_path)
+        
+        handler = generator.generate_file("dest", "gen_lContext6_merge.cpp")
+        self.assertIsNotNone(handler)
+        contexts.generate_context_merge(handler, context_raw_data)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_lContext6_merge.cpp", "assets/expected/gen_lContext6_merge.cpp")
+        
+    def test_gen_context6_load(self):
+        file_path = "assets/contexts/lContext6.json"
+        context_raw_data = loader.load_file_data(file_path)
+        
+        handler = generator.generate_file("dest", "gen_lContext6_load.cpp")
+        self.assertIsNotNone(handler)
+        contexts.generate_context_load(handler, context_raw_data, file_path)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_lContext6_load.cpp", "assets/expected/gen_lContext6_load.cpp")
+        
+    def test_gen_context6_getters(self):
+        file_path = "assets/contexts/lContext6.json"
+        context_raw_data = loader.load_file_data(file_path)
+        
+        handler = generator.generate_file("dest", "gen_lContext6_getters.cpp")
+        self.assertIsNotNone(handler)
+        context_data = contexts.load_data(context_raw_data)
+        contexts.generate_context_getters(handler, context_data)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_lContext6_getters.cpp", "assets/expected/gen_lContext6_getters.cpp")
+      
+    def test_gen_context6_setters(self):
+        file_path = "assets/contexts/lContext6.json"
+        context_raw_data = loader.load_file_data(file_path)
+        
+        handler = generator.generate_file("dest", "gen_lContext6_setters.cpp")
+        self.assertIsNotNone(handler)
+        context_data = contexts.load_data(context_raw_data)
+        contexts.generate_context_setters(handler, context_data)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_lContext6_setters.cpp", "assets/expected/gen_lContext6_setters.cpp")
+      
+    def test_gen_context6_impl(self):
+        contexts.generate_context_impl("dest", "assets/contexts/lContext6.json")
+        utils.assert_files(self, "dest/lContext6Context.cpp", "assets/expected/lContext6Context.cpp")
+        
+    def test_gen_context8_load(self):
+        file_path = "assets/contexts/lContext8.json"
+        context_raw_data = loader.load_file_data(file_path)
+        
+        handler = generator.generate_file("dest", "gen_lContext8_load.cpp")
+        self.assertIsNotNone(handler)
+        contexts.generate_context_load(handler, context_raw_data, file_path)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_lContext8_load.cpp", "assets/expected/gen_lContext8_load.cpp")
+      
     def test_gen_context1_impl(self):
         contexts.generate_context_impl("dest", "assets/contexts/lContext1.json")
         utils.assert_files(self, "dest/lContext1Context.cpp", "assets/expected/lContext1Context.cpp")
@@ -222,6 +334,21 @@ class TestContexts(unittest.TestCase):
         handler.close()
         
         utils.assert_files(self, "dest/gen_scontexts_init.cpp", "assets/expected/gen_scontexts_init.cpp")
+        
+    def test_generate_shared_contexts_usage(self):
+        instances_data = contexts.load_shared_context_instances("assets/project3/ws_runtime.json")
+        handler = generator.generate_file("dest", "gen_scontexts_usage.cpp")
+        self.assertIsNotNone(handler)
+        pool_id = 1
+        contexts.generate_shared_usage(handler, instances_data, pool_id, [
+            "poolInst1",
+            "poolInst2",
+            "poolInst3"
+        ])
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_scontexts_usage.cpp", "assets/expected/gen_scontexts_usage.cpp")
         
     def test_get_shared_contexts_flush(self):
         workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")

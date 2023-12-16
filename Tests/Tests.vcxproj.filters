@@ -20,7 +20,7 @@
     <ClCompile Include="engineTests\Buffers.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="engineTests\BufferUtils.cpp">
+    <ClCompile Include="engineTests\DataUtilsForBuffers.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="engineTests\Contexts.cpp">
@@ -32,12 +32,23 @@
     <ClCompile Include="engineTests\utils\TypesDesImpl.cpp">
       <Filter>src\utils</Filter>
     </ClCompile>
+    <ClCompile Include="engineTests\DataUtilsForTables.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="engineTests\TypeHelpers.cpp" />
+    <ClCompile Include="engineTests\DataStream.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="engineTests\utils\TypeUtils.h">
       <Filter>src\utils</Filter>
     </ClInclude>
+    <ClInclude Include="engineTests\utils\CommonStructures.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="engineTests\utils\CommonCheckers.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

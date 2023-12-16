@@ -33,18 +33,23 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClInclude Include="engineTests\utils\CommonCheckers.h" />
+    <ClInclude Include="engineTests\utils\CommonStructures.h" />
     <ClInclude Include="engineTests\utils\TypeUtils.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="engineTests\Algorithms.cpp" />
     <ClCompile Include="engineTests\Buffers.cpp" />
-    <ClCompile Include="engineTests\BufferUtils.cpp" />
+    <ClCompile Include="engineTests\DataStream.cpp" />
+    <ClCompile Include="engineTests\DataUtilsForBuffers.cpp" />
     <ClCompile Include="engineTests\Contexts.cpp" />
     <ClCompile Include="engineTests\MemPool.cpp" />
     <ClCompile Include="engineTests\MemUtils.cpp" />
     <ClCompile Include="engineTests\SharedContext.cpp" />
     <ClCompile Include="engineTests\String.cpp" />
+    <ClCompile Include="engineTests\DataUtilsForTables.cpp" />
+    <ClCompile Include="engineTests\TypeHelpers.cpp" />
     <ClCompile Include="engineTests\Types.cpp" />
     <ClCompile Include="engineTests\utils\TypesDesImpl.cpp" />
     <ClCompile Include="pch.cpp">
@@ -89,6 +94,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)RisingCore\src;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

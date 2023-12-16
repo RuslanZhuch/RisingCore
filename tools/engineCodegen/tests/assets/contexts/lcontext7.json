@@ -1,0 +1,13 @@
+{
+    "whoIAm": "Context",
+    "version": 1,
+    "data": [
+        {
+            "type": "object",
+            "dataType": "int32_t",
+            "merge": "add",
+            "name": "var1",
+            "initial": 1
+        }
+    ]
+}

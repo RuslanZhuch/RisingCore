@@ -14,7 +14,13 @@ namespace Engine
 	struct String
 	{
 		constexpr static int32_t capacity{ 64 };
-		std::array<char, capacity> internalData{};
+		std::array<char, capacity> internalData;
+
+		[[nodiscard]] bool operator==(const String& other) const noexcept
+		{
+			return std::strcmp(this->internalData.data(), other.internalData.data()) == 0;
+		}
+
 	};
 
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <dod/Buffers.h>
-#include <dod/BufferUtils.h>
+#include <dod/DataUtils.h>
 #include <cinttypes>
 #include <span>
 
@@ -25,9 +25,9 @@ namespace Dod::CondTable
 	{
 
 		Dod::DBBuffer<uint32_t> xOrMasks;
-		Dod::BufferUtils::initFromArray(xOrMasks, xOrMasksMem);
+		Dod::DataUtils::initFromArray(xOrMasks, xOrMasksMem);
 		Dod::DBBuffer<uint32_t> ignoreMasks;
-		Dod::BufferUtils::initFromArray(ignoreMasks, ignoreMasksMem);
+		Dod::DataUtils::initFromArray(ignoreMasks, ignoreMasksMem);
 
 		const auto tableSize{ static_cast<uint32_t>(tableSrc.size()) };
 
@@ -46,11 +46,11 @@ namespace Dod::CondTable
 			for (uint32_t colId{ rawSize }; colId < 32; ++colId)
 				ignore |= (1 << colId);
 
-			Dod::BufferUtils::populate(xOrMasks, xOr, true);
-			Dod::BufferUtils::populate(ignoreMasks, ignore, true);
+			Dod::DataUtils::populate(xOrMasks, xOr, true);
+			Dod::DataUtils::populate(ignoreMasks, ignore, true);
 		}
 
-		return Table(Dod::BufferUtils::createImFromBuffer(xOrMasks), Dod::BufferUtils::createImFromBuffer(ignoreMasks));
+		return Table(Dod::DataUtils::createImFromBuffer(xOrMasks), Dod::DataUtils::createImFromBuffer(ignoreMasks));
 
 	}
 
@@ -58,14 +58,14 @@ namespace Dod::CondTable
 	void populateQuery(DBBuffer<T>& query, const uint32_t inputs, const Table& table) noexcept
 	{
 
-		for (int32_t rowId{}; rowId < Dod::BufferUtils::getNumFilledElements(table.xOrMasks); ++rowId)
+		for (int32_t rowId{}; rowId < Dod::DataUtils::getNumFilledElements(table.xOrMasks); ++rowId)
 		{
-			const auto xOr{ Dod::BufferUtils::get(table.xOrMasks, rowId) };
-			const auto ignore{ Dod::BufferUtils::get(table.ignoreMasks, rowId) };
+			const auto xOr{ Dod::DataUtils::get(table.xOrMasks, rowId) };
+			const auto ignore{ Dod::DataUtils::get(table.ignoreMasks, rowId) };
 			const uint32_t conditionMet{ (inputs ^ xOr) | ignore };
 			const uint32_t czero{ conditionMet + 1 };
 			const int32_t cmask{ static_cast<int32_t>(~(czero | static_cast<uint32_t>(-static_cast<int32_t>(czero)))) >> 31 };
-			Dod::BufferUtils::populate(query, rowId, static_cast<bool>(cmask));
+			Dod::DataUtils::populate(query, rowId, static_cast<bool>(cmask));
 		}
 
 	}
@@ -74,9 +74,9 @@ namespace Dod::CondTable
 	void applyTransform(TOutput& target, const std::span<const TOutput> outputs, const Dod::ImBuffer<TInput>& query) noexcept
 	{
 
-		for (int32_t id{ 0 }; id < Dod::BufferUtils::getNumFilledElements(query); ++id)
+		for (int32_t id{ 0 }; id < Dod::DataUtils::getNumFilledElements(query); ++id)
 		{
-			const auto outputId{ Dod::BufferUtils::get(query, id) };
+			const auto outputId{ Dod::DataUtils::get(query, id) };
 			target = outputs[static_cast<size_t>(outputId)];
 		}
 

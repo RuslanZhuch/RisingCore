@@ -16,7 +16,7 @@ namespace Dod
 		using type_t = typename T;
 		T* dataBegin{ nullptr };
 		T* dataEnd{ nullptr };
-		int32_t pad[3];
+		int32_t pad[3]{};
 		int32_t numOfFilledEls{ 0 };
 	};
 

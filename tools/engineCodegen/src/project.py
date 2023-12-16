@@ -177,6 +177,7 @@ def generate(project_path : str):
         executors.gen_header(executors_target_path, data)
         executors.gen_source(executors_target_path, data)
         executors.gen_implementation(executors_target_path, data)
+        executors.inject_modify_methods(executors_target_path, data)
     
     if project_structure_changed is False and runtime_changed is False:
         return

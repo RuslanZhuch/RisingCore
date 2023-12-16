@@ -44,6 +44,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -114,6 +115,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4514;5045</DisableSpecificWarnings>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,16 +151,22 @@
     <ClInclude Include="src\dod\Algorithms.h" />
     <ClInclude Include="src\dod\Buffers.h" />
     <ClInclude Include="src\dod\BufferUtils.h" />
+    <ClInclude Include="src\dod\CommonData.h" />
     <ClInclude Include="src\dod\ConditionTable.h" />
+    <ClInclude Include="src\dod\DataStream.h" />
+    <ClInclude Include="src\dod\DataUtils.h" />
     <ClInclude Include="src\dod\MemPool.h" />
     <ClInclude Include="src\dod\MemTypes.h" />
     <ClInclude Include="src\dod\MemUtils.h" />
     <ClInclude Include="src\dod\SharedContext.h" />
+    <ClInclude Include="src\dod\Tables.h" />
+    <ClInclude Include="src\dod\TableUtils.h" />
     <ClInclude Include="src\engine\contextUtils.h" />
     <ClInclude Include="src\engine\jsonParser.h" />
     <ClInclude Include="src\engine\String.h" />
     <ClInclude Include="src\engine\StringUtils.h" />
     <ClInclude Include="src\engine\types.h" />
+    <ClInclude Include="src\Helpers.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dod\MemPool.cpp" />

@@ -10,9 +10,6 @@ namespace Game::ExecutionBlock
         this->local3Context.load();
         this->local4Context.load();
 
-        this->target1Context.load();
-        this->target2Context.load();
-        this->target3Context.load();
     }
 
     void Test1::initiate() noexcept
