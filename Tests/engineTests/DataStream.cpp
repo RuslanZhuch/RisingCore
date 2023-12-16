@@ -16,9 +16,11 @@ protected:
 	void init(Dod::MemTypes::capacity_t byteToAllocate)
 	{
 		this->memory.allocate(byteToAllocate + 64);
-		Dod::DataUtils::initFromMemory(this->dest, byteToAllocate / sizeof(TDest), Dod::MemUtils::acquire(this->memory, 0, byteToAllocate, 64));
+		constexpr auto destSize{ static_cast<Dod::MemTypes::capacity_t>(sizeof(TDest)) };
+		const auto capacityEls{ static_cast<int32_t>(byteToAllocate / destSize) };
+		Dod::DataUtils::initFromMemory(this->dest, capacityEls, Dod::MemUtils::acquire(this->memory, 0, byteToAllocate, 64));
 		this->header = 0;
-		EXPECT_EQ(Dod::DataUtils::getCapacity(this->dest), byteToAllocate / sizeof(TDest));
+		EXPECT_EQ(Dod::DataUtils::getCapacity(this->dest), capacityEls);
 	}
 
 	template <typename TData>
@@ -38,7 +40,7 @@ protected:
 	void serializeMultiple(std::vector<TData> data, Dod::MemTypes::capacity_t expectedHeaderOffset, Dod::MemTypes::capacity_t expectedPages)
 	{
 		const auto prevHeader{ this->header };
-		this->header = Dod::DataStream::serialize(this->dest, data.data(), data.size());
+		this->header = Dod::DataStream::serialize(this->dest, data.data(), static_cast<int32_t>(data.size()));
 
 		const auto headerOffset{ this->header - prevHeader };
 		EXPECT_EQ(headerOffset, expectedHeaderOffset);
@@ -56,7 +58,7 @@ protected:
 	{
 		TData data{};
 		const auto prevHeader{ this->header };
-		this->header = Dod::DataStream::deserialize(this->dest, this->header, data);
+		this->header = Dod::DataStream::deserialize(Dod::ImTable(this->dest), this->header, data);
 
 		const auto headerOffset{ this->header - prevHeader };
 		EXPECT_EQ(headerOffset, expectedHeaderOffset);
@@ -68,10 +70,10 @@ protected:
 	template <typename TData>
 	void deserializeMultiple(Dod::MemTypes::capacity_t expectedHeaderOffset, std::vector<TData> expectedData)
 	{
-		TData* data{};
+		const TData* data{};
 		int32_t numOfElements{};
 		const auto prevHeader{ this->header };
-		this->header = Dod::DataStream::deserialize(this->dest, this->header, numOfElements, data);
+		this->header = Dod::DataStream::deserialize(Dod::ImTable(this->dest), this->header, numOfElements, data);
 
 		const auto headerOffset{ this->header - prevHeader };
 		EXPECT_EQ(headerOffset, expectedHeaderOffset);

@@ -28,7 +28,8 @@
     for (const auto& element : doc.GetObject())
     {
 
-        if (element.name != "data" || !element.value.IsArray())
+        const auto& elementName{ element.name.GetString() };
+        if (std::strcmp(elementName, "data") != 0 || !element.value.IsArray())
             continue;
 
         const auto& arrayData{ element.value.GetArray() };

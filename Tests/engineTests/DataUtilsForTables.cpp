@@ -281,7 +281,7 @@ protected:
 		const auto memorySpan{ Dod::MemUtils::acquire(memory, 0, 1024, alignment) };
 		Dod::ImTable<int32_t> indicesToRemove;
 		std::memcpy(memorySpan.dataBegin, indices.data(), indices.size() * sizeof(int32_t));
-		Dod::DataUtils::initFromMemory(indicesToRemove, indices.size(), memorySpan);
+		Dod::DataUtils::initFromMemory(indicesToRemove, static_cast<int32_t>(indices.size()), memorySpan);
 		Dod::DataUtils::remove(this->table, indicesToRemove);
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), expectedEls);
 	}
@@ -870,14 +870,15 @@ TEST(DataUtils, CreateGuidedImTable)
 		Dod::MemTypes::dataConstPoint_t dataBegin;
 		Dod::MemTypes::dataConstPoint_t dataEnd;
 	};
-	Dod::DataUtils::initFromMemory(table, values.size(), Span(
+	const auto numOfElements{ static_cast<int32_t>(values.size()) };
+	Dod::DataUtils::initFromMemory(table, numOfElements, Span(
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data()),
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data() + 64)
 	));
 
 	alignas(alignment) std::array<type_t, values.size()> indices{ {7, 6, 5, 4, 3, 2, 1, 0} };
 	Dod::ImTable<int32_t> indicesBuffer;
-	Dod::DataUtils::initFromMemory(indicesBuffer, indices.size(), Span(
+	Dod::DataUtils::initFromMemory(indicesBuffer, static_cast<int32_t>(indices.size()), Span(
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data()),
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data() + 64)
 	));
@@ -909,14 +910,14 @@ TEST(DataUtils, CreateGuidedImTableFailed)
 		Dod::MemTypes::dataConstPoint_t dataBegin;
 		Dod::MemTypes::dataConstPoint_t dataEnd;
 	};
-	Dod::DataUtils::initFromMemory(table, values.size(), Span(
+	Dod::DataUtils::initFromMemory(table, static_cast<int32_t>(values.size()), Span(
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data()),
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data() + 64)
 	));
 
 	alignas(alignment) std::array<type_t, 4> indices{ {7, 6, 5, 4} };
 	Dod::ImTable<int32_t> indicesBuffer;
-	Dod::DataUtils::initFromMemory(indicesBuffer, indices.size(), Span(
+	Dod::DataUtils::initFromMemory(indicesBuffer, static_cast<int32_t>(indices.size()), Span(
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data()),
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data() + 64)
 	));

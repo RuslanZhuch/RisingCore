@@ -6,13 +6,13 @@
 namespace Dod::MemUtils
 {
 
-	[[nodiscard]] static auto getAlignOffset(const auto* point, MemTypes::alignment_t alignment)
+	[[nodiscard]] static MemTypes::capacity_t getAlignOffset(const auto* point, MemTypes::alignment_t alignment)
 	{
-		const auto address{ reinterpret_cast<MemTypes::alignment_t>(point) };
-		const auto shifted{ static_cast<MemTypes::alignment_t>(address & (alignment - 1)) };
+		const auto address{ reinterpret_cast<MemTypes::capacity_t>(point) };
+		const auto shifted{ static_cast<MemTypes::capacity_t>(address & (alignment - 1)) };
 		if (shifted != 0)
 			return alignment - shifted;
-		return MemTypes::alignment_t{};
+		return {};
 	}
 
 	[[nodiscard]] static auto acquire(const auto& source, MemTypes::capacity_t beginIndex, MemTypes::capacity_t numOfBytes, MemTypes::alignment_t alignment) noexcept

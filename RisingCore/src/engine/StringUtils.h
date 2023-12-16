@@ -12,6 +12,7 @@ namespace Engine::StringUtils
 
 	void assign(auto&& string, std::string_view inStr) noexcept
 	{
+		std::memset(string.internalData.data(), '\0', string.capacity);
 		if (inStr.size() <= string.capacity)
 			std::memcpy(string.internalData.data(), inStr.data(), inStr.size());
 	}

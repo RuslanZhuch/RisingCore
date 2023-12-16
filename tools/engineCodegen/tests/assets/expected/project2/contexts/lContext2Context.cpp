@@ -25,7 +25,7 @@ namespace Game::Context::LContext2
         const auto dbvar0Capacity{ Engine::ContextUtils::getBufferCapacity<float>(loadingDataArray, 2) };
         const auto dbvar1Capacity{ Engine::ContextUtils::getBufferCapacity<int64_t>(loadingDataArray, 3) };
 
-        int32_t needBytes{};
+        int32_t needBytes{ 64 };
         needBytes += dbvar0Capacity.numOfBytes;
         needBytes += dbvar1Capacity.numOfBytes;
 

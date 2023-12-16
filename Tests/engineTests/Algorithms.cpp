@@ -39,8 +39,9 @@ static void initDTable(Dod::DTable<T>& dest, auto& src)
 		Dod::MemTypes::dataPoint_t dataEnd{};
 	};
 	MemorySpan memSpan(reinterpret_cast<Dod::MemTypes::dataPoint_t>(src.data()), Dod::MemTypes::dataPoint_t(src.data()) + 64);
-	Dod::DataUtils::initFromMemory(dest, src.size(), memSpan);
-	dest.numOfFilledEls = static_cast<int32_t>(src.size());
+	const auto numOfElements{ static_cast<int32_t>(src.size()) };
+	Dod::DataUtils::initFromMemory(dest, numOfElements, memSpan);
+	dest.numOfFilledEls = numOfElements;
 
 }
 
@@ -54,7 +55,8 @@ static void initDTableFromArray(Dod::DTable<T>& dest, auto& src)
 		Dod::MemTypes::dataPoint_t dataEnd{};
 	};
 	MemorySpan memSpan(reinterpret_cast<Dod::MemTypes::dataPoint_t>(src.data()), Dod::MemTypes::dataPoint_t(src.data()) + 64);
-	Dod::DataUtils::initFromMemory(dest, src.size(), memSpan);
+	const auto numOfElements{ static_cast<int32_t>(src.size()) };
+	Dod::DataUtils::initFromMemory(dest, static_cast<int32_t>(src.size()), memSpan);
 
 }
 

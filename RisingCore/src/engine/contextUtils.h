@@ -81,7 +81,7 @@ namespace Engine::ContextUtils
         if (row.IsArray())
         {
             const auto& rowData{ row.GetArray() };
-            if (rowData.Size() > colId)
+            if (static_cast<int32_t>(rowData.Size()) > colId)
                 assignToVariable(dest, rowData[static_cast<rapidjson::SizeType>(colId)]);
             return;
         }

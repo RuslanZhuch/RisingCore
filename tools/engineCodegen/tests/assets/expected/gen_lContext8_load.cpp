@@ -17,7 +17,7 @@ void Data::load() noexcept
     const auto dbvar2Capacity{ Engine::ContextUtils::getBufferCapacity<int64_t>(loadingDataArray, 2) };
     const auto data1Capacity{ Engine::ContextUtils::getDataCapacity<int32_t, float>(loadingDataArray, 0) };
 
-    int32_t needBytes{};
+    int32_t needBytes{ 64 };
     needBytes += dbvar2Capacity.numOfBytes;
     needBytes += data1Capacity.numOfBytes;
 

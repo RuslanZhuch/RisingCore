@@ -22,7 +22,7 @@ namespace Game::Context::LContext3
 
         const auto dbvarCapacity{ Engine::ContextUtils::getBufferCapacity<int32_t>(loadingDataArray, 0) };
 
-        int32_t needBytes{};
+        int32_t needBytes{ 64 };
         needBytes += dbvarCapacity.numOfBytes;
 
         this->memory.allocate(needBytes);

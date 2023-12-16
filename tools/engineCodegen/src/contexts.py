@@ -339,7 +339,7 @@ def generate_context_load(handler, context_raw_data, context_file_path):
             if len(context_data.buffers_data) == 0 and len(context_data.tables_data) == 0:
                 return
             
-            generator.generate_line(handler, "int32_t needBytes{};")
+            generator.generate_line(handler, "int32_t needBytes{ 64 };")
             for buffer in context_data.buffers_data:
                 generator.generate_line(handler, "needBytes += {}Capacity.numOfBytes;".format(buffer.name))
             for table in context_data.tables_data:

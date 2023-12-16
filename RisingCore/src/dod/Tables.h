@@ -69,6 +69,7 @@ namespace Dod
 		using innerTables_t = typename std::tuple<ImTable<TFirst>, ImTable<TOther>...>;
 		MemTypes::dataConstPoint_t dataBegin{ nullptr };
 		int32_t capacityEls{};
+		int32_t pad{};
 	};
 
 	template <typename TFirst, typename ... TOther>

@@ -42,7 +42,7 @@ namespace Dod::DataUtils
 	}
 
 	template <typename Types>
-	[[nodiscard]] auto computeCapacityInBytes(int32_t numOfElements) noexcept
+	[[nodiscard]] MemTypes::capacity_t computeCapacityInBytes(int32_t numOfElements) noexcept
 	{
 
 		if (numOfElements == 0)
@@ -68,7 +68,8 @@ namespace Dod::DataUtils
 
 	[[nodiscard]] static auto roundToCells(MemTypes::capacity_t bytes) noexcept
 	{
-		const auto numOfCellsForColumn{ static_cast<MemTypes::capacity_t>(std::ceilf(bytes / 64.f)) };
+		const auto bytesF{ static_cast<float>(bytes) };
+		const auto numOfCellsForColumn{ static_cast<MemTypes::capacity_t>(std::ceil(bytesF / 64.f)) };
 		return numOfCellsForColumn * 64;
 	}
 
@@ -156,7 +157,7 @@ namespace Dod::DataUtils
 	}
 
 	template<typename TReturn>
-	[[nodiscard]] auto getImpl(const CommonData::CTable auto& table, MemTypes::capacity_t beginElIndex, MemTypes::capacity_t numOfElements) noexcept
+	[[nodiscard]] auto getImpl(const CommonData::CTable auto& table, MemTypes::capacity_t beginElIndex, MemTypes::capacityEls_t numOfElements) noexcept
 	{
 
 		TReturn buffersPack;
@@ -188,7 +189,7 @@ namespace Dod::DataUtils
 	}
 
 	template <typename TReturn>
-	[[nodiscard]] auto get(const CommonData::CTable auto& table, MemTypes::capacity_t beginElIndex, MemTypes::capacity_t numOfElements) noexcept
+	[[nodiscard]] auto get(const CommonData::CTable auto& table, MemTypes::capacity_t beginElIndex, MemTypes::capacityEls_t numOfElements) noexcept
 	{
 
 		using tableType = std::decay_t<decltype(table)>;
@@ -261,7 +262,7 @@ namespace Dod::DataUtils
 		using tableType_t = typename std::decay_t<decltype(table)>;
 		using types_t = tableType_t::types_t;
 
-		size_t memoryOffset{ MemUtils::getAlignOffset(table.dataBegin, 64) };
+		auto memoryOffset{ MemUtils::getAlignOffset(table.dataBegin, 64) };
 
 		MemTypes::dataPoint_t rowMemPosition{ table.dataBegin };
 		(std::invoke([&] {
@@ -289,7 +290,7 @@ namespace Dod::DataUtils
 		using types_t = tableType_t::types_t;
 		static_assert(sizeof...(filler) == std::tuple_size_v<types_t>, "Filler args don't match table types");
 		const auto elementPosition{ table.numOfFilledEls };
-		size_t memoryOffset{ MemUtils::getAlignOffset(table.dataBegin, 64) };
+		auto memoryOffset{ MemUtils::getAlignOffset(table.dataBegin, 64) };
 		(std::invoke([&] {
 			using valueType_t = std::invoke_result_t<decltype(filler), int32_t>;
 			for (int32_t elId{}; elId < numOfElements; ++elId)
