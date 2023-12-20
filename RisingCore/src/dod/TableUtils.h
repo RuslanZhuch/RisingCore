@@ -73,38 +73,49 @@ namespace Dod::DataUtils
 		return numOfCellsForColumn * 64;
 	}
 
-	void initTableFromMemoryImpl(CommonData::CTable auto& dbTable, int32_t numOfElements, auto&& actualData) noexcept
-	{
-
-		using tableType_t = typename std::decay_t<decltype(dbTable)>;
-		using types_t = tableType_t::types_t;
-
-		const auto needBytes{ computeCapacityInBytes<types_t>(numOfElements) };
-		const auto alignmentOffset{ MemUtils::getAlignOffset(actualData.dataBegin, 64) };
-
-		dbTable.dataBegin = actualData.dataBegin + alignmentOffset;
-
-		const auto capacityInBytes{ static_cast<MemTypes::capacity_t>(actualData.dataEnd - actualData.dataBegin) };
-		dbTable.capacityEls = numOfElements * (needBytes + alignmentOffset <= capacityInBytes);
-
-		if constexpr (requires { dbTable.numOfFilledEls; })
-			dbTable.numOfFilledEls = 0;
-
-	}
-
-	void initFromMemory(CommonData::CTable auto& dbTable, int32_t numOfElements, const auto& memSpan) noexcept
-	{
-
-		initTableFromMemoryImpl(dbTable, numOfElements, memSpan);
-
-	}
-
 	[[nodiscard]] auto getNumFilledElements(const CommonData::CTable auto& table) noexcept
 	{
 		if constexpr (requires { table.numOfFilledEls; })
 			return table.numOfFilledEls;
 		else
-			return static_cast<int32_t>(table.capacityEls);
+			return static_cast<int32_t>(table.numOfElements);
+	}
+
+	void initTableFromMemoryImpl(CommonData::CTable auto& dbTable, int32_t capacityEls, int32_t numOfElements, auto&& actualData) noexcept
+	{
+
+		using tableType_t = typename std::decay_t<decltype(dbTable)>;
+		using types_t = tableType_t::types_t;
+
+		const auto needBytes{ computeCapacityInBytes<types_t>(capacityEls) };
+		const auto alignmentOffset{ MemUtils::getAlignOffset(actualData.dataBegin, 64) };
+
+		dbTable.dataBegin = actualData.dataBegin + alignmentOffset;
+
+		const auto capacityInBytes{ static_cast<MemTypes::capacity_t>(actualData.dataEnd - actualData.dataBegin) };
+		dbTable.capacityEls = capacityEls * (needBytes + alignmentOffset <= capacityInBytes);
+
+		if constexpr (requires { dbTable.numOfFilledEls; })
+			dbTable.numOfFilledEls = 0;
+		else if constexpr (requires { dbTable.numOfElements; })
+			dbTable.numOfElements = numOfElements;
+
+	}
+
+
+	void initFromMemory(CommonData::CDTable auto& dbTable, int32_t numOfElements, const auto& memSpan) noexcept
+	{
+		initTableFromMemoryImpl(dbTable, numOfElements, 0, memSpan);
+	}
+
+	void initFromMemory(CommonData::CMutTable auto& dbTable, int32_t capacityEls, int32_t numOfElements, const auto& memSpan) noexcept
+	{
+		initTableFromMemoryImpl(dbTable, capacityEls, numOfElements, memSpan);
+	}
+
+	void initFromMemory(CommonData::CImTable auto& dbTable, int32_t capacityEls, int32_t numOfElements, const auto& memSpan) noexcept
+	{
+		initTableFromMemoryImpl(dbTable, capacityEls, numOfElements, memSpan);
 	}
 
 	template<int32_t collumnId>
@@ -138,19 +149,19 @@ namespace Dod::DataUtils
 		if constexpr (Dod::CommonData::CDTable<tableType_t>)
 		{
 			Dod::MutTable<returnType_t> out;
-			initFromMemory(out, table.numOfFilledEls, Span{});
+			initFromMemory(out, table.capacityEls, Dod::DataUtils::getNumFilledElements(table), Span{});
 			return out;
 		}
 		else if constexpr (Dod::CommonData::CImTable<std::decay_t<decltype(table)>>)
 		{
 			Dod::ImTable<returnType_t> out;
-			initFromMemory(out, table.capacityEls, Span{});
+			initFromMemory(out, table.capacityEls, Dod::DataUtils::getNumFilledElements(table), Span{});
 			return out;
 		}
 		else
 		{
 			Dod::MutTable<returnType_t> out;
-			initFromMemory(out, table.capacityEls, Span{});
+			initFromMemory(out, table.capacityEls, Dod::DataUtils::getNumFilledElements(table), Span{});
 			return out;
 		}
 
@@ -179,7 +190,7 @@ namespace Dod::DataUtils
 			const auto spanBeginOffset{ beginElIndex * columnTypeSize };
 
 			const auto pureBytesForColumn{ roundToCells(table.capacityEls * columnTypeSize) };
-			initFromMemory(bufferPack, numOfElements, Span(rowMemPosition + spanBeginOffset, rowMemPosition + spanBeginOffset + pureBytesForColumn));
+			initFromMemory(bufferPack, table.capacityEls, numOfElements, Span(rowMemPosition + spanBeginOffset, rowMemPosition + spanBeginOffset + pureBytesForColumn));
 			rowMemPosition += pureBytesForColumn;
 
 		});
@@ -205,11 +216,11 @@ namespace Dod::DataUtils
 	[[nodiscard]] auto get(const Table& table) noexcept -> Table::innerTables_t
 	{
 		if constexpr (CommonData::CImTable<Table>)
-			return get<typename Table::innerTables_t>(table, 0, table.capacityEls);
+			return get<typename Table::innerTables_t>(table, 0, getNumFilledElements(table));
 		else if constexpr (CommonData::CDTable<Table>)
-			return get<typename Table::innerTables_t>(table, 0, table.numOfFilledEls);
+			return get<typename Table::innerTables_t>(table, 0, getNumFilledElements(table));
 		else if constexpr (CommonData::CMutTable<Table>)
-			return get<typename Table::innerTables_t>(table, 0, table.capacityEls);
+			return get<typename Table::innerTables_t>(table, 0, getNumFilledElements(table));
 	}
 
 //	template <CommonData::CDTable Table>
@@ -487,8 +498,8 @@ namespace Dod::DataUtils
 
 		sortedTable.dataBegin = srcTable.dataBegin;
 		sortedTable.capacityEls = srcTable.capacityEls;
-		sortedTable.guid.dataBegin = indices.dataBegin;
-		sortedTable.guid.capacityEls = indices.capacityEls;
+		sortedTable.numOfElements = Dod::DataUtils::getNumFilledElements(srcTable);
+		sortedTable.guid = indices;
 
 		return sortedTable;
 

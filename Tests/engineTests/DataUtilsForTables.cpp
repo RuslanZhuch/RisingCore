@@ -28,6 +28,7 @@ static constexpr size_t bytesForIntDouble16{ 192 };
 static constexpr size_t bytesForDoubleInt2{ 128 };
 static constexpr size_t bytesForIntComplex2{ 196 };
 static constexpr size_t bytesForIntComplex3{ 196 };
+static constexpr size_t bytesForIntInt{ 256 };
 static constexpr size_t bytesForIntComplex4{ 256 };
 static constexpr size_t bytesForIntComplexComplex3{ 320 };
 
@@ -281,7 +282,7 @@ protected:
 		const auto memorySpan{ Dod::MemUtils::acquire(memory, 0, 1024, alignment) };
 		Dod::ImTable<int32_t> indicesToRemove;
 		std::memcpy(memorySpan.dataBegin, indices.data(), indices.size() * sizeof(int32_t));
-		Dod::DataUtils::initFromMemory(indicesToRemove, static_cast<int32_t>(indices.size()), memorySpan);
+		Dod::DataUtils::initFromMemory(indicesToRemove, static_cast<int32_t>(indices.size()), static_cast<int32_t>(indices.size()), memorySpan);
 		Dod::DataUtils::remove(this->table, indicesToRemove);
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), expectedEls);
 	}
@@ -563,6 +564,24 @@ TEST_F(PopulateIntDouble16, Populate)
 	this->checkTable<int, double>({
 		{181, 182, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274},
 		{201., 202., 281., 282., 283., 284., 285., 286., 287., 288., 289., 290., 291., 292., 293., 294.}
+	});
+
+}
+
+
+using PopulateIntInt1 = TableTest<bytesForIntInt, 0, int, int>;
+TEST_F(PopulateIntInt1, Populate)
+{
+
+	this->init(32);
+	this->populate(1, 1, [](int32_t id) {
+		return id + 1;
+	}, [](int32_t id) {
+		return static_cast<int>(id) + 20 + 1;
+	});
+	this->checkTable<int, int>({
+		{1},
+		{21}
 	});
 
 }
@@ -871,14 +890,14 @@ TEST(DataUtils, CreateGuidedImTable)
 		Dod::MemTypes::dataConstPoint_t dataEnd;
 	};
 	const auto numOfElements{ static_cast<int32_t>(values.size()) };
-	Dod::DataUtils::initFromMemory(table, numOfElements, Span(
+	Dod::DataUtils::initFromMemory(table, numOfElements, numOfElements, Span(
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data()),
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data() + 64)
 	));
 
 	alignas(alignment) std::array<type_t, values.size()> indices{ {7, 6, 5, 4, 3, 2, 1, 0} };
 	Dod::ImTable<int32_t> indicesBuffer;
-	Dod::DataUtils::initFromMemory(indicesBuffer, static_cast<int32_t>(indices.size()), Span(
+	Dod::DataUtils::initFromMemory(indicesBuffer, static_cast<int32_t>(indices.size()), static_cast<int32_t>(indices.size()), Span(
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data()),
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data() + 64)
 	));
@@ -910,14 +929,14 @@ TEST(DataUtils, CreateGuidedImTableFailed)
 		Dod::MemTypes::dataConstPoint_t dataBegin;
 		Dod::MemTypes::dataConstPoint_t dataEnd;
 	};
-	Dod::DataUtils::initFromMemory(table, static_cast<int32_t>(values.size()), Span(
+	Dod::DataUtils::initFromMemory(table, static_cast<int32_t>(values.size()), static_cast<int32_t>(values.size()), Span(
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data()),
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data() + 64)
 	));
 
 	alignas(alignment) std::array<type_t, 4> indices{ {7, 6, 5, 4} };
 	Dod::ImTable<int32_t> indicesBuffer;
-	Dod::DataUtils::initFromMemory(indicesBuffer, static_cast<int32_t>(indices.size()), Span(
+	Dod::DataUtils::initFromMemory(indicesBuffer, static_cast<int32_t>(indices.size()), static_cast<int32_t>(indices.size()), Span(
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data()),
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data() + 64)
 	));

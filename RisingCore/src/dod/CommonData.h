@@ -33,6 +33,7 @@ namespace Dod::CommonData
 	{
 		requires CTable<T>;
 		requires std::same_as<decltype(T::dataBegin), MemTypes::dataConstPoint_t>;
+		requires std::same_as<decltype(T::numOfElements), int32_t>;
 	};
 
 	template <typename T>
@@ -40,6 +41,7 @@ namespace Dod::CommonData
 	{
 		requires CTable<T>;
 		requires std::same_as<decltype(T::dataBegin), MemTypes::dataPoint_t>;
+		requires std::same_as<decltype(T::numOfElements), int32_t>;
 	};
 
 	template <typename T>

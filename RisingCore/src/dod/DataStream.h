@@ -11,7 +11,7 @@ namespace Dod::DataStream
 
 	using header_t = int32_t;
 
-	template <Dod::CommonData::CMonoMutTable TTable, typename TData> requires std::is_trivial_v<TData>
+	template <Dod::CommonData::CMonoDTable TTable, typename TData> requires std::is_trivial_v<TData>
 	header_t serialize(TTable& dest, TData data) noexcept
 	{
 
@@ -31,7 +31,7 @@ namespace Dod::DataStream
 
 	}
 
-	template <Dod::CommonData::CMonoMutTable TTable, typename TData> requires std::is_trivial_v<TData>
+	template <Dod::CommonData::CMonoDTable TTable, typename TData> requires std::is_trivial_v<TData>
 	header_t serialize(TTable& dest, const TData* data, int32_t numOfElements) noexcept
 	{
 

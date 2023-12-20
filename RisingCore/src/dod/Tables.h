@@ -43,12 +43,14 @@ namespace Dod
 		explicit MutTable(const DTable<TFirst, TOther...>& other) noexcept
 			:
 			dataBegin(other.dataBegin),
-			capacityEls(other.numOfFilledEls)
+			capacityEls(other.capacityEls),
+			numOfElements(other.numOfFilledEls)
 		{}
 		using types_t = typename std::tuple<TFirst, TOther...>;
 		using innerTables_t = typename std::tuple<MutTable<TFirst>, MutTable<TOther>...>;
 		MemTypes::dataPoint_t dataBegin{ nullptr };
 		int32_t capacityEls{};
+		int32_t numOfElements{};
 	};
 
 	template <typename TFirst, typename ... TOther>
@@ -58,18 +60,20 @@ namespace Dod
 		explicit ImTable(MutTable<TFirst, TOther...> other) noexcept
 			:
 			dataBegin(other.dataBegin),
-			capacityEls(other.capacityEls)
+			capacityEls(other.capacityEls),
+			numOfElements(other.numOfElements)
 		{}
 		explicit ImTable(const DTable<TFirst, TOther...>& other) noexcept
 			:
 			dataBegin(other.dataBegin),
-			capacityEls(other.numOfFilledEls)
+			capacityEls(other.capacityEls),
+			numOfElements(other.numOfFilledEls)
 		{}
 		using types_t = typename std::tuple<TFirst, TOther...>;
 		using innerTables_t = typename std::tuple<ImTable<TFirst>, ImTable<TOther>...>;
 		MemTypes::dataConstPoint_t dataBegin{ nullptr };
 		int32_t capacityEls{};
-		int32_t pad{};
+		int32_t numOfElements{};
 	};
 
 	template <typename TFirst, typename ... TOther>
@@ -79,13 +83,15 @@ namespace Dod
 		explicit ImTableGuided(MutTable<TFirst, TOther...> other) noexcept
 			:
 			dataBegin(other.dataBegin),
+			numOfElements(other.numOfElements),
 			capacityEls(other.capacityEls),
 			guid(other.guid)
 		{}
 		explicit ImTableGuided(const DTable<TFirst, TOther...>& other) noexcept
 			:
 			dataBegin(other.dataBegin),
-			capacityEls(other.numOfFilledEls),
+			numOfElements(other.numOfFilledEls),
+			capacityEls(other.capacityEls),
 			guid(other.guid)
 		{}
 		using types_t = typename std::tuple<TFirst, TOther...>;
@@ -93,6 +99,7 @@ namespace Dod
 		MemTypes::dataConstPoint_t dataBegin{ nullptr };
 		ImTable<int32_t> guid;
 		int32_t capacityEls{};
+		int32_t numOfElements{};
 	};
 
 
