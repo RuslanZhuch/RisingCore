@@ -93,13 +93,14 @@ namespace Dod::Algorithms
 	}
 
 	template <typename T>
-	static void getIndicesByValue(DBBuffer<int32_t>& indices, CImBuffer auto buffer, T value) noexcept
+	static void getIndicesByValue(Dod::CommonData::CMonoDTable auto& indices, Dod::CommonData::CMonoImTable auto src, T value) noexcept requires
+		std::is_same_v<std::tuple_element_t<0, typename std::decay_t<decltype(indices)>::types_t>, int32_t>
 	{
 		Dod::DataUtils::flush(indices);
-		for (int32_t elId{}; elId < Dod::DataUtils::getNumFilledElements(buffer); ++elId)
+		for (int32_t elId{}; elId < Dod::DataUtils::getNumFilledElements(src); ++elId)
 		{
-			const auto bFound{ Dod::DataUtils::get(buffer, elId) == value };
-			Dod::DataUtils::populate(indices, elId, bFound);
+			const auto bFound{ Dod::DataUtils::get(src, elId) == value };
+			Dod::DataUtils::pushBack(indices, bFound, elId);
 		}
 	}
 

@@ -55,7 +55,6 @@ static void initDTableFromArray(Dod::DTable<T>& dest, auto& src)
 		Dod::MemTypes::dataPoint_t dataEnd{};
 	};
 	MemorySpan memSpan(reinterpret_cast<Dod::MemTypes::dataPoint_t>(src.data()), Dod::MemTypes::dataPoint_t(src.data()) + 64);
-	const auto numOfElements{ static_cast<int32_t>(src.size()) };
 	Dod::DataUtils::initFromMemory(dest, static_cast<int32_t>(src.size()), memSpan);
 
 }
@@ -249,51 +248,51 @@ TEST(Algorithm, GetIndicesByValue)
 	using type_t = int32_t;
 
 	{
-		auto values{ std::to_array<type_t>({0, 2, 1, 1, 2, 3, 4, 3, 5, 4}) };
+		alignas(64) auto values{ std::to_array<type_t>({2, 1, 1, 2, 3, 4, 3, 5, 4}) };
 
-		Dod::DBBuffer<type_t> buffer;
-		initDBuffer(buffer, values);
+		Dod::DTable<type_t> buffer;
+		initDTable(buffer, values);
 
-		auto results{ std::array<int32_t, values.size()>() };
-		Dod::DBBuffer<int32_t> resultbuffer;
-		Dod::DataUtils::initFromArray(resultbuffer, results);
+		alignas(64) auto results{ std::array<int32_t, values.size()>() };
+		Dod::DTable<int32_t> resultbuffer;
+		initDTableFromArray(resultbuffer, results);
 
 		{
-			Dod::Algorithms::getIndicesByValue(resultbuffer, Dod::DataUtils::createImFromBuffer(buffer), 1);
+			Dod::Algorithms::getIndicesByValue(resultbuffer, Dod::ImTable(buffer), 1);
 
 			ASSERT_EQ(Dod::DataUtils::getNumFilledElements(resultbuffer), 2);
 			EXPECT_EQ(Dod::DataUtils::get(resultbuffer, 0), 1);
 			EXPECT_EQ(Dod::DataUtils::get(resultbuffer, 1), 2);
 		}
 		{
-			Dod::Algorithms::getIndicesByValue(resultbuffer, Dod::DataUtils::createImFromBuffer(buffer), 2);
+			Dod::Algorithms::getIndicesByValue(resultbuffer, Dod::ImTable(buffer), 2);
 
 			ASSERT_EQ(Dod::DataUtils::getNumFilledElements(resultbuffer), 2);
 			EXPECT_EQ(Dod::DataUtils::get(resultbuffer, 0), 0);
 			EXPECT_EQ(Dod::DataUtils::get(resultbuffer, 1), 3);
 		}
 		{
-			Dod::Algorithms::getIndicesByValue(resultbuffer, Dod::DataUtils::createImFromBuffer(buffer), 3);
+			Dod::Algorithms::getIndicesByValue(resultbuffer, Dod::ImTable(buffer), 3);
 
 			ASSERT_EQ(Dod::DataUtils::getNumFilledElements(resultbuffer), 2);
 			EXPECT_EQ(Dod::DataUtils::get(resultbuffer, 0), 4);
 			EXPECT_EQ(Dod::DataUtils::get(resultbuffer, 1), 6);
 		}
 		{
-			Dod::Algorithms::getIndicesByValue(resultbuffer, Dod::DataUtils::createImFromBuffer(buffer), 4);
+			Dod::Algorithms::getIndicesByValue(resultbuffer, Dod::ImTable(buffer), 4);
 
 			ASSERT_EQ(Dod::DataUtils::getNumFilledElements(resultbuffer), 2);
 			EXPECT_EQ(Dod::DataUtils::get(resultbuffer, 0), 5);
 			EXPECT_EQ(Dod::DataUtils::get(resultbuffer, 1), 8);
 		}
 		{
-			Dod::Algorithms::getIndicesByValue(resultbuffer, Dod::DataUtils::createImFromBuffer(buffer), 5);
+			Dod::Algorithms::getIndicesByValue(resultbuffer, Dod::ImTable(buffer), 5);
 
 			ASSERT_EQ(Dod::DataUtils::getNumFilledElements(resultbuffer), 1);
 			EXPECT_EQ(Dod::DataUtils::get(resultbuffer, 0), 7);
 		}
 		{
-			Dod::Algorithms::getIndicesByValue(resultbuffer, Dod::DataUtils::createImFromBuffer(buffer), 10);
+			Dod::Algorithms::getIndicesByValue(resultbuffer, Dod::ImTable(buffer), 10);
 
 			ASSERT_EQ(Dod::DataUtils::getNumFilledElements(resultbuffer), 0);
 		}
