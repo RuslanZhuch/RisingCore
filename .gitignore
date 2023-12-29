@@ -399,3 +399,6 @@ FodyWeavers.xsd
 tools/engineCodegen/tests/dest
 tools/cppParser/tests/dest
 tools/engineCodegen/tests/externalTypes/Type1.h
+RisingCore.sln
+RisingCore.vcxproj
+RisingCore.vcxproj.filters
