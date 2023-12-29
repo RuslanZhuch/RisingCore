@@ -28,15 +28,18 @@ def _prepare_project2():
     cache_path = "dest/projects/project2/prev"
     cache_path_contexts = cache_path + "/contexts"
     cache_path_executors = cache_path + "/executors"
+    cache_path_executors_impls = cache_path + "/executorsImpls"
     
     _clear_cache_folder(cache_path_contexts)
     _clear_cache_folder(cache_path_executors)
+    _clear_cache_folder(cache_path_executors_impls)
     _clear_cache_folder(cache_path)
         
     project.generate("assets/project2/project2.json")
     
     _clear_cache_folder(cache_path_contexts)
     _clear_cache_folder(cache_path_executors)
+    _clear_cache_folder(cache_path_executors_impls)
     _clear_cache_folder(cache_path)
         
     return cache_path
@@ -153,8 +156,8 @@ class TestProject(unittest.TestCase):
         utils.assert_files(self, "dest/projects/project2/executors/Executor2Executor.h", "assets/expected/project2/executors/Executor2Executor.h")
         utils.assert_files(self, "dest/projects/project2/executors/Executor2Executor.cpp", "assets/expected/project2/executors/Executor2Executor.cpp")
         
-        utils.assert_files(self, "dest/projects/project2/executors/Executor1ExecutorImpl.cpp", "assets/expected/project2/executors/Executor1ExecutorImpl.cpp")
-        utils.assert_files(self, "dest/projects/project2/executors/Executor2ExecutorImpl.cpp", "assets/expected/project2/executors/Executor2ExecutorImpl.cpp")
+        utils.assert_files(self, "dest/projects/project2/executorsImpls/Executor1ExecutorImpl.cpp", "assets/expected/project2/executorsImpls/Executor1ExecutorImpl.cpp")
+        utils.assert_files(self, "dest/projects/project2/executorsImpls/Executor2ExecutorImpl.cpp", "assets/expected/project2/executorsImpls/Executor2ExecutorImpl.cpp")
         
         utils.assert_files(self, "dest/projects/project2/runtime.cpp", "assets/expected/project2/runtime.cpp")
         
@@ -231,8 +234,8 @@ class TestProject(unittest.TestCase):
         utils.assert_files(self, "dest/projects/project2/executors/Executor2Executor.h", "assets/expected/project2/executors/Executor2Executor.h")
         utils.assert_files(self, "dest/projects/project2/executors/Executor2Executor.cpp", "assets/expected/project2/executors/Executor2Executor.cpp")
         
-        utils.assert_files(self, "dest/projects/project2/executors/Executor1ExecutorImpl.cpp", "assets/expected/project2/executors/Executor1ExecutorImpl.cpp")
-        utils.assert_files(self, "dest/projects/project2/executors/Executor2ExecutorImpl.cpp", "assets/expected/project2/executors/Executor2ExecutorImpl.cpp")
+        utils.assert_files(self, "dest/projects/project2/executorsImpls/Executor1ExecutorImpl.cpp", "assets/expected/project2/executorsImpls/Executor1ExecutorImpl.cpp")
+        utils.assert_files(self, "dest/projects/project2/executorsImpls/Executor2ExecutorImpl.cpp", "assets/expected/project2/executorsImpls/Executor2ExecutorImpl.cpp")
         
         utils.assert_files(self, "dest/projects/project2/runtime.cpp", "assets/expected/project2/runtime.cpp")
         
@@ -279,8 +282,8 @@ class TestProject(unittest.TestCase):
         utils.assert_files(self, "dest/projects/project2/executors/Executor2Executor.h", "assets/expected/project2/executors/Executor2Executor.h")
         utils.assert_files(self, "dest/projects/project2/executors/Executor2Executor.cpp", "assets/expected/project2/executors/Executor2Executor.cpp")
         
-        utils.assert_files(self, "dest/projects/project2/executors/Executor1ExecutorImpl.cpp", "assets/expected/project2/executors/Executor1ExecutorImpl.cpp")
-        utils.assert_files(self, "dest/projects/project2/executors/Executor2ExecutorImpl.cpp", "assets/expected/project2/executors/Executor2ExecutorImpl.cpp")
+        utils.assert_files(self, "dest/projects/project2/executorsImpls/Executor1ExecutorImpl.cpp", "assets/expected/project2/executorsImpls/Executor1ExecutorImpl.cpp")
+        utils.assert_files(self, "dest/projects/project2/executorsImpls/Executor2ExecutorImpl.cpp", "assets/expected/project2/executorsImpls/Executor2ExecutorImpl.cpp")
         
         utils.assert_files(self, "dest/projects/project2/runtime.cpp", "assets/expected/project2/runtime.cpp")
         
@@ -321,8 +324,8 @@ class TestProject(unittest.TestCase):
         utils.assert_files(self, "dest/projects/project2/executors/Executor2Executor.h", "assets/expected/project2/executors/Executor2Executor.h")
         utils.assert_files(self, "dest/projects/project2/executors/Executor2Executor.cpp", "assets/expected/project2/executors/Executor2Executor.cpp")
         
-        utils.assert_files(self, "dest/projects/project2/executors/Executor1ExecutorImpl.cpp", "assets/expected/project2/executors/Executor1ExecutorImpl.cpp")
-        utils.assert_files(self, "dest/projects/project2/executors/Executor2ExecutorImpl.cpp", "assets/expected/project2/executors/Executor2ExecutorImpl.cpp")
+        utils.assert_files(self, "dest/projects/project2/executorsImpls/Executor1ExecutorImpl.cpp", "assets/expected/project2/executorsImpls/Executor1ExecutorImpl.cpp")
+        utils.assert_files(self, "dest/projects/project2/executorsImpls/Executor2ExecutorImpl.cpp", "assets/expected/project2/executorsImpls/Executor2ExecutorImpl.cpp")
         
         utils.assert_files(self, "dest/projects/project2/runtime.cpp", "assets/expected/project2/runtime.cpp")
         
@@ -364,8 +367,8 @@ class TestProject(unittest.TestCase):
         utils.assert_files(self, "dest/projects/project2/executors/Executor2Executor.h", "assets/expected/project2/executors/Executor2Executor.h")
         utils.assert_files(self, "dest/projects/project2/executors/Executor2Executor.cpp", "assets/expected/project2/executors/Executor2Executor.cpp")
         
-        utils.assert_files(self, "dest/projects/project2/executors/Executor1ExecutorImpl.cpp", "assets/expected/project2/executors/Executor1ExecutorImpl.cpp")
-        utils.assert_files(self, "dest/projects/project2/executors/Executor2ExecutorImpl.cpp", "assets/expected/project2/executors/Executor2ExecutorImpl.cpp")
+        utils.assert_files(self, "dest/projects/project2/executorsImpls/Executor1ExecutorImpl.cpp", "assets/expected/project2/executorsImpls/Executor1ExecutorImpl.cpp")
+        utils.assert_files(self, "dest/projects/project2/executorsImpls/Executor2ExecutorImpl.cpp", "assets/expected/project2/executorsImpls/Executor2ExecutorImpl.cpp")
         
         utils.assert_files(self, "dest/projects/project2/runtime.cpp", "assets/expected/project2/runtime.cpp")
         

@@ -2,6 +2,7 @@
     "project_dest_folder": "dest/projects/project2",
     "runtime_path": "assets/project2/ws_runtime.json",
     "cache_folder": "dest/projects/project2/prev",
+    "executors_impl_path": "dest/projects/project2/executorsImpls",
     "types_paths": [
         "assets/project2/types_default.json",
         "assets/project2/types_contexts_data.json"

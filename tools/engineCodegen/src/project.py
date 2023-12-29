@@ -18,6 +18,7 @@ import parser
 class ProjectDesc:
     def __init__(self):
         self.project_dest_folder = ""
+        self.executors_impl_path = ""
         self.application_runtime_path = ""
         self.cache_folder = "",
         self.types_src_path = "",
@@ -98,6 +99,7 @@ def load(project_desc_file):
         return project_desc
     
     project_desc.project_dest_folder = _get_value(desc_file_data, "project_dest_folder")
+    project_desc.executors_impl_path = _get_value(desc_file_data, "executors_impl_path")
     project_desc.application_runtime_path = _get_value(desc_file_data, "runtime_path")
     project_desc.cache_folder = _get_value(desc_file_data, "cache_folder")
     project_desc.types_paths = _get_array(desc_file_data, "types_paths")
@@ -127,6 +129,12 @@ def generate(project_path : str):
     executors_target_path = target_path + "/executors"
     if not os.path.exists(executors_target_path):
         os.makedirs(executors_target_path)
+    
+    executors_impls_target_path = project_desc.executors_impl_path
+    if executors_impls_target_path == "":
+        executors_impls_target_path = executors_target_path
+    if not os.path.exists(executors_impls_target_path):
+        os.makedirs(executors_impls_target_path)
     
     cache_folder_contexts = project_desc.cache_folder + "/contexts"
     cache_folder_executors = project_desc.cache_folder + "/executors"
@@ -176,8 +184,8 @@ def generate(project_path : str):
     for data in executors_data_changed:
         executors.gen_header(executors_target_path, data)
         executors.gen_source(executors_target_path, data)
-        executors.gen_implementation(executors_target_path, data)
-        executors.inject_modify_methods(executors_target_path, data)
+        executors.gen_implementation(executors_impls_target_path, data)
+        executors.inject_modify_methods(executors_impls_target_path, data)
     
     if project_structure_changed is False and runtime_changed is False:
         return

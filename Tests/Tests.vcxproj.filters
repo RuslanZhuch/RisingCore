@@ -1,64 +1,147 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="pch.cpp" />
-    <ClCompile Include="engineTests\MemPool.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="engineTests\MemUtils.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="engineTests\SharedContext.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="engineTests\String.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="engineTests\Algorithms.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="engineTests\Buffers.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="engineTests\DataUtilsForBuffers.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="engineTests\Contexts.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="engineTests\Types.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="engineTests\utils\TypesDesImpl.cpp">
-      <Filter>src\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="engineTests\DataUtilsForTables.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="engineTests\TypeHelpers.cpp" />
-    <ClCompile Include="engineTests\DataStream.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="engineTests\utils\TypeUtils.h">
-      <Filter>src\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="engineTests\utils\CommonStructures.h">
-      <Filter>src\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="engineTests\utils\CommonCheckers.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="src">
-      <UniqueIdentifier>{0367df37-65df-41c2-8417-7caf72fb5488}</UniqueIdentifier>
+    <Filter Include="includes">
+      <UniqueIdentifier>{1CA10C65-086E-6770-3187-55181DB39CFE}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\utils">
-      <UniqueIdentifier>{fff927b6-23b1-4c90-885a-63ff3df5a4bf}</UniqueIdentifier>
+    <Filter Include="includes\gtest">
+      <UniqueIdentifier>{72B0CB3E-5E7E-BF44-4712-306B337F9BA9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="includes\gtest\internal">
+      <UniqueIdentifier>{FEF2FF96-6A2A-482E-7334-AC51DFEA6E27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="includes\gtest\internal\custom">
+      <UniqueIdentifier>{A8051398-942B-DDFE-7D71-62CA693602CB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="includes\utils">
+      <UniqueIdentifier>{9C17C93F-88E5-BC45-7179-2D6C5DE698AA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources">
+      <UniqueIdentifier>{A9EE9AA3-15CE-193F-1EE6-A4158A4480A0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\utils">
+      <UniqueIdentifier>{E99AF05A-555B-6C91-1E96-B50E8A15B16D}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ClInclude Include="includes\gtest\gtest-assertion-result.h">
+      <Filter>includes\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\gtest-death-test.h">
+      <Filter>includes\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\gtest-matchers.h">
+      <Filter>includes\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\gtest-message.h">
+      <Filter>includes\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\gtest-param-test.h">
+      <Filter>includes\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\gtest-printers.h">
+      <Filter>includes\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\gtest-spi.h">
+      <Filter>includes\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\gtest-test-part.h">
+      <Filter>includes\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\gtest-typed-test.h">
+      <Filter>includes\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\gtest.h">
+      <Filter>includes\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\gtest_pred_impl.h">
+      <Filter>includes\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\gtest_prod.h">
+      <Filter>includes\gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\internal\custom\gtest-port.h">
+      <Filter>includes\gtest\internal\custom</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\internal\custom\gtest-printers.h">
+      <Filter>includes\gtest\internal\custom</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\internal\custom\gtest.h">
+      <Filter>includes\gtest\internal\custom</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\internal\gtest-death-test-internal.h">
+      <Filter>includes\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\internal\gtest-filepath.h">
+      <Filter>includes\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\internal\gtest-internal.h">
+      <Filter>includes\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\internal\gtest-param-util.h">
+      <Filter>includes\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\internal\gtest-port-arch.h">
+      <Filter>includes\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\internal\gtest-port.h">
+      <Filter>includes\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\internal\gtest-string.h">
+      <Filter>includes\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\gtest\internal\gtest-type-util.h">
+      <Filter>includes\gtest\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\utils\CommonCheckers.h">
+      <Filter>includes\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\utils\CommonStructures.h">
+      <Filter>includes\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\utils\TypeUtils.h">
+      <Filter>includes\utils</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="sources\Algorithms.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Buffers.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Contexts.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\DataStream.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\DataUtilsForBuffers.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\DataUtilsForTables.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\MemPool.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\MemUtils.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\SharedContext.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\String.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\TypeHelpers.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Types.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\utils\TypesDesImpl.cpp">
+      <Filter>sources\utils</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
