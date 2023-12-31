@@ -1,6 +1,6 @@
 #pragma once
 
-#include <dod/Buffers.h>
+#include <dod/Tables.h>
 #include <dod/DataUtils.h>
 #include <cinttypes>
 #include <span>
@@ -17,17 +17,17 @@ namespace Dod::CondTable
 
 	struct Table
 	{
-		ImBuffer<uint32_t> xOrMasks;
-		ImBuffer<uint32_t> ignoreMasks;
+		ImTable<uint32_t> xOrMasks;
+		ImTable<uint32_t> ignoreMasks;
 	};
 
 	[[nodiscard]] static Table generate(const auto& tableSrc, const std::span<uint32_t> xOrMasksMem, const std::span<uint32_t> ignoreMasksMem) noexcept
 	{
 
-		Dod::DBBuffer<uint32_t> xOrMasks;
-		Dod::DataUtils::initFromArray(xOrMasks, xOrMasksMem);
-		Dod::DBBuffer<uint32_t> ignoreMasks;
-		Dod::DataUtils::initFromArray(ignoreMasks, ignoreMasksMem);
+		Dod::ImTable<uint32_t> xOrMasks;
+//		Dod::DataUtils::initFromArray(xOrMasks, xOrMasksMem);
+		Dod::ImTable<uint32_t> ignoreMasks;
+//		Dod::DataUtils::initFromArray(ignoreMasks, ignoreMasksMem);
 
 		const auto tableSize{ static_cast<uint32_t>(tableSrc.size()) };
 
@@ -50,12 +50,12 @@ namespace Dod::CondTable
 			Dod::DataUtils::populate(ignoreMasks, ignore, true);
 		}
 
-		return Table(Dod::DataUtils::createImFromBuffer(xOrMasks), Dod::DataUtils::createImFromBuffer(ignoreMasks));
+		return Table(xOrMasks, ignoreMasks);
 
 	}
 
 	template <typename T>
-	void populateQuery(DBBuffer<T>& query, const uint32_t inputs, const Table& table) noexcept
+	void populateQuery(DTable<T>& query, const uint32_t inputs, const Table& table) noexcept
 	{
 
 		for (int32_t rowId{}; rowId < Dod::DataUtils::getNumFilledElements(table.xOrMasks); ++rowId)
@@ -71,7 +71,7 @@ namespace Dod::CondTable
 	}
 	
 	template <typename TInput, typename TOutput>
-	void applyTransform(TOutput& target, const std::span<const TOutput> outputs, const Dod::ImBuffer<TInput>& query) noexcept
+	void applyTransform(TOutput& target, const std::span<const TOutput> outputs, const Dod::ImTable<TInput>& query) noexcept
 	{
 
 		for (int32_t id{ 0 }; id < Dod::DataUtils::getNumFilledElements(query); ++id)

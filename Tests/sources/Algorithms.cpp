@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <dod/Buffers.h>
 #include <dod/DataUtils.h>
 #include <dod/Algorithms.h>
 
@@ -13,21 +12,6 @@
 
 #include <array>
 #pragma warning(pop)
-
-template <typename T>
-static void initDBuffer(Dod::DBBuffer<T>& dest, auto& src)
-{
-
-	struct MemorySpan
-	{
-		Dod::MemTypes::dataPoint_t dataBegin{};
-		Dod::MemTypes::dataPoint_t dataEnd{};
-	};
-	MemorySpan memSpan(reinterpret_cast<Dod::MemTypes::dataPoint_t>(src.data()), Dod::MemTypes::dataPoint_t(src.data() + src.size()));
-	Dod::DataUtils::initFromMemory(dest, memSpan);
-	dest.numOfFilledEls = static_cast<int32_t>(src.size()) - 1;
-
-}
 
 template <typename T>
 static void initDTable(Dod::DTable<T>& dest, auto& src)
@@ -310,17 +294,17 @@ TEST(Algorithms, GetIntersections)
 	};
 
 	{
-		auto valuesLeft{ std::to_array<type_t>({ 0, 1, 2, 3 }) };
-		Dod::DBBuffer<type_t> bufferLeft;
-		initDBuffer(bufferLeft, valuesLeft);
+		alignas(64) auto valuesLeft{ std::to_array<type_t>({ 1, 2, 3 }) };
+		Dod::DTable<type_t> bufferLeft;
+		initDTable(bufferLeft, valuesLeft);
 
-		auto valuesRight{ std::to_array<type_t>({ 0, 1, 2, 3 }) };
-		Dod::DBBuffer<type_t> bufferRight;
-		initDBuffer(bufferRight, valuesRight);
+		alignas(64) auto valuesRight{ std::to_array<type_t>({ 1, 2, 3 }) };
+		Dod::DTable<type_t> bufferRight;
+		initDTable(bufferRight, valuesRight);
 
-		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
-		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
+		alignas(64) std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
+		Dod::DTable<type_t> resultBuffer;
+		initDTableFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
@@ -331,37 +315,17 @@ TEST(Algorithms, GetIntersections)
 	}
 
 	{
-		auto valuesLeft{ std::to_array<type_t>({ 0, 1, 2 }) };
-		Dod::DBBuffer<type_t> bufferLeft;
-		initDBuffer(bufferLeft, valuesLeft);
+		alignas(64) auto valuesLeft{ std::to_array<type_t>({ 1, 2 }) };
+		Dod::DTable<type_t> bufferLeft;
+		initDTable(bufferLeft, valuesLeft);
 
-		auto valuesRight{ std::to_array<type_t>({ 0, 1, 2, 3 }) };
-		Dod::DBBuffer<type_t> bufferRight;
-		initDBuffer(bufferRight, valuesRight);
+		alignas(64) auto valuesRight{ std::to_array<type_t>({ 1, 2, 3 }) };
+		Dod::DTable<type_t> bufferRight;
+		initDTable(bufferRight, valuesRight);
 
-		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
-		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
-
-		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
-
-		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 2);
-		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 0), 1);
-		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 1), 2);
-	}
-
-	{
-		auto valuesLeft{ std::to_array<type_t>({ 0, 1, 2, 3 }) };
-		Dod::DBBuffer<type_t> bufferLeft;
-		initDBuffer(bufferLeft, valuesLeft);
-
-		auto valuesRight{ std::to_array<type_t>({ 0, 1, 2 }) };
-		Dod::DBBuffer<type_t> bufferRight;
-		initDBuffer(bufferRight, valuesRight);
-
-		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
-		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
+		alignas(64) std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
+		Dod::DTable<type_t> resultBuffer;
+		initDTableFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
@@ -371,17 +335,37 @@ TEST(Algorithms, GetIntersections)
 	}
 
 	{
-		auto valuesLeft{ std::to_array<type_t>({ 0, 1, 1, 2, 3 }) };
-		Dod::DBBuffer<type_t> bufferLeft;
-		initDBuffer(bufferLeft, valuesLeft);
+		alignas(64) auto valuesLeft{ std::to_array<type_t>({ 1, 2, 3 }) };
+		Dod::DTable<type_t> bufferLeft;
+		initDTable(bufferLeft, valuesLeft);
 
-		auto valuesRight{ std::to_array<type_t>({ 0, 1, 1, 2, 3 }) };
-		Dod::DBBuffer<type_t> bufferRight;
-		initDBuffer(bufferRight, valuesRight);
+		alignas(64) auto valuesRight{ std::to_array<type_t>({ 1, 2 }) };
+		Dod::DTable<type_t> bufferRight;
+		initDTable(bufferRight, valuesRight);
 
-		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
-		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
+		alignas(64) std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
+		Dod::DTable<type_t> resultBuffer;
+		initDTableFromArray(resultBuffer, resultMemory);
+
+		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
+
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 2);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 0), 1);
+		EXPECT_EQ(Dod::DataUtils::get(resultBuffer, 1), 2);
+	}
+
+	{
+		alignas(64) auto valuesLeft{ std::to_array<type_t>({ 1, 1, 2, 3 }) };
+		Dod::DTable<type_t> bufferLeft;
+		initDTable(bufferLeft, valuesLeft);
+
+		alignas(64) auto valuesRight{ std::to_array<type_t>({ 1, 1, 2, 3 }) };
+		Dod::DTable<type_t> bufferRight;
+		initDTable(bufferRight, valuesRight);
+
+		alignas(64) std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
+		Dod::DTable<type_t> resultBuffer;
+		initDTableFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
@@ -393,35 +377,17 @@ TEST(Algorithms, GetIntersections)
 	}
 
 	{
-		auto valuesLeft{ std::to_array<type_t>({ 0, 1, 1, 2, 3 }) };
-		Dod::DBBuffer<type_t> bufferLeft;
-		initDBuffer(bufferLeft, valuesLeft);
+		alignas(64) auto valuesLeft{ std::to_array<type_t>({ 1, 1, 2, 3 }) };
+		Dod::DTable<type_t> bufferLeft;
+		initDTable(bufferLeft, valuesLeft);
 
-		auto valuesRight{ std::to_array<type_t>({ 0, 4, 5, 6, 7 }) };
-		Dod::DBBuffer<type_t> bufferRight;
-		initDBuffer(bufferRight, valuesRight);
+		alignas(64) auto valuesRight{ std::to_array<type_t>({ 4, 5, 6, 7 }) };
+		Dod::DTable<type_t> bufferRight;
+		initDTable(bufferRight, valuesRight);
 
-		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
-		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
-
-		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
-
-		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 0);
-	}
-
-	{
-		auto valuesLeft{ std::to_array<type_t>({ 0 }) };
-		Dod::DBBuffer<type_t> bufferLeft;
-		initDBuffer(bufferLeft, valuesLeft);
-
-		auto valuesRight{ std::to_array<type_t>({ 0, 4, 5, 6, 7 }) };
-		Dod::DBBuffer<type_t> bufferRight;
-		initDBuffer(bufferRight, valuesRight);
-
-		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
-		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
+		alignas(64) std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
+		Dod::DTable<type_t> resultBuffer;
+		initDTableFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
@@ -429,17 +395,15 @@ TEST(Algorithms, GetIntersections)
 	}
 
 	{
-		auto valuesLeft{ std::to_array<type_t>({ 0, 4, 5, 6, 7 }) };
-		Dod::DBBuffer<type_t> bufferLeft;
-		initDBuffer(bufferLeft, valuesLeft);
+		Dod::DTable<type_t> bufferLeft;
 
-		auto valuesRight{ std::to_array<type_t>({ 0 }) };
-		Dod::DBBuffer<type_t> bufferRight;
-		initDBuffer(bufferRight, valuesRight);
+		alignas(64) auto valuesRight{ std::to_array<type_t>({ 4, 5, 6, 7 }) };
+		Dod::DTable<type_t> bufferRight;
+		initDTable(bufferRight, valuesRight);
 
-		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
-		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
+		alignas(64) std::array<type_t, valuesRight.size()> resultMemory;
+		Dod::DTable<type_t> resultBuffer;
+		initDTableFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
@@ -447,17 +411,15 @@ TEST(Algorithms, GetIntersections)
 	}
 
 	{
-		auto valuesLeft{ std::to_array<type_t>({ 0 }) };
-		Dod::DBBuffer<type_t> bufferLeft;
-		initDBuffer(bufferLeft, valuesLeft);
+		alignas(64) auto valuesLeft{ std::to_array<type_t>({ 4, 5, 6, 7 }) };
+		Dod::DTable<type_t> bufferLeft;
+		initDTable(bufferLeft, valuesLeft);
 
-		auto valuesRight{ std::to_array<type_t>({ 0 }) };
-		Dod::DBBuffer<type_t> bufferRight;
-		initDBuffer(bufferRight, valuesRight);
+		Dod::DTable<type_t> bufferRight;
 
-		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
-		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
+		alignas(64) std::array<type_t, valuesLeft.size()> resultMemory;
+		Dod::DTable<type_t> resultBuffer;
+		initDTableFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 
@@ -465,17 +427,28 @@ TEST(Algorithms, GetIntersections)
 	}
 
 	{
-		auto valuesLeft{ std::to_array<type_t>({ 0, 1 }) };
-		Dod::DBBuffer<type_t> bufferLeft;
-		initDBuffer(bufferLeft, valuesLeft);
+		Dod::DTable<type_t> bufferLeft;
+		Dod::DTable<type_t> bufferRight;
 
-		auto valuesRight{ std::to_array<type_t>({ 0, 1 }) };
-		Dod::DBBuffer<type_t> bufferRight;
-		initDBuffer(bufferRight, valuesRight);
+		Dod::DTable<type_t> resultBuffer;
 
-		std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
-		Dod::DBBuffer<type_t> resultBuffer;
-		Dod::DataUtils::initFromArray(resultBuffer, resultMemory);
+		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
+
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(resultBuffer), 0);
+	}
+
+	{
+		alignas(64) auto valuesLeft{ std::to_array<type_t>({ 1 }) };
+		Dod::DTable<type_t> bufferLeft;
+		initDTable(bufferLeft, valuesLeft);
+
+		alignas(64) auto valuesRight{ std::to_array<type_t>({ 1 }) };
+		Dod::DTable<type_t> bufferRight;
+		initDTable(bufferRight, valuesRight);
+
+		alignas(64) std::array<type_t, std::max(valuesLeft.size(), valuesRight.size())> resultMemory;
+		Dod::DTable<type_t> resultBuffer;
+		initDTableFromArray(resultBuffer, resultMemory);
 
 		Dod::Algorithms::getIntersections(resultBuffer, bufferLeft, bufferRight);
 

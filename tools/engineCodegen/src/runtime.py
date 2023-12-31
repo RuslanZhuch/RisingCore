@@ -135,7 +135,6 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
     handler.newline(1)
     
     generator.generate_line(handler, "#include <dod/SharedContext.h>")
-    generator.generate_line(handler, "#include <dod/BufferUtils.h>")
     generator.generate_line(handler, "#include <chrono>")
     handler.newline(1)
     

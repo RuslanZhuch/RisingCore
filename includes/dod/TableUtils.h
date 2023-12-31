@@ -11,6 +11,7 @@
 #include <type_traits>
 #include <concepts>
 #include <cmath>
+#include <cstring>
 
 namespace Dod::DataUtils
 {
@@ -57,7 +58,7 @@ namespace Dod::DataUtils
 			using type_t = std::tuple_element_t<columnId, types_t>;
 			
 			const auto rawBytesForColumn{ static_cast<MemTypes::capacity_t>(sizeof(type_t) * (numOfElements)) };
-			const auto numOfCellsForColumn{ static_cast<MemTypes::capacity_t>(std::ceilf(rawBytesForColumn / 64.f)) };
+			const auto numOfCellsForColumn{ static_cast<MemTypes::capacity_t>(std::ceil(rawBytesForColumn / 64.f)) };
 			const auto pureBytesForColumn{ numOfCellsForColumn * 64 };
 			needBytes += pureBytesForColumn;
 		});
@@ -142,26 +143,31 @@ namespace Dod::DataUtils
 		const auto pureBytesForColumn{ roundToCells(table.capacityEls * returnTypeSize) };
 		struct Span
 		{
-			decltype(rowMemPosition) dataBegin{ rowMemPosition };
-			decltype(rowMemPosition) dataEnd{ rowMemPosition + pureBytesForColumn };
+			decltype(rowMemPosition) dataBegin{  };
+			decltype(rowMemPosition) dataEnd{  };
+		};
+
+		const Span span{
+			rowMemPosition,
+			rowMemPosition + pureBytesForColumn
 		};
 
 		if constexpr (Dod::CommonData::CDTable<tableType_t>)
 		{
 			Dod::MutTable<returnType_t> out;
-			initFromMemory(out, table.capacityEls, Dod::DataUtils::getNumFilledElements(table), Span{});
+			initFromMemory(out, table.capacityEls, Dod::DataUtils::getNumFilledElements(table), span);
 			return out;
 		}
 		else if constexpr (Dod::CommonData::CImTable<std::decay_t<decltype(table)>>)
 		{
 			Dod::ImTable<returnType_t> out;
-			initFromMemory(out, table.capacityEls, Dod::DataUtils::getNumFilledElements(table), Span{});
+			initFromMemory(out, table.capacityEls, Dod::DataUtils::getNumFilledElements(table), span);
 			return out;
 		}
 		else
 		{
 			Dod::MutTable<returnType_t> out;
-			initFromMemory(out, table.capacityEls, Dod::DataUtils::getNumFilledElements(table), Span{});
+			initFromMemory(out, table.capacityEls, Dod::DataUtils::getNumFilledElements(table), span);
 			return out;
 		}
 
@@ -289,8 +295,7 @@ namespace Dod::DataUtils
 
 	}
 
-	void populate(CommonData::CDTable auto& table, int32_t numOfElements, std::invocable<int32_t> auto&& ... filler) noexcept requires
-		CommonData::CTrivialTable<decltype(table)>
+	void populate(CommonData::CDTrivialTable auto& table, int32_t numOfElements, std::invocable<int32_t> auto&& ... filler) noexcept
 	{
 
 
@@ -378,8 +383,7 @@ namespace Dod::DataUtils
 		}
 	}
 
-	void destroyRange(CommonData::CDTable auto& table, int32_t beginElementId, int32_t endElementId) requires 
-		CommonData::CTrivialTable<decltype(table)>
+	void destroyRange(CommonData::CDTable auto& table, int32_t beginElementId, int32_t endElementId)
 	{
 		using tableType = std::decay_t<decltype(table)>;
 		using types_t = tableType::types_t;
@@ -394,9 +398,9 @@ namespace Dod::DataUtils
 		});
 	}
 
-	void flush(CommonData::CDTable auto& table) noexcept requires CommonData::CTrivialTable<decltype(table)>
+	void flush(CommonData::CDTrivialTable auto& table) noexcept
 	{
-		
+		 
 		destroyRange(table, 0, table.numOfFilledEls);
 		table.numOfFilledEls = 0;
 
@@ -407,9 +411,8 @@ namespace Dod::DataUtils
 		return table.capacityEls;
 	}
 
-	void append(CommonData::CDTable auto& table, const CommonData::CImTable auto& srcTable) noexcept requires 
-		CommonData::CTablesStructureIsSame<decltype(table), decltype(srcTable)> && 
-		CommonData::CTrivialTable<decltype(srcTable)>
+	void append(CommonData::CDTrivialTable auto& table, const CommonData::CImTable auto& srcTable) noexcept requires 
+		CommonData::CTablesStructureIsSame<decltype(table), decltype(srcTable)>
 	{
 
 		const auto destSpaceLeft{ table.capacityEls - getNumFilledElements(table) };

@@ -2,7 +2,6 @@
 
 #include <dod/MemPool.h>
 #include <dod/MemUtils.h>
-#include <dod/Buffers.h>
 #include <dod/DataUtils.h>
 
 #include <engine/StringUtils.h>
@@ -148,19 +147,6 @@ namespace Engine::ContextUtils
 
     }
 
-    template <typename T>
-    static void initData(
-        Dod::DBBuffer<T>& dest,
-        CapacityData capacityData,
-        Dod::MemPool& pool, 
-        Dod::MemTypes::capacity_t& header
-    ) noexcept
-    {
-
-        Dod::DataUtils::initFromMemory(dest, Dod::MemUtils::stackAquire(pool, capacityData.numOfBytes, 64, header));
-
-    }
-
     static void initData(
         Dod::CommonData::CTable auto& dest,
         CapacityData capacityData,
@@ -171,37 +157,6 @@ namespace Engine::ContextUtils
         using tableType_t = std::decay_t<decltype(dest)>;
         using types_t = tableType_t::types_t;
         Dod::DataUtils::initFromMemory(dest, capacityData.numOfElements, Dod::MemUtils::stackAquire(pool, capacityData.numOfBytes, 64, header));
-
-    }
-
-    template <typename T>
-    static void loadDataContent(
-        Dod::DBBuffer<T>& dest,
-        rapidjson::GenericArray<true, rapidjson::Value> src, 
-        int32_t id
-    ) noexcept
-    {
-
-        if (!src[static_cast<rapidjson::SizeType>(id)].IsObject())
-            return;
-        const auto& dataObject{ src[static_cast<rapidjson::SizeType>(id)].GetObject() };
-
-        const auto initialField{ dataObject.FindMember("initial") };
-        if (initialField == dataObject.end())
-            return;
-
-        const auto initialData{ initialField->value.GetArray() };
-
-        const auto numOfElementsToLoad{ static_cast<int32_t>(initialData.Size()) };
-        const auto bufferSize{ Dod::DataUtils::getCapacity(dest) };
-
-        const auto totalElements{ std::min(numOfElementsToLoad, bufferSize) };
-
-        for (int32_t elId{}; elId < totalElements; ++elId)
-        {
-            Dod::DataUtils::constructBack(dest);
-            loadVariableFromList(Dod::DataUtils::get(dest, elId), initialData, elId, 0);
-        }
 
     }
 

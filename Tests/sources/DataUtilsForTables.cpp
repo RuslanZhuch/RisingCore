@@ -13,6 +13,7 @@
 #include <array>
 #include <span>
 #include <cassert>
+#include <cstring>
 #pragma warning(pop)
 
 static constexpr Dod::MemTypes::alignment_t alignment{ 64 };
@@ -214,9 +215,9 @@ protected:
 
 		};
 
-		impl.operator()<Dod::MutTable<T>>(this->table);
-		impl.operator()<Dod::MutTable<T>>(Dod::MutTable(this->table));
-		impl.operator()<Dod::ImTable<T>>(Dod::ImTable(this->table));
+		impl.template operator()<Dod::MutTable<T>>(this->table);
+		impl.template operator()<Dod::MutTable<T>>(Dod::MutTable(this->table));
+		impl.template operator()<Dod::ImTable<T>>(Dod::ImTable(this->table));
 
 	}
 

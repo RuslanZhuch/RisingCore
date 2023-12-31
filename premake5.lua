@@ -18,6 +18,7 @@ project "Tests"
 
     includedirs {
         "tests/includes",
+        "thirdparty",
         "includes",
         "sources"
     }
@@ -46,3 +47,7 @@ project "Tests"
         staticruntime "On"
 
         flags { "MultiProcessorCompile" }
+
+    filter { "action:vs2022" }
+        buildoptions { "/MP" }
+

@@ -3,6 +3,7 @@
 #include "MemTypes.h"
 
 #include <type_traits>
+#include <tuple>
 
 namespace Dod::CommonData
 {
@@ -91,5 +92,12 @@ namespace Dod::CommonData
 
 	template <typename T>
 	concept CTrivialTable = getAllTypesAreTrivial<typename std::decay_t<T>::types_t>();
+
+	template <typename T>
+	concept CDTrivialTable = requires(T)
+	{
+		requires CDTable<T>;
+		requires CTrivialTable<T>;
+	};
 
 }

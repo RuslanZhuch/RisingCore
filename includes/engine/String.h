@@ -6,6 +6,7 @@
 
 #include <array>
 #include <string_view>
+#include <cstring>
 
 #pragma warning(pop)
 

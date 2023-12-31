@@ -1,6 +1,5 @@
 #pragma once
 
-#include "dod/Buffers.h"
 #include "dod/CommonData.h"
 
 #include <concepts>
@@ -104,8 +103,7 @@ namespace Dod::Algorithms
 		}
 	}
 
-	template <typename T>
-	static void getIntersections(DBBuffer<T>& resultBuffer, const auto& srcLeft, const auto& srcRight) noexcept
+	static void getIntersections(Dod::CommonData::CMonoDTable auto& resultBuffer, const auto& srcLeft, const auto& srcRight) noexcept
 	{
 
 		int32_t srcLeftId{ 0 };
@@ -118,7 +116,7 @@ namespace Dod::Algorithms
 			const auto rightValue{ DataUtils::get(srcRight, srcRightId) };
 			if (leftValue == rightValue)
 			{
-				DataUtils::populate(resultBuffer, leftValue, true);
+				DataUtils::pushBack(resultBuffer, true, leftValue);
 				++srcLeftId;
 				++srcRightId;
 			}

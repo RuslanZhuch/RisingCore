@@ -6,7 +6,7 @@ namespace RisingCore::Helpers
 	template <size_t N, size_t Current = 0>
 	constexpr void constexprLoop(auto func) {
 		if constexpr (Current < N) {
-			func.operator()<Current>();
+			func.template operator()<Current>();
 			constexprLoop<N, Current + 1>(func);
 		}
 	}

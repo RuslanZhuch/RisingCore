@@ -1,7 +1,6 @@
 #pragma once
 
 #include <assets/types/cpp/CustomData.h>
-#include <dod/Buffers.h>
 #include <dod/Tables.h>
 #include <dod/DataUtils.h>
 #include <dod/MemPool.h>

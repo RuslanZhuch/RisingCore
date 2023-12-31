@@ -1,7 +1,6 @@
 #pragma once
 
 #include <assets/types/cpp/cats/Crying.h>
-#include <dod/Buffers.h>
 #include <dod/Tables.h>
 #include <dod/DataUtils.h>
 #include <dod/MemPool.h>

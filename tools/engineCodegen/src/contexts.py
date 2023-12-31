@@ -253,7 +253,6 @@ def generate_context_def(dest_path, context_file_path, types_cache):
         
     #generator.generate_line(handler, "#include <{}>".format(buffer.data_type))
             
-    generator.generate_line(handler, "#include <dod/Buffers.h>")
     generator.generate_line(handler, "#include <dod/Tables.h>")
     generator.generate_line(handler, "#include <dod/DataUtils.h>")
     generator.generate_line(handler, "#include <dod/MemPool.h>")
@@ -286,7 +285,6 @@ def generate_context_impl(dest_path, context_file_path):
     generator.generate_line(handler, "#include \"{}Context.h\"".format(context_name))
     generator.generate_empty(handler)
 
-    generator.generate_line(handler, "#include <dod/BufferUtils.h>")
     generator.generate_line(handler, "#include <engine/contextUtils.h>")
     generator.generate_empty(handler)
     

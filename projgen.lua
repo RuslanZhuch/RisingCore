@@ -8,7 +8,8 @@ project "RisingCore"
     files { "includes/**.h", "sources/**cpp" }
 
     includedirs {
-        "includes"
+        "includes",
+        "thirdparty",
     }
 
     filter "configurations:Debug"
