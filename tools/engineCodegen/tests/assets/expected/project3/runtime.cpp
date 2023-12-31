@@ -9,7 +9,7 @@
 #include <executors/Executor6Executor.h>
 
 #include <dod/SharedContext.h>
-#include <chrono>
+#include <engine/Timer.h>
 
 int main()
 {
@@ -39,62 +39,66 @@ int main()
     executor6.loadContext();
     executor6.initiate();
 
+    Timer timer;
     float deltaTime{};
     while(true)
     {
-        const auto start{ std::chrono::high_resolution_clock::now() };
-
-
-
-        executor1.update(deltaTime);
-        executor2.update(deltaTime);
-
-        executor1.modifyPool1(poolInst1Context);
-        executor1.modifyPool2(poolInst2Context);
-        executor2.modifyPool2(poolInst2Context);
-
-        const auto computedP2_poolInst1Context{ Game::Context::SContext1::convertToConst(poolInst1Context) };
-        const auto computedP2_poolInst2Context{ Game::Context::SContext1::convertToConst(poolInst2Context) };
-        const auto computedP2_poolInst3Context{ Game::Context::SContext2::convertToConst(poolInst3Context) };
-
-        executor3.pool1Context = computedP2_poolInst1Context;
-        executor3.update(deltaTime);
-        executor4.pool2Context = computedP2_poolInst2Context;
-        executor4.pool3Context = computedP2_poolInst3Context;
-        executor4.update(deltaTime);
-
-        executor4.modifyPool3(poolInst3Context);
-
-        const auto computedP3_poolInst2Context{ Game::Context::SContext1::convertToConst(poolInst2Context) };
-        const auto computedP3_poolInst3Context{ Game::Context::SContext2::convertToConst(poolInst3Context) };
-
-        executor5.pool2Context = computedP3_poolInst2Context;
-        executor5.pool3Context = computedP3_poolInst3Context;
-        executor5.update(deltaTime);
-        executor6.pool3Context = computedP3_poolInst3Context;
-        executor6.update(deltaTime);
-
-        poolInst1Context.reset();
-        poolInst2Context.reset();
-        poolInst3Context.reset();
-
-
-        executor1.flushSharedLocalContexts();
-        executor2.flushSharedLocalContexts();
-        executor3.flushSharedLocalContexts();
-        executor4.flushSharedLocalContexts();
-        executor5.flushSharedLocalContexts();
-        executor6.flushSharedLocalContexts();
-
-        for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
+        if (deltaTime >= 1.f / 60.f)
         {
-            if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
+
+
+
+            executor1.update(deltaTime);
+            executor2.update(deltaTime);
+
+            executor1.modifyPool1(poolInst1Context);
+            executor1.modifyPool2(poolInst2Context);
+            executor2.modifyPool2(poolInst2Context);
+
+            const auto computedP2_poolInst1Context{ Game::Context::SContext1::convertToConst(poolInst1Context) };
+            const auto computedP2_poolInst2Context{ Game::Context::SContext1::convertToConst(poolInst2Context) };
+            const auto computedP2_poolInst3Context{ Game::Context::SContext2::convertToConst(poolInst3Context) };
+
+            executor3.pool1Context = computedP2_poolInst1Context;
+            executor3.update(deltaTime);
+            executor4.pool2Context = computedP2_poolInst2Context;
+            executor4.pool3Context = computedP2_poolInst3Context;
+            executor4.update(deltaTime);
+
+            executor4.modifyPool3(poolInst3Context);
+
+            const auto computedP3_poolInst2Context{ Game::Context::SContext1::convertToConst(poolInst2Context) };
+            const auto computedP3_poolInst3Context{ Game::Context::SContext2::convertToConst(poolInst3Context) };
+
+            executor5.pool2Context = computedP3_poolInst2Context;
+            executor5.pool3Context = computedP3_poolInst3Context;
+            executor5.update(deltaTime);
+            executor6.pool3Context = computedP3_poolInst3Context;
+            executor6.update(deltaTime);
+
+            poolInst1Context.reset();
+            poolInst2Context.reset();
+            poolInst3Context.reset();
+
+
+            executor1.flushSharedLocalContexts();
+            executor2.flushSharedLocalContexts();
+            executor3.flushSharedLocalContexts();
+            executor4.flushSharedLocalContexts();
+            executor5.flushSharedLocalContexts();
+            executor6.flushSharedLocalContexts();
+
+            for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
             {
-                return 0;
+                if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
+                {
+                    return 0;
+                }
             }
+            deltaTime = {};
         }
 
-        const auto end{ std::chrono::high_resolution_clock::now() };
-        deltaTime = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) / 1'000'000'000.f;
+        timer.tick();
+        deltaTime += timer.getDeltaTime();
     }
 }

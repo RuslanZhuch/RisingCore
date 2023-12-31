@@ -6,7 +6,7 @@
 #include <executors/Executor3Executor.h>
 
 #include <dod/SharedContext.h>
-#include <chrono>
+#include <engine/Timer.h>
 
 int main()
 {
@@ -29,47 +29,51 @@ int main()
     executor3.loadContext();
     executor3.initiate();
 
+    Timer timer;
     float deltaTime{};
     while(true)
     {
-        const auto start{ std::chrono::high_resolution_clock::now() };
-
-        const auto computedP1_sharedInst1Context{ Game::Context::SContext1::convertToConst(sharedInst1Context) };
-        const auto computedP1_sharedInst2Context{ Game::Context::SContext1::convertToConst(sharedInst2Context) };
-        const auto computedP1_sharedInst3Context{ Game::Context::SContext2::convertToConst(sharedInst3Context) };
-        const auto computedP1_sharedInst4Context{ Game::Context::SContext2::convertToConst(sharedInst4Context) };
-
-        executor1.update(deltaTime);
-        executor2.shared1Context = computedP1_sharedInst1Context;
-        executor2.shared2Context = computedP1_sharedInst2Context;
-        executor2.shared3Context = computedP1_sharedInst3Context;
-        executor2.shared4Context = computedP1_sharedInst4Context;
-        executor2.update(deltaTime);
-        executor3.shared1_2Context = computedP1_sharedInst1Context;
-        executor3.shared2_2Context = computedP1_sharedInst3Context;
-        executor3.update(deltaTime);
-
-        sharedInst1Context.reset();
-        sharedInst2Context.reset();
-        sharedInst4Context.reset();
-
-        executor2.modifyTarget1(sharedInst1Context);
-        executor2.modifyTarget2(sharedInst1Context);
-        executor3.modifyShared3(sharedInst3Context);
-
-        executor1.flushSharedLocalContexts();
-        executor2.flushSharedLocalContexts();
-        executor3.flushSharedLocalContexts();
-
-        for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
+        if (deltaTime >= 1.f / 60.f)
         {
-            if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
+
+            const auto computedP1_sharedInst1Context{ Game::Context::SContext1::convertToConst(sharedInst1Context) };
+            const auto computedP1_sharedInst2Context{ Game::Context::SContext1::convertToConst(sharedInst2Context) };
+            const auto computedP1_sharedInst3Context{ Game::Context::SContext2::convertToConst(sharedInst3Context) };
+            const auto computedP1_sharedInst4Context{ Game::Context::SContext2::convertToConst(sharedInst4Context) };
+
+            executor1.update(deltaTime);
+            executor2.shared1Context = computedP1_sharedInst1Context;
+            executor2.shared2Context = computedP1_sharedInst2Context;
+            executor2.shared3Context = computedP1_sharedInst3Context;
+            executor2.shared4Context = computedP1_sharedInst4Context;
+            executor2.update(deltaTime);
+            executor3.shared1_2Context = computedP1_sharedInst1Context;
+            executor3.shared2_2Context = computedP1_sharedInst3Context;
+            executor3.update(deltaTime);
+
+            sharedInst1Context.reset();
+            sharedInst2Context.reset();
+            sharedInst4Context.reset();
+
+            executor2.modifyTarget1(sharedInst1Context);
+            executor2.modifyTarget2(sharedInst1Context);
+            executor3.modifyShared3(sharedInst3Context);
+
+            executor1.flushSharedLocalContexts();
+            executor2.flushSharedLocalContexts();
+            executor3.flushSharedLocalContexts();
+
+            for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
             {
-                return 0;
+                if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
+                {
+                    return 0;
+                }
             }
+            deltaTime = {};
         }
 
-        const auto end{ std::chrono::high_resolution_clock::now() };
-        deltaTime = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) / 1'000'000'000.f;
+        timer.tick();
+        deltaTime += timer.getDeltaTime();
     }
 }

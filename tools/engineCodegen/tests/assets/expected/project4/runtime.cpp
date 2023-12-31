@@ -1,30 +1,34 @@
 
 #include <dod/SharedContext.h>
-#include <chrono>
+#include <engine/Timer.h>
 
 int main()
 {
 
 
+    Timer timer;
     float deltaTime{};
     while(true)
     {
-        const auto start{ std::chrono::high_resolution_clock::now() };
-
-
-
-
-
-
-        for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
+        if (deltaTime >= 1.f / 60.f)
         {
-            if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
+
+
+
+
+
+
+            for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
             {
-                return 0;
+                if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
+                {
+                    return 0;
+                }
             }
+            deltaTime = {};
         }
 
-        const auto end{ std::chrono::high_resolution_clock::now() };
-        deltaTime = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) / 1'000'000'000.f;
+        timer.tick();
+        deltaTime += timer.getDeltaTime();
     }
 }
