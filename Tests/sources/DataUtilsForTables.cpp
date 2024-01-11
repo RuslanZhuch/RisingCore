@@ -947,3 +947,105 @@ TEST(DataUtils, CreateGuidedImTableFailed)
 	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(guidedTable), 0);
 
 }
+
+TEST(DataUtils, ForEachElement)
+{
+
+	{
+		using type_t = int32_t;
+		alignas(alignment) auto values{ std::to_array<type_t>({1, 2, 3, 4, 5, 6, 7, 8}) };
+
+		Dod::ImTable<type_t> table;
+
+		struct Span
+		{
+			Dod::MemTypes::dataConstPoint_t dataBegin;
+			Dod::MemTypes::dataConstPoint_t dataEnd;
+		};
+		Dod::DataUtils::initFromMemory(table, static_cast<type_t>(values.size()), static_cast<type_t>(values.size()), Span(
+			reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data()),
+			reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data() + 64)
+		));
+
+		std::vector<type_t> result;
+		Dod::DataUtils::forEach(table, [&result](type_t el) {
+			result.push_back(el);
+		});
+		EXPECT_TRUE(std::equal(result.begin(), result.end(), values.begin(), values.end()));
+
+	}
+
+	{
+		using type_t = double;
+		alignas(alignment) auto values{ std::to_array<type_t>({0.1, 0.5, 1.5, -42.}) };
+
+		Dod::ImTable<type_t> table;
+
+		struct Span
+		{
+			Dod::MemTypes::dataConstPoint_t dataBegin;
+			Dod::MemTypes::dataConstPoint_t dataEnd;
+		};
+		Dod::DataUtils::initFromMemory(table, static_cast<type_t>(values.size()), static_cast<type_t>(values.size()), Span(
+			reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data()),
+			reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data() + 64)
+		));
+
+		std::vector<type_t> result;
+		Dod::DataUtils::forEach(table, [&result](type_t el) {
+			result.push_back(el);
+		});
+		EXPECT_TRUE(std::equal(result.begin(), result.end(), values.begin(), values.end()));
+
+	}
+
+	{
+		using type_t = double;
+		alignas(alignment) auto values{ std::to_array<type_t>({0.1, 0.5, 1.5, -42.}) };
+
+		Dod::MutTable<type_t> table;
+
+		struct Span
+		{
+			Dod::MemTypes::dataPoint_t dataBegin;
+			Dod::MemTypes::dataPoint_t dataEnd;
+		};
+		Dod::DataUtils::initFromMemory(table, static_cast<type_t>(values.size()), static_cast<type_t>(values.size()), Span(
+			reinterpret_cast<Dod::MemTypes::dataPoint_t>(values.data()),
+			reinterpret_cast<Dod::MemTypes::dataPoint_t>(values.data() + 64)
+		));
+
+		std::vector<type_t> result;
+		Dod::DataUtils::forEach(table, [&result](type_t el) {
+			result.push_back(el);
+		});
+		EXPECT_TRUE(std::equal(result.begin(), result.end(), values.begin(), values.end()));
+
+	}
+
+	{
+		using type_t = int32_t;
+		alignas(alignment) auto values{ std::to_array<type_t>( {1, 2, 3, 4, 5, 6, 7, 8}) };
+
+		Dod::MutTable<type_t> table;
+
+		struct Span
+		{
+			Dod::MemTypes::dataPoint_t dataBegin;
+			Dod::MemTypes::dataPoint_t dataEnd;
+		};
+		Dod::DataUtils::initFromMemory(table, static_cast<type_t>(values.size()), static_cast<type_t>(values.size()), Span(
+			reinterpret_cast<Dod::MemTypes::dataPoint_t>(values.data()),
+			reinterpret_cast<Dod::MemTypes::dataPoint_t>(values.data() + 64)
+		));
+
+		Dod::DataUtils::forEach(table, [](type_t& el) {
+			el *= 10;
+		});
+
+		const auto expectedValues{ std::to_array<type_t>({10, 20, 30, 40, 50, 60, 70, 80}) };
+		EXPECT_TRUE(std::equal(expectedValues.begin(), expectedValues.end(), values.begin(), values.end()));
+
+	}
+
+}

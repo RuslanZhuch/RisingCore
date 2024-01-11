@@ -266,9 +266,24 @@ namespace Dod::DataUtils
 
 	}
 
+	template <CommonData::CMonoImTable T>
+	void forEach(T imTable, std::invocable<std::tuple_element_t<0, typename T::types_t>> auto body) noexcept
+	{
+		for (int32_t elId{}; elId < Dod::DataUtils::getNumFilledElements(imTable); ++elId)
+			std::invoke(body, Dod::DataUtils::get(imTable, elId));
+	}
+
+	template <CommonData::CMonoMutTable T>
+	void forEach(T imTable, std::invocable<std::tuple_element_t<0, typename T::types_t>&> auto body) noexcept
+	{
+		for (int32_t elId{}; elId < Dod::DataUtils::getNumFilledElements(imTable); ++elId)
+			std::invoke(body, Dod::DataUtils::get(imTable, elId));
+	}
+
 	void pushBack(CommonData::CDTable auto& table, bool strobe, auto&& ... value) noexcept requires
 		CommonData::CTrivialTable<decltype(table)>
 	{
+		static_assert(sizeof ... (value) > 0, "No data provided to DataUtils::pushBack");
 
 		if (Dod::DataUtils::getNumFilledElements(table) >= table.capacityEls)
 			return;

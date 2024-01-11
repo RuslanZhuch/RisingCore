@@ -26,7 +26,7 @@ namespace Dod::CommonData
 	template <typename Left, typename Right>
 	concept CTablesStructureIsSame = requires(Left, Right)
 	{
-		{std::same_as<typename std::decay_t<Left>::types_t, typename std::decay_t<Right>::types_t>};
+		requires std::same_as<typename std::decay_t<Left>::types_t, typename std::decay_t<Right>::types_t>;
 	};
 
 	template <typename T>

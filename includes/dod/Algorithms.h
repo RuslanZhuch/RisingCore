@@ -95,11 +95,24 @@ namespace Dod::Algorithms
 	static void getIndicesByValue(Dod::CommonData::CMonoDTable auto& indices, Dod::CommonData::CMonoImTable auto src, T value) noexcept requires
 		std::is_same_v<std::tuple_element_t<0, typename std::decay_t<decltype(indices)>::types_t>, int32_t>
 	{
-		Dod::DataUtils::flush(indices);
 		for (int32_t elId{}; elId < Dod::DataUtils::getNumFilledElements(src); ++elId)
 		{
 			const auto bFound{ Dod::DataUtils::get(src, elId) == value };
 			Dod::DataUtils::pushBack(indices, bFound, elId);
+		}
+	}
+
+	static void getIndicesByValues(Dod::CommonData::CMonoDTable auto& indices, Dod::CommonData::CMonoImTable auto src, Dod::CommonData::CMonoImTable auto values) noexcept requires
+		std::is_same_v<std::tuple_element_t<0, typename std::decay_t<decltype(indices)>::types_t>, int32_t>
+	{
+		for (int32_t valueElId{}; valueElId < Dod::DataUtils::getNumFilledElements(values); ++valueElId)
+		{
+			const auto value{ Dod::DataUtils::get(values, valueElId) };
+			for (int32_t srcElId{}; srcElId < Dod::DataUtils::getNumFilledElements(src); ++srcElId)
+			{
+				const auto bFound{ Dod::DataUtils::get(src, srcElId) == value };
+				Dod::DataUtils::pushBack(indices, bFound, srcElId);
+			}
 		}
 	}
 
