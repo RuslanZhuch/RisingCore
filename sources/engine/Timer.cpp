@@ -1,60 +1,14 @@
 #include <engine/Timer.h>
-
-Timer* initTimer(float timeScale, bool cntFPS)
-{
-
-	Timer* t = new Timer();
-
-	t->setTimeScale(timeScale);
-	t->reset();
-
-	return t;
-
-}
+#include <chrono>
 
 void Timer::setEFPSCnt(bool eFPSCnt)
 {
-
 	this->eFPSCnt = eFPSCnt;
-
-}
-
-bool Timer::getEFPSCnt() const
-{
-
-	return this->eFPSCnt;
-
-}
-
-double Timer::getTotalTime() const
-{
-	return this->totalTime; 
-}
-
-int Timer::getFPS() const
-{ 
-	return this->fps; 
 }
 
 void Timer::setTimeScale(float timeScale) 
 { 
 	this->timeScale = timeScale; 
-}
-
-double Timer::getTimeScale() const
-{
-	return this->timeScale; 
-}
-
-//Return seconds in one cycle
-float Timer::getDeltaTime() const
-{
-	return static_cast<float>(this->deltaTime); 
-}
-
-bool Timer::getIsStoped() const 
-{
-	return this->isInPause; 
 }
 
 void Timer::tick()
@@ -123,11 +77,17 @@ void Timer::stop()
 	this->isInPause = true;
 }
 
+void Timer::computeCurrTime()
+{
+	std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+	this->currTime = startTime.time_since_epoch().count();
+}
+
 void Timer::computeSecondsPerCount()
 {
 
-	QueryPerformanceFrequency((LARGE_INTEGER*)&this->countsPerSecond);
-	this->secondsPerCount = 1.0 / (double)countsPerSecond * timeScale;
+	const auto tickDuration = std::chrono::steady_clock::duration::period();
+	this->secondsPerCount = 1.0 / static_cast<double>(tickDuration.den);
 
 }
 

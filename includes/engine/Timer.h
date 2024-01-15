@@ -1,8 +1,6 @@
-#ifndef TIMER_H
-#define TIMER_H
+#pragma once
 
-#include <Windows.h>
-#include <time.h>
+#include <cinttypes>
 
 class Timer
 {
@@ -23,28 +21,28 @@ public:
 	void setTimeScale(float timeScale);
 
 	// Return Fraps(cycles) per second
-	int getFPS() const;
+	[[nodiscard]] int getFPS() const { return this->fps; }
 	// Return Pause Time
-	double getPauseTime();
+	[[nodiscard]] double getPauseTime();
 	// Return non-Pause Time
-	double getTotalTime() const;
+	[[nodiscard]] double getTotalTime() const { return this->totalTime; }
 
-	double getTimeScale() const;
+	[[nodiscard]] double getTimeScale() const { return this->timeScale; }
 
 	//Return seconds in one cycle
-	float getDeltaTime() const;
+	[[nodiscard]] float getDeltaTime() const { return static_cast<float>(this->deltaTime); }
 
-	bool getIsStoped() const;
+	[[nodiscard]] bool getIsStoped() const { return this->isInPause; }
 
 	void setEFPSCnt(bool eFPSCnt = true);
-	bool getEFPSCnt() const;
+	[[nodiscard]] bool getEFPSCnt() const { return this->eFPSCnt; }
 
 private:
 
 	//Return Time (Processor cycles) 
-	__int64 getCurrTime() { return this->currTime; }
-	void computeCurrTime() { /*this->CurrTime = clock(); }*/QueryPerformanceCounter((LARGE_INTEGER*)&this->currTime); }
-	double getSecondsPerCount() { return this->secondsPerCount; }
+	[[nodiscard]] int64_t getCurrTime() const { return this->currTime; }
+	[[nodiscard]] double getSecondsPerCount() const { return this->secondsPerCount; }
+	void computeCurrTime();
 	void computeSecondsPerCount();
 
 private:
@@ -53,19 +51,19 @@ private:
 	//**Processor Counts
 	///////////////////////////////////
 	// Current Time
-	__int64 currTime{ 0 };
+	int64_t currTime{ 0 };
 	// Previous Time
-	__int64 prevTime{ 0 };
+	int64_t prevTime{ 0 };
 	// Start Time
-	__int64 baseTime{ 0 };
+	int64_t baseTime{ 0 };
 	// Stop Time
-	__int64 stopTime{ 0 };
+	int64_t stopTime{ 0 };
 	// In Pause Time
-	__int64 pauseTime{ 0 };
+	int64_t pauseTime{ 0 };
 	// In Previuos Pause Time
-	__int64 prevPauseTime{ 0 };
+	int64_t prevPauseTime{ 0 };
 
-	__int64 countsPerSecond{ 0 };
+	int64_t countsPerSecond{ 0 };
 	double secondsPerCount{ 0 };
 
 	///////////////////////////////////
@@ -88,7 +86,3 @@ private:
 
 	bool eFPSCnt{ false };
 };
-
-Timer* initTimer(float timeScale = 1, bool cntFPS = false);
-
-#endif // !TIMER_H
