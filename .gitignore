@@ -402,3 +402,4 @@ tools/engineCodegen/tests/externalTypes/Type1.h
 RisingCore.sln
 RisingCore.vcxproj
 RisingCore.vcxproj.filters
+*.make
