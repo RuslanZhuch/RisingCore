@@ -118,6 +118,20 @@ def load_data(context_raw_data : dict):
     
     return ContextData(objects_data, buffers_data, tables_data)
 
+def generate_context_buffer_decls(handler, context_data : ContextData):
+        
+    def struct_body(struct_handler):
+        pass
+            
+    for table in context_data.tables_data:
+        generator.generate_struct(handler, "Buffer{} : public Dod::DTable<{}>".format(_to_class_name(table.name), ", ".join(table.data_type_list)), struct_body)
+        generator.generate_empty(handler)
+            
+    for table in context_data.tables_data:
+        generator.generate_struct(handler, "CBuffer{} : public Dod::ImTable<{}>".format(_to_class_name(table.name), ", ".join(table.data_type_list)), struct_body)
+        generator.generate_empty(handler)
+
+
 def generate_context_data(handler, context_data : ContextData):
         
     def struct_body(struct_handler):
@@ -135,7 +149,7 @@ def generate_context_data(handler, context_data : ContextData):
             generator.generate_struct_variable(struct_handler, type, buffer.name, None)
             
         for table in context_data.tables_data:
-            type = "Dod::DTable<{}>".format(", ".join(table.data_type_list))
+            type = "Buffer{}".format(_to_class_name(table.name))
             generator.generate_struct_variable(struct_handler, type, table.name, None)
             
     generator.generate_struct(handler, "Data", struct_body)
@@ -147,7 +161,7 @@ def generate_context_data(handler, context_data : ContextData):
             generator.generate_struct_variable(struct_handler, type, buffer.name, None)
             
         for table in context_data.tables_data:
-            type = "Dod::ImTable<{}>".format(", ".join(table.data_type_list))
+            type = "CBuffer{}".format(_to_class_name(table.name))
             generator.generate_struct_variable(struct_handler, type, table.name, None)
             
     generator.generate_struct(handler, "CData", struct_body_const)
@@ -172,7 +186,7 @@ def generate_context_getters(handler, context_data : ContextData):
             continue
         data_name = table.name
         data_name_capital = _to_class_name(data_name)
-        function_name = "[[nodiscard]] static auto get{0}(Data& context) noexcept".format(data_name_capital, data_name)
+        function_name = "[[nodiscard]] static auto decoupleData(Buffer{}& {}ToDecouple) noexcept".format(data_name_capital, data_name)
         
         def function_body(handler):
             def struct_data(struct_handler):
@@ -181,7 +195,7 @@ def generate_context_getters(handler, context_data : ContextData):
 
             generator.generate_struct(handler, "Output", struct_data)
             
-            generator.generate_line(handler, "const auto data{{ Dod::DataUtils::get(context.{}) }};".format(data_name))
+            generator.generate_line(handler, "const auto data{{ Dod::DataUtils::get({}ToDecouple) }};".format(data_name))
 
             output_values = ["std::get<{}>(data)".format(index) for index in range(0, len(table.data_type_list))]
                 
@@ -191,7 +205,7 @@ def generate_context_getters(handler, context_data : ContextData):
         generator.generate_block(handler, function_name, function_body)
         generator.generate_empty(handler)
 
-        function_name_const = "[[nodiscard]] static auto get{0}(const CData& context) noexcept".format(data_name_capital, data_name)
+        function_name_const = "[[nodiscard]] static auto decoupleData(const CBuffer{}& {}ToDecouple) noexcept".format(data_name_capital, data_name)
         
         def function_body_const(handler):
             def struct_data(struct_handler):
@@ -200,7 +214,7 @@ def generate_context_getters(handler, context_data : ContextData):
 
             generator.generate_struct(handler, "Output", struct_data)
             
-            generator.generate_line(handler, "const auto data{{ Dod::DataUtils::get(context.{}) }};".format(data_name))
+            generator.generate_line(handler, "const auto data{{ Dod::DataUtils::get({}ToDecouple) }};".format(data_name))
 
             output_values = ["std::get<{}>(data)".format(index) for index in range(0, len(table.data_type_list))]
                 
@@ -266,6 +280,7 @@ def generate_context_def(dest_path, context_file_path, types_cache):
     
     def namespace_body(namespace_handler):
         context_data = load_data(context_raw_data)
+        generate_context_buffer_decls(namespace_handler, context_data)
         generate_context_data(namespace_handler, context_data)
         generator.generate_empty(namespace_handler)
         generate_data_converter(namespace_handler, context_data)

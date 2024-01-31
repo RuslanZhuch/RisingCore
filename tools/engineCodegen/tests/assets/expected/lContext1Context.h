@@ -12,6 +12,26 @@
 
 namespace Game::Context::LContext1
 {
+    struct BufferDbvar1 : public Dod::DTable<float>
+    {
+
+    };
+
+    struct BufferDbvar2 : public Dod::DTable<int64_t>
+    {
+
+    };
+
+    struct CBufferDbvar1 : public Dod::ImTable<float>
+    {
+
+    };
+
+    struct CBufferDbvar2 : public Dod::ImTable<int64_t>
+    {
+
+    };
+
     struct Data
     {
         void load() noexcept;
@@ -22,20 +42,20 @@ namespace Game::Context::LContext1
         float var2{};
         Types::Data::CustomData1 var3;
         Dod::MemPool memory;
-        Dod::DBBuffer<float> dbvar1;
-        Dod::DBBuffer<int64_t> dbvar2;
+        BufferDbvar1 dbvar1;
+        BufferDbvar2 dbvar2;
     };
 
     struct CData
     {
 
-        Dod::ImBuffer<float> dbvar1;
-        Dod::ImBuffer<int64_t> dbvar2;
+        CBufferDbvar1 dbvar1;
+        CBufferDbvar2 dbvar2;
     };
 
     [[nodiscard]] static CData convertToConst(const Data& context) noexcept
     {
-        return { Dod::DataUtils::createImFromBuffer(context.dbvar1), Dod::DataUtils::createImFromBuffer(context.dbvar2) };
+        return { Dod::ImTable<float>(context.dbvar1), Dod::ImTable<int64_t>(context.dbvar2) };
     }
 
 }
