@@ -917,7 +917,7 @@ TEST(DataUtils, CreateGuidedImTable)
 
 }
 
-TEST(DataUtils, CreateGuidedImTableFailed)
+TEST(DataUtils, CreateGuidedImTableStarving)
 {
 
 	using type_t = int32_t;
@@ -930,12 +930,13 @@ TEST(DataUtils, CreateGuidedImTableFailed)
 		Dod::MemTypes::dataConstPoint_t dataBegin;
 		Dod::MemTypes::dataConstPoint_t dataEnd;
 	};
-	Dod::DataUtils::initFromMemory(table, static_cast<int32_t>(values.size()), static_cast<int32_t>(values.size()), Span(
+	const auto numOfElements{ static_cast<int32_t>(values.size()) };
+	Dod::DataUtils::initFromMemory(table, numOfElements, numOfElements, Span(
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data()),
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(values.data() + 64)
 	));
 
-	alignas(alignment) std::array<type_t, 4> indices{ {7, 6, 5, 4} };
+	alignas(alignment) std::array<type_t, 5> indices{ {1, 3, 2, 2, 7} };
 	Dod::ImTable<int32_t> indicesBuffer;
 	Dod::DataUtils::initFromMemory(indicesBuffer, static_cast<int32_t>(indices.size()), static_cast<int32_t>(indices.size()), Span(
 		reinterpret_cast<Dod::MemTypes::dataConstPoint_t>(indices.data()),
@@ -944,7 +945,12 @@ TEST(DataUtils, CreateGuidedImTableFailed)
 
 	Dod::ImTableGuided<int32_t> guidedTable{ Dod::DataUtils::createGuidedImTable(table, indicesBuffer) };
 
-	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(guidedTable), 0);
+	ASSERT_EQ(Dod::DataUtils::getNumFilledElements(guidedTable), 5);
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 0), static_cast<type_t>(2));
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 1), static_cast<type_t>(4));
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 2), static_cast<type_t>(3));
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 3), static_cast<type_t>(3));
+	EXPECT_EQ(Dod::DataUtils::get(guidedTable, 4), static_cast<type_t>(8));
 
 }
 

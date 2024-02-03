@@ -501,8 +501,6 @@ namespace Dod::DataUtils
 		std::is_same_v<std::tuple_element_t<0, typename decltype(indices)::types_t>, int32_t>
 	{
 
-		const auto bCanCreate{ Dod::DataUtils::getNumFilledElements(srcTable) == Dod::DataUtils::getNumFilledElements(indices) };
-
 		using table_t = decltype(srcTable);
 		using types_t = table_t::types_t;
 
@@ -511,12 +509,10 @@ namespace Dod::DataUtils
 		};
 
 		auto sortedTable{ createSorted(types_t{}) };
-		if (!bCanCreate)
-			return sortedTable;
 
 		sortedTable.dataBegin = srcTable.dataBegin;
 		sortedTable.capacityEls = srcTable.capacityEls;
-		sortedTable.numOfElements = Dod::DataUtils::getNumFilledElements(srcTable);
+		sortedTable.numOfElements = Dod::DataUtils::getNumFilledElements(indices);
 		sortedTable.guid = indices;
 
 		return sortedTable;
