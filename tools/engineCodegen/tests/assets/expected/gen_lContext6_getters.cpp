@@ -1,4 +1,4 @@
-[[nodiscard]] static auto decoupleData(BufferData1& data1ToDecouple) noexcept
+[[nodiscard]] static auto decoupleData(LContext6::BufferData1& data1ToDecouple) noexcept
 {
     struct Output
     {
@@ -10,7 +10,7 @@
     return Output(std::get<0>(data), std::get<1>(data));
 }
 
-[[nodiscard]] static auto decoupleData(const CBufferData1& data1ToDecouple) noexcept
+[[nodiscard]] static auto decoupleData(const LContext6::CBufferData1& data1ToDecouple) noexcept
 {
     struct Output
     {
@@ -22,7 +22,7 @@
     return Output(std::get<0>(data), std::get<1>(data));
 }
 
-[[nodiscard]] static auto decoupleData(BufferData2& data2ToDecouple) noexcept
+[[nodiscard]] static auto decoupleData(LContext6::BufferData2& data2ToDecouple) noexcept
 {
     struct Output
     {
@@ -35,7 +35,7 @@
     return Output(std::get<0>(data), std::get<1>(data), std::get<2>(data));
 }
 
-[[nodiscard]] static auto decoupleData(const CBufferData2& data2ToDecouple) noexcept
+[[nodiscard]] static auto decoupleData(const LContext6::CBufferData2& data2ToDecouple) noexcept
 {
     struct Output
     {

@@ -44,4 +44,8 @@ namespace Game::Context::LContext3
 
 }
 
+namespace Game::Context
+{
+}
+
 #pragma warning(pop)

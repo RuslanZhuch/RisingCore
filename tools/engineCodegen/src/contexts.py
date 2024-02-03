@@ -179,14 +179,15 @@ def generate_data_converter(handler, context_data : ContextData):
 
     generator.generate_block(handler, function_name, function_body)    
 
-def generate_context_getters(handler, context_data : ContextData):
+def generate_context_getters(handler, context_data : ContextData, context_name : str):
     
     for table in context_data.tables_data:
         if "nohelpers" in table.flags or len(table.data_type_list) <= 1:
             continue
         data_name = table.name
         data_name_capital = _to_class_name(data_name)
-        function_name = "[[nodiscard]] static auto decoupleData(Buffer{}& {}ToDecouple) noexcept".format(data_name_capital, data_name)
+        context_name = _to_class_name(context_name)
+        function_name = "[[nodiscard]] static auto decoupleData({}::Buffer{}& {}ToDecouple) noexcept".format(context_name, data_name_capital, data_name)
         
         def function_body(handler):
             def struct_data(struct_handler):
@@ -205,7 +206,7 @@ def generate_context_getters(handler, context_data : ContextData):
         generator.generate_block(handler, function_name, function_body)
         generator.generate_empty(handler)
 
-        function_name_const = "[[nodiscard]] static auto decoupleData(const CBuffer{}& {}ToDecouple) noexcept".format(data_name_capital, data_name)
+        function_name_const = "[[nodiscard]] static auto decoupleData(const {}::CBuffer{}& {}ToDecouple) noexcept".format(context_name, data_name_capital, data_name)
         
         def function_body_const(handler):
             def struct_data(struct_handler):
@@ -224,7 +225,7 @@ def generate_context_getters(handler, context_data : ContextData):
         generator.generate_block(handler, function_name_const, function_body_const)
         generator.generate_empty(handler)
 
-def generate_context_setters(handler, context_data : ContextData):
+def generate_context_setters(handler, context_data : ContextData, context_name : str):
     
     for table in context_data.tables_data:
         if "nohelpers" in table.flags or len(table.data_type_list) <= 1:
@@ -233,10 +234,10 @@ def generate_context_setters(handler, context_data : ContextData):
         data_name_capital = _to_class_name(data_name)
         parameters = ["{} {}".format(table.data_type_full_list[type_name], type_name) for type_name in table.data_type_full_list]
         parameters.append("bool bStrobe = true")
-        function_name = "static void add{}(Data& context, {}) noexcept".format(data_name_capital, ", ".join(parameters))
+        function_name = "static void addData({}::Buffer{}& {}Dst, {}) noexcept".format(context_name, data_name_capital, data_name, ", ".join(parameters))
         
         def function_body(handler):
-            arguments = ["context.{}".format(data_name), "bStrobe"]
+            arguments = ["{}Dst".format(data_name), "bStrobe"]
             arguments.extend(table.data_name_list)
             generator.generate_line(handler, "Dod::DataUtils::pushBack({});".format(", ".join(arguments)))
             
@@ -285,9 +286,14 @@ def generate_context_def(dest_path, context_file_path, types_cache):
         generator.generate_empty(namespace_handler)
         generate_data_converter(namespace_handler, context_data)
         generator.generate_empty(namespace_handler)
-        generate_context_getters(namespace_handler, context_data)
-        generate_context_setters(namespace_handler, context_data)
+
     generator.generate_block(handler, "namespace Game::Context::{}".format(context_name), namespace_body)
+    generator.generate_empty(handler)
+    
+    def helpers_namespace_body(helpers_namespace_handler):  
+        generate_context_getters(helpers_namespace_handler, context_data, context_name)
+        generate_context_setters(helpers_namespace_handler, context_data, context_name)
+    generator.generate_block(handler, "namespace Game::Context", helpers_namespace_body)
     
     generator.generate_empty(handler)
     generator.generate_line(handler, "#pragma warning(pop)")

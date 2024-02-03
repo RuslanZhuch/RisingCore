@@ -79,7 +79,11 @@ namespace Game::Context::LContext6
         return { Dod::ImTable<int64_t>(context.dbvar2), Dod::ImTable<int32_t, float>(context.data1), Dod::ImTable<Types::Cats::CryingCat, float, int64_t>(context.data2), Dod::ImTable<float>(context.data3) };
     }
 
-    [[nodiscard]] static auto decoupleData(BufferData1& data1ToDecouple) noexcept
+}
+
+namespace Game::Context
+{
+    [[nodiscard]] static auto decoupleData(LContext6::BufferData1& data1ToDecouple) noexcept
     {
         struct Output
         {
@@ -91,7 +95,7 @@ namespace Game::Context::LContext6
         return Output(std::get<0>(data), std::get<1>(data));
     }
 
-    [[nodiscard]] static auto decoupleData(const CBufferData1& data1ToDecouple) noexcept
+    [[nodiscard]] static auto decoupleData(const LContext6::CBufferData1& data1ToDecouple) noexcept
     {
         struct Output
         {
@@ -103,7 +107,7 @@ namespace Game::Context::LContext6
         return Output(std::get<0>(data), std::get<1>(data));
     }
 
-    [[nodiscard]] static auto decoupleData(BufferData2& data2ToDecouple) noexcept
+    [[nodiscard]] static auto decoupleData(LContext6::BufferData2& data2ToDecouple) noexcept
     {
         struct Output
         {
@@ -116,7 +120,7 @@ namespace Game::Context::LContext6
         return Output(std::get<0>(data), std::get<1>(data), std::get<2>(data));
     }
 
-    [[nodiscard]] static auto decoupleData(const CBufferData2& data2ToDecouple) noexcept
+    [[nodiscard]] static auto decoupleData(const LContext6::CBufferData2& data2ToDecouple) noexcept
     {
         struct Output
         {
@@ -129,14 +133,14 @@ namespace Game::Context::LContext6
         return Output(std::get<0>(data), std::get<1>(data), std::get<2>(data));
     }
 
-    static void addData1(Data& context, int32_t values1, float values2, bool bStrobe = true) noexcept
+    static void addData(LContext6::BufferData1& data1Dst, int32_t values1, float values2, bool bStrobe = true) noexcept
     {
-        Dod::DataUtils::pushBack(context.data1, bStrobe, values1, values2);
+        Dod::DataUtils::pushBack(data1Dst, bStrobe, values1, values2);
     }
 
-    static void addData2(Data& context, Types::Cats::CryingCat values3, float values4, int64_t values5, bool bStrobe = true) noexcept
+    static void addData(LContext6::BufferData2& data2Dst, Types::Cats::CryingCat values3, float values4, int64_t values5, bool bStrobe = true) noexcept
     {
-        Dod::DataUtils::pushBack(context.data2, bStrobe, values3, values4, values5);
+        Dod::DataUtils::pushBack(data2Dst, bStrobe, values3, values4, values5);
     }
 
 }

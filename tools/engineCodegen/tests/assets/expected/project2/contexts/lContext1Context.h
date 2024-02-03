@@ -60,4 +60,8 @@ namespace Game::Context::LContext1
 
 }
 
+namespace Game::Context
+{
+}
+
 #pragma warning(pop)

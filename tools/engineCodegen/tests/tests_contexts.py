@@ -245,7 +245,7 @@ class TestContexts(unittest.TestCase):
         handler = generator.generate_file("dest", "gen_lContext6_getters.cpp")
         self.assertIsNotNone(handler)
         context_data = contexts.load_data(context_raw_data)
-        contexts.generate_context_getters(handler, context_data)
+        contexts.generate_context_getters(handler, context_data, "LContext6")
         
         handler.close()
         
@@ -258,7 +258,7 @@ class TestContexts(unittest.TestCase):
         handler = generator.generate_file("dest", "gen_lContext6_setters.cpp")
         self.assertIsNotNone(handler)
         context_data = contexts.load_data(context_raw_data)
-        contexts.generate_context_setters(handler, context_data)
+        contexts.generate_context_setters(handler, context_data, "LContext6")
         
         handler.close()
         
