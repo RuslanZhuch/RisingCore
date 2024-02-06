@@ -285,11 +285,13 @@ namespace Dod::DataUtils
 	{
 		static_assert(sizeof ... (value) > 0, "No data provided to DataUtils::pushBack");
 
+		if (!strobe)
+			return;
+
 		if (Dod::DataUtils::getNumFilledElements(table) >= table.capacityEls)
 			return;
 
-		const auto elementPosition{ table.numOfFilledEls };
-		table.numOfFilledEls += int32_t(1) * strobe;
+		const auto elementPosition{ table.numOfFilledEls++ };
 
 		using tableType_t = typename std::decay_t<decltype(table)>;
 		using types_t = tableType_t::types_t;
