@@ -280,8 +280,9 @@ namespace Dod::DataUtils
 			std::invoke(body, Dod::DataUtils::get(imTable, elId));
 	}
 
-	void pushBack(CommonData::CDTable auto& table, bool strobe, auto&& ... value) noexcept requires
-		CommonData::CTrivialTable<decltype(table)>
+	template <CommonData::CDTable Table, typename ... TPush>
+	void pushBack(Table& table, bool strobe, TPush&& ... value) noexcept requires
+		CommonData::CTrivialTable<decltype(table)> && std::same_as<std::tuple<std::decay_t<TPush>...>, typename Table::types_t>
 	{
 		static_assert(sizeof ... (value) > 0, "No data provided to DataUtils::pushBack");
 
