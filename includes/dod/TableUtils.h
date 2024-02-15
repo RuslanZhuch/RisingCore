@@ -280,16 +280,19 @@ namespace Dod::DataUtils
 			std::invoke(body, Dod::DataUtils::get(imTable, elId));
 	}
 
-	void pushBack(CommonData::CDTable auto& table, bool strobe, auto&& ... value) noexcept requires
-		CommonData::CTrivialTable<decltype(table)>
+	template <CommonData::CDTable Table, typename ... TPush>
+	void pushBack(Table& table, bool strobe, TPush&& ... value) noexcept requires
+		CommonData::CTrivialTable<decltype(table)> && std::same_as<std::tuple<std::decay_t<TPush>...>, typename Table::types_t>
 	{
 		static_assert(sizeof ... (value) > 0, "No data provided to DataUtils::pushBack");
+
+		if (!strobe)
+			return;
 
 		if (Dod::DataUtils::getNumFilledElements(table) >= table.capacityEls)
 			return;
 
-		const auto elementPosition{ table.numOfFilledEls };
-		table.numOfFilledEls += int32_t(1) * strobe;
+		const auto elementPosition{ table.numOfFilledEls++ };
 
 		using tableType_t = typename std::decay_t<decltype(table)>;
 		using types_t = tableType_t::types_t;
@@ -501,8 +504,6 @@ namespace Dod::DataUtils
 		std::is_same_v<std::tuple_element_t<0, typename decltype(indices)::types_t>, int32_t>
 	{
 
-		const auto bCanCreate{ Dod::DataUtils::getNumFilledElements(srcTable) == Dod::DataUtils::getNumFilledElements(indices) };
-
 		using table_t = decltype(srcTable);
 		using types_t = table_t::types_t;
 
@@ -511,12 +512,10 @@ namespace Dod::DataUtils
 		};
 
 		auto sortedTable{ createSorted(types_t{}) };
-		if (!bCanCreate)
-			return sortedTable;
 
 		sortedTable.dataBegin = srcTable.dataBegin;
 		sortedTable.capacityEls = srcTable.capacityEls;
-		sortedTable.numOfElements = Dod::DataUtils::getNumFilledElements(srcTable);
+		sortedTable.numOfElements = Dod::DataUtils::getNumFilledElements(indices);
 		sortedTable.guid = indices;
 
 		return sortedTable;

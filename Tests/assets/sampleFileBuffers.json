@@ -4,13 +4,13 @@
   "contextType": "Local",
   "data": [
     {
-      "type": "dbbuffer",
+      "type": "data",
       "dataType": "float",
       "name": "buffer1",
       "capacity": 41
     },
     {
-      "type": "dbbuffer",
+      "type": "data",
       "dataType": "int64_t",
       "name": "buffer1",
       "capacity": 81

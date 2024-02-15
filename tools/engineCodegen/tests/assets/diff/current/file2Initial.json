@@ -3,7 +3,7 @@
     "version": 1,
     "data": [
         {
-            "type": "dbbuffer",
+            "type": "data",
             "dataType": "double",
             "name": "dbvar",
             "capacity": 4096

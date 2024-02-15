@@ -19,7 +19,7 @@ namespace Game::Context::LContext6
         const auto& loadingDataArray{ inputDataOpt.value() };
 
 
-        const auto dbvar2Capacity{ Engine::ContextUtils::getBufferCapacity<int64_t>(loadingDataArray, 0) };
+        const auto dbvar2Capacity{ Engine::ContextUtils::getDataCapacity<int64_t>(loadingDataArray, 0) };
         const auto data1Capacity{ Engine::ContextUtils::getDataCapacity<int32_t, float>(loadingDataArray, 1) };
         const auto data2Capacity{ Engine::ContextUtils::getDataCapacity<Types::Cats::CryingCat, float, int64_t>(loadingDataArray, 2) };
         const auto data3Capacity{ Engine::ContextUtils::getDataCapacity<float>(loadingDataArray, 3) };
@@ -54,7 +54,7 @@ namespace Game::Context::LContext6
 
     void Data::merge([[maybe_unused]] const Data& other) noexcept
     {
-        Dod::DataUtils::append(this->dbvar2, Dod::DataUtils::createImFromBuffer(other.dbvar2));
+        Dod::DataUtils::append(this->dbvar2, Dod::ImTable(other.dbvar2));
         Dod::DataUtils::append(this->data1, Dod::ImTable(other.data1));
         Dod::DataUtils::append(this->data2, Dod::ImTable(other.data2));
         Dod::DataUtils::append(this->data3, Dod::ImTable(other.data3));

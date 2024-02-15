@@ -20,13 +20,13 @@
             "initial": 1.1
         },
         {
-            "type": "dbbuffer",
+            "type": "data",
             "dataType": "float",
             "name": "dbvar0",
             "capacity": 512
         },
         {
-            "type": "dbbuffer",
+            "type": "data",
             "dataType": "int64_t",
             "name": "dbvar1",
             "capacity": 1024

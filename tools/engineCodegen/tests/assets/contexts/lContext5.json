@@ -22,13 +22,13 @@
             "name": "var3"
         },
         {
-            "type": "dbbuffer",
+            "type": "data",
             "dataType": "float",
             "name": "dbvar1",
             "capacity": 512
         },
         {
-            "type": "dbbuffer",
+            "type": "data",
             "dataType": "int64_t",
             "merge": "disabled",
             "name": "dbvar2",
