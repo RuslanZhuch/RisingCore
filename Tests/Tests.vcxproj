@@ -135,6 +135,8 @@
     <ClCompile Include="sources\DataUtilsForTables.cpp" />
     <ClCompile Include="sources\MemPool.cpp" />
     <ClCompile Include="sources\MemUtils.cpp" />
+    <ClCompile Include="sources\StaticMap.cpp" />
+    <ClCompile Include="sources\StaticVector.cpp" />
     <ClCompile Include="sources\String.cpp" />
     <ClCompile Include="sources\TypeHelpers.cpp" />
     <ClCompile Include="sources\Types.cpp" />
