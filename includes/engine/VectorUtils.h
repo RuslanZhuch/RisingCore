@@ -1,6 +1,7 @@
 #include <type_traits>
 #include <concepts>
 #include <memory>
+#include <span>
 
 #include "ContainersCommon.h"
 
@@ -55,6 +56,15 @@ namespace Engine::ContainerUtils
 		const auto totalElements{ dst.cap < src.size ? dst.cap : src.size };
 		std::memcpy(dst.data, src.data, totalElements * sizeof(type_t));
 		dst.size = totalElements;
+	}
+
+	template <VectorWithData VecType>
+	[[nodiscard]] auto getData(VecType&& vector)
+	{
+
+		using type_t = typename std::decay_t<VecType>::type_t;
+		return std::span<const type_t>{vector.data, static_cast<size_t>(getNumOfElements(vector))};
+
 	}
 
 }

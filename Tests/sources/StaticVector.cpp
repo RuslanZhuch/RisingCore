@@ -200,3 +200,65 @@ TEST(StaticVector, assign)
 	}
 
 }
+
+
+TEST(StaticVector, getData)
+{
+
+	{
+		Engine::StaticVector<int32_t, 4> vec{};
+		Engine::ContainerUtils::pushBack(vec, 1);
+		Engine::ContainerUtils::pushBack(vec, 2);
+		Engine::ContainerUtils::pushBack(vec, 3);
+
+		const auto data{ Engine::ContainerUtils::getData(vec) };
+		const auto expected{ std::to_array<int32_t>({1, 2, 3}) };
+		EXPECT_EQ(data.size(), expected.size());
+		EXPECT_TRUE(std::equal(data.begin(), data.end(), expected.begin(), expected.end()));
+	}
+
+	{
+		Engine::StaticVector<int32_t, 4> vec{};
+		Engine::ContainerUtils::pushBack(vec, 1);
+		Engine::ContainerUtils::pushBack(vec, 2);
+		Engine::ContainerUtils::pushBack(vec, 3);
+		Engine::ContainerUtils::pushBack(vec, 4);
+
+		const auto data{ Engine::ContainerUtils::getData(vec) };
+		const auto expected{ std::to_array<int32_t>({1, 2, 3, 4}) };
+		EXPECT_EQ(data.size(), expected.size());
+		EXPECT_TRUE(std::equal(data.begin(), data.end(), expected.begin(), expected.end()));
+	}
+
+	{
+		Engine::StaticVector<int32_t, 4> vec{};
+
+		const auto data{ Engine::ContainerUtils::getData(vec) };
+		EXPECT_TRUE(data.empty());
+	}
+
+//	{
+//		Engine::StaticVector<int32_t, 4> vec{};
+//		Engine::ContainerUtils::pushBack(vec, 1);
+//		Engine::ContainerUtils::pushBack(vec, 2);
+//		Engine::ContainerUtils::pushBack(vec, 3);
+//
+//		Engine::StaticVector<int32_t, 3> vec2{};
+//		Engine::ContainerUtils::assign(vec2, vec);
+//
+//		checkElements(vec2, std::to_array<int32_t>({ 1, 2, 3 }));
+//	}
+//
+//	{
+//		Engine::StaticVector<int32_t, 4> vec{};
+//		Engine::ContainerUtils::pushBack(vec, 1);
+//		Engine::ContainerUtils::pushBack(vec, 2);
+//		Engine::ContainerUtils::pushBack(vec, 3);
+//
+//		Engine::StaticVector<int32_t, 2> vec2{};
+//		Engine::ContainerUtils::assign(vec2, vec);
+//
+//		checkElements(vec2, std::to_array<int32_t>({ 1, 2 }));
+//	}
+
+}
