@@ -1,0 +1,35 @@
+
+{
+    "namespaces": [
+        {
+            "name": "Types::Group1",
+            "types": [
+                {
+                    "name": "Type3",
+                    "variables": [
+                        {
+                            "dataType": "Engine::StaticVector<int, 16>",
+                            "name": "static1"
+                        },
+                        {
+                            "dataType": "Engine::StaticVector<float, 32>",
+                            "name": "static2"
+                        },
+                        {
+                            "dataType": "int",
+                            "name": "initiated1"
+                        },
+                        {
+                            "dataType": "float",
+                            "name": "initiated2"
+                        },
+                        {
+                            "dataType": "std::string",
+                            "name": "initiated3"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

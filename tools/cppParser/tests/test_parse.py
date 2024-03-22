@@ -28,6 +28,14 @@ class TestParse(unittest.TestCase):
         
         self.assertEqual(deser_data, expected_data)
         
+    def test_parse_group_2(self):
+        deser_data = parser.parse("assets/headers/group2.h")
+        
+        expected_file = open("assets/expected/group2Deser.json")
+        expected_data = json.load(expected_file)
+        
+        self.assertEqual(deser_data, expected_data)
+        
     def test_parse_multiple_files(self):
         files_list = [
             "assets/headers/group1.h"

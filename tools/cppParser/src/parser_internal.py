@@ -155,11 +155,16 @@ def find_variables_in_scope(data : str, scope_entry_id : int, scrope_entries : S
     for field in fields:
         if "(" in field or ")" in field:
             continue
-        keys = [s.strip() for s in re.split("{|}| ", field)]
+
+        keys = [s.strip() for s in re.split("{|=", field)]
+        if len(keys) > 1:
+            keys = [s.strip() for s in re.split("{|}| ", keys[0])]
+        
         keys = list(filter(lambda key : key != "", keys))
         if len(keys) < 2:
             continue
-        variables.append(VariableData(keys[0], keys[1]))
+        type = ' '.join(keys[:-1])
+        variables.append(VariableData(type, keys[-1]))
     
     return variables
 
