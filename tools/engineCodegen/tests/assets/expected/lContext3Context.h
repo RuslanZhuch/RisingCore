@@ -11,6 +11,16 @@
 
 namespace Game::Context::LContext3
 {
+    struct BufferDbvar : public Dod::DTable<int32_t>
+    {
+
+    };
+
+    struct CBufferDbvar : public Dod::ImTable<int32_t>
+    {
+
+    };
+
     struct Data
     {
         void load() noexcept;
@@ -18,20 +28,24 @@ namespace Game::Context::LContext3
         void merge(const Data& other) noexcept;
 
         Dod::MemPool memory;
-        Dod::DBBuffer<int32_t> dbvar;
+        BufferDbvar dbvar;
     };
 
     struct CData
     {
 
-        Dod::ImBuffer<int32_t> dbvar;
+        CBufferDbvar dbvar;
     };
 
     [[nodiscard]] static CData convertToConst(const Data& context) noexcept
     {
-        return { Dod::DataUtils::createImFromBuffer(context.dbvar) };
+        return { Dod::ImTable<int32_t>(context.dbvar) };
     }
 
+}
+
+namespace Game::Context
+{
 }
 
 #pragma warning(pop)

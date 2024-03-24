@@ -18,7 +18,7 @@
             "initial": 1
         },
         {
-            "type": "dbbuffer",
+            "type": "data",
             "dataType": "int64_t",
             "name": "dbvar2",
             "capacity": 512

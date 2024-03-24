@@ -22,8 +22,8 @@ namespace Game::Context::LContext2
         Engine::ContextUtils::loadVariable(this->cat, loadingDataArray, 1);
         Engine::ContextUtils::loadVariable(this->var2, loadingDataArray, 2);
 
-        const auto dbvar0Capacity{ Engine::ContextUtils::getBufferCapacity<float>(loadingDataArray, 3) };
-        const auto dbvar1Capacity{ Engine::ContextUtils::getBufferCapacity<int64_t>(loadingDataArray, 4) };
+        const auto dbvar0Capacity{ Engine::ContextUtils::getDataCapacity<float>(loadingDataArray, 3) };
+        const auto dbvar1Capacity{ Engine::ContextUtils::getDataCapacity<int64_t>(loadingDataArray, 4) };
 
         int32_t needBytes{ 64 };
         needBytes += dbvar0Capacity.numOfBytes;
@@ -47,8 +47,8 @@ namespace Game::Context::LContext2
 
     void Data::merge([[maybe_unused]] const Data& other) noexcept
     {
-        Dod::DataUtils::append(this->dbvar0, Dod::DataUtils::createImFromBuffer(other.dbvar0));
-        Dod::DataUtils::append(this->dbvar1, Dod::DataUtils::createImFromBuffer(other.dbvar1));
+        Dod::DataUtils::append(this->dbvar0, Dod::ImTable(other.dbvar0));
+        Dod::DataUtils::append(this->dbvar1, Dod::ImTable(other.dbvar1));
     }
 
 }

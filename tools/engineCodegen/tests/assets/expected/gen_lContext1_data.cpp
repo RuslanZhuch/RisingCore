@@ -8,13 +8,13 @@ struct Data
     float var2{};
     Types::Data::CustomData1 var3;
     Dod::MemPool memory;
-    Dod::DBBuffer<float> dbvar1;
-    Dod::DBBuffer<int64_t> dbvar2;
+    BufferDbvar1 dbvar1;
+    BufferDbvar2 dbvar2;
 };
 
 struct CData
 {
 
-    Dod::ImBuffer<float> dbvar1;
-    Dod::ImBuffer<int64_t> dbvar2;
+    CBufferDbvar1 dbvar1;
+    CBufferDbvar2 dbvar2;
 };

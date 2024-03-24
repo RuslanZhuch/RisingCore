@@ -33,4 +33,8 @@ namespace Game::Context::SContext2
 
 }
 
+namespace Game::Context
+{
+}
+
 #pragma warning(pop)

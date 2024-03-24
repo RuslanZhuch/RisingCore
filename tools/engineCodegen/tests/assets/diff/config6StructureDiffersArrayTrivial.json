@@ -3,7 +3,7 @@
     "version": 1,
     "data": [
         {
-            "type": "dbbuffer",
+            "type": "data",
             "dataType": "int32_t",
             "name": "dbvar",
             "capacity": 4096,
@@ -20,7 +20,7 @@
             ]
         },
         {
-            "type": "dbbuffer",
+            "type": "data",
             "dataType": "int32_t",
             "name": "dbvar2",
             "capacity": 4096,
@@ -32,7 +32,7 @@
             ]
         },
         {
-            "type": "dbbuffer",
+            "type": "data",
             "dataType": "int32_t",
             "name": "dbvar2",
             "capacity": 4096,
