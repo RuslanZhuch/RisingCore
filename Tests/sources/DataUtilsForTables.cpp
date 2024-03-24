@@ -667,7 +667,7 @@ TEST_F(GetIntDouble, GetElements)
 	this->check<0, int>({ 1, 3, 5 }, 0);
 	this->check<1, double>({ 2., 4., 6. }, 64);
 
-	this->pushBack(3, 7, 8.f);
+	this->pushBack(3, 7, 8.);
 
 }
 
@@ -702,7 +702,7 @@ TEST_F(GetAllIntDouble, GetAllElements)
 	this->pushBack(2, 3, 4.);
 	this->checkTable<int, double>({ {1, 3}, {2., 4.} });
 
-	this->pushBack(2, 5, 6.f);
+	this->pushBack(2, 5, 6.);
 
 }
 
