@@ -32,10 +32,14 @@ def _get_validated_shared_context_instaces(workspace_shared_contexts_file, conte
 def _generate_commands(handler):
     def cycle_body(handler):
         def exit_body(handler):
-            generator.generate_line(handler, "return 0;")
-        generator.generate_block(handler, "if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)", exit_body)
+            generator.generate_line(handler, "exit(0);")
+        def assign_delta_time(handler):
+            generator.generate_line(handler, "targetDeltaTime = data.frameDeltaStep;")
+        generator.generate_block(handler, "if (data.cmd == 1)", exit_body)
+        generator.generate_block(handler, "if (data.frameDeltaStep != 0)", assign_delta_time)
         
-    generator.generate_block(handler, "for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)", cycle_body)
+    generator.generate_block(handler, "Dod::DataUtils::forEach(Dod::ImTable(sApplicationContext.data), [&](const Types::Application::Data& data)", cycle_body)
+    generator.generate_line(handler, ");")
 
 def _generate_contexts_includes(handler, shared_context_instances : list[contexts.ContextUsage]):
     context_names = [instance.context_name for instance in shared_context_instances]
@@ -147,6 +151,9 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
         def cycle_function(handler):
             def impl(handler):
                 handler.newline(1)
+                generator.generate_line(handler, "Timer frameTimer;")
+                generator.generate_line(handler, "frameTimer.tick();")
+                handler.newline(1)
                 
                 _generate_executors_update(handler, workspace_context_data, executors_data, validated_shared_context_instances)
                 
@@ -162,8 +169,11 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
             
                 _generate_commands(handler)
                 generator.generate_line(handler, "deltaTime = {};")
+                generator.generate_line(handler, "frameTimer.tick();")
+                generator.generate_line(handler, "const auto frameTime{ frameTimer.getDeltaTime() };")
+                generator.generate_line(handler, "Dod::DataUtils::pushBack(applicationStatisticsContext.frameTime, true, frameTime);")
                 
-            generator.generate_block(handler, "if (deltaTime >= 1.f / 60.f)", impl)
+            generator.generate_block(handler, "if (deltaTime >= targetDeltaTime)", impl)
             handler.newline(1)
             generator.generate_line(handler, "timer.tick();")
             generator.generate_line(handler, "deltaTime += timer.getDeltaTime();")
@@ -173,6 +183,7 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
         
         generator.generate_variable(handler, "Timer", "timer")
         generator.generate_variable(handler, "float", "deltaTime", 0)
+        generator.generate_variable(handler, "float", "targetDeltaTime", "0.f")
         generator.generate_block(handler, "while(true)", cycle_function)
         
     generator.generate_function(handler, "main", fill_function, "int")

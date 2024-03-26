@@ -31,10 +31,14 @@ int main()
 
     Timer timer;
     float deltaTime{};
+    float targetDeltaTime{ 0.f };
     while(true)
     {
-        if (deltaTime >= 1.f / 60.f)
+        if (deltaTime >= targetDeltaTime)
         {
+
+            Timer frameTimer;
+            frameTimer.tick();
 
             const auto computedP1_sharedInst1Context{ Game::Context::SContext1::convertToConst(sharedInst1Context) };
             const auto computedP1_sharedInst2Context{ Game::Context::SContext1::convertToConst(sharedInst2Context) };
@@ -63,14 +67,22 @@ int main()
             executor2.flushSharedLocalContexts();
             executor3.flushSharedLocalContexts();
 
-            for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
+            Dod::DataUtils::forEach(Dod::ImTable(sApplicationContext.data), [&](const Types::Application::Data& data)
             {
-                if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
+                if (data.cmd == 1)
                 {
-                    return 0;
+                    exit(0);
+                }
+                if (data.frameDeltaStep != 0)
+                {
+                    targetDeltaTime = data.frameDeltaStep;
                 }
             }
+            );
             deltaTime = {};
+            frameTimer.tick();
+            const auto frameTime{ frameTimer.getDeltaTime() };
+            Dod::DataUtils::pushBack(applicationStatisticsContext.frameTime, true, frameTime);
         }
 
         timer.tick();

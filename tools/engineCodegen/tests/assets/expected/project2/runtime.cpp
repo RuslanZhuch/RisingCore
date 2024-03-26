@@ -16,9 +16,10 @@ int main()
 
     Timer timer;
     float deltaTime{};
+    float targetDeltaTime{ 1.f / 60.f };
     while(true)
     {
-        if (deltaTime >= 1.f / 60.f)
+        if (deltaTime >= targetDeltaTime)
         {
 
 
@@ -30,13 +31,18 @@ int main()
             executor1.flushSharedLocalContexts();
             executor2.flushSharedLocalContexts();
 
-            for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
+            Dod::DataUtils::forEach(Dod::ImTable(sApplicationContext.data), [&](const Types::Application::Data& data)
             {
-                if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
+                if (data.cmd == 1)
                 {
-                    return 0;
+                    exit(0);
+                }
+                if (data.frameDeltaStep != 0)
+                {
+                    targetDeltaTime = data.frameDeltaStep;
                 }
             }
+            );
             deltaTime = {};
         }
 
