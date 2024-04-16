@@ -92,4 +92,17 @@ namespace Engine::ContainerUtils
 		return map.data.values[0];
 	}
 
+	template <typename MapType>
+	int32_t getIndex(MapType& map, auto key)
+	{
+		for (int32_t elId{}; elId < getNumOfElements(map); ++elId)
+		{
+			if (map.data.keys[elId] != key)
+				continue;
+			return elId;
+		}
+
+		return -1;
+	}
+
 }

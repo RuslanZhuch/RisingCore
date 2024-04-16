@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstddef>
 #include <cinttypes>
 
@@ -10,5 +12,11 @@ namespace Dod::MemTypes
 	using capacityEls_t = int32_t;
 	using capacity_t = int64_t;
 	using alignment_t = uintptr_t;
+
+	struct MemorySpan
+	{
+		dataConstPoint_t dataBegin{};
+		dataConstPoint_t dataEnd{};
+	};
 
 };
