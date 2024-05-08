@@ -14,14 +14,14 @@ namespace Engine::ContainerUtils
 		{
 			if (map.data.keys[elId] != pushKey)
 				continue;
-			map.data.values[elId] = pushDataElement;
+			map.data.values[elId] = std::move(pushDataElement);
 			return;
 		}
 
 		if (getNumOfElements(map) < getCapacity(map))
 		{
 			map.data.keys[map.size] = pushKey;
-			map.data.values[map.size] = pushDataElement;
+			map.data.values[map.size] = std::move(pushDataElement);
 			++map.size;
 		}
 	}
