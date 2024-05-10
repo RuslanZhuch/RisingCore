@@ -92,6 +92,26 @@ namespace Dod::Algorithms
 	}
 
 	template <typename T>
+	[[nodiscard]] static int32_t getIndexByValue(Dod::CommonData::CMonoImTable auto src, T value, int32_t startIndex = 0) noexcept
+	{
+
+		const auto firstPassIndex{ startIndex };
+		for (int32_t elId{ firstPassIndex }; elId < Dod::DataUtils::getNumFilledElements(src); ++elId)
+		{
+			if (Dod::DataUtils::get(src, elId) == value)
+				return elId;
+		}
+		for (int32_t elId{ 0 }; elId < startIndex; ++elId)
+		{
+			if (Dod::DataUtils::get(src, elId) == value)
+				return elId;
+		}
+
+		return -1;
+
+	}
+
+	template <typename T>
 	static void getIndicesByValue(Dod::CommonData::CMonoDTable auto& indices, Dod::CommonData::CMonoImTable auto src, T value) noexcept requires
 		std::is_same_v<std::tuple_element_t<0, typename std::decay_t<decltype(indices)>::types_t>, int32_t>
 	{

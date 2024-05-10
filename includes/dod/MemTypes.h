@@ -15,6 +15,12 @@ namespace Dod::MemTypes
 
 	struct MemorySpan
 	{
+		dataPoint_t dataBegin{};
+		dataPoint_t dataEnd{};
+	};
+
+	struct MemoryConstSpan
+	{
 		dataConstPoint_t dataBegin{};
 		dataConstPoint_t dataEnd{};
 	};

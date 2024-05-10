@@ -227,6 +227,40 @@ TEST(Algorithm, GetSortedUniques)
 
 }
 
+TEST(Algorithm, GetIndexByValue)
+{
+	using type_t = int32_t;
+
+	{
+		alignas(64) auto values{ std::to_array<type_t>({2, 1, 1, 2, 3, 4, 3, 5, 4}) };
+
+		Dod::DTable<type_t> buffer;
+		initDTable(buffer, values);
+
+		{
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 1, 0), 1);
+		}
+		{
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, 0), 0);
+		}
+		{
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 3, 0), 4);
+		}
+		{
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 42, 0), -1);
+		}
+		{
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, 0), 0);
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, 0), 0);
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, 1), 3);
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, 2), 3);
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, 3), 3);
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, 4), 0);
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, 4), 0);
+		}
+	}
+}
+
 TEST(Algorithm, GetIndicesByValue)
 {
 	using type_t = int32_t;
