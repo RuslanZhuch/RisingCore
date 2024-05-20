@@ -12,16 +12,19 @@
 
 namespace Engine
 {
-	struct String
+
+	template <int32_t capacityArg>
+	struct StringV
 	{
-		constexpr static int32_t capacity{ 64 };
+		constexpr static int32_t capacity{ capacityArg };
 		std::array<char, capacity> internalData;
 
-		[[nodiscard]] bool operator==(const String& other) const noexcept
+		[[nodiscard]] bool operator==(const StringV<capacityArg>& other) const noexcept
 		{
 			return std::strcmp(this->internalData.data(), other.internalData.data()) == 0;
 		}
-
 	};
+
+	using String = StringV<64>;
 
 }
