@@ -594,6 +594,30 @@ TEST(Algorithms, GetIntersections)
 
 }
 
+TEST(Algorithms, Sort)
+{
+
+	using type_t = int32_t;
+
+	alignas(64) auto values{ std::to_array<type_t>({10, 1, 5, -5, 6, 4}) };
+
+	Dod::DTable<type_t> buffer;
+	initDTable(buffer, values);
+
+	Dod::Algorithms::sort(
+		Dod::MutTable(buffer)
+	);
+
+	ASSERT_EQ(values.size(), Dod::DataUtils::getNumFilledElements(buffer));
+	EXPECT_EQ(Dod::DataUtils::get(buffer, 0), -5);
+	EXPECT_EQ(Dod::DataUtils::get(buffer, 1), 1);
+	EXPECT_EQ(Dod::DataUtils::get(buffer, 2), 4);
+	EXPECT_EQ(Dod::DataUtils::get(buffer, 3), 5);
+	EXPECT_EQ(Dod::DataUtils::get(buffer, 4), 6);
+	EXPECT_EQ(Dod::DataUtils::get(buffer, 5), 10);
+
+}
+
 TEST(Algorithms, GetSortedIndices)
 {
 

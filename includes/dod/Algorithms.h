@@ -40,6 +40,21 @@ namespace Dod::Algorithms
 
 	}
 
+	static void sort(Dod::CommonData::CMonoMutTable auto buffer) noexcept
+	{
+
+		if (Dod::DataUtils::getNumFilledElements(buffer) == 0)
+			return;
+
+		const auto dataBegin{ &Dod::DataUtils::get(buffer, 0) };
+		const auto endOffset{ Dod::DataUtils::getNumFilledElements(buffer) };
+
+		std::sort(dataBegin, dataBegin + endOffset, [&](auto left, auto right) -> bool {
+			return left < right;
+		});
+
+	}
+
 	static void getSortedIndices(Dod::CommonData::CMonoDTable auto& sortedIndices, Dod::CommonData::CMonoImTable auto srcBuffer) noexcept requires
 		std::is_same_v<std::tuple_element_t<0, typename std::decay_t<decltype(sortedIndices)>::types_t>, int32_t>
 	{
