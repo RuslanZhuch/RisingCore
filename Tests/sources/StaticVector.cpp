@@ -199,6 +199,49 @@ TEST(StaticVector, assign)
 		checkElements(vec2, std::to_array<int32_t>({ 1, 2 }));
 	}
 
+	{
+		using type_t = std::variant<int32_t, float>;
+		Engine::StaticVector<type_t, 4> vec{};
+		Engine::ContainerUtils::pushBack(vec, 1);
+		Engine::ContainerUtils::pushBack(vec, 2);
+		Engine::ContainerUtils::pushBack(vec, 3.f);
+
+		checkElements(vec, std::to_array<type_t>({ 1, 2, 3.f }));
+	}
+
+	{
+        struct BigData1
+        {
+            int data1;
+            float data2;
+            uint32_t data3;
+
+            [[nodiscard]] auto operator<=>(const BigData1&) const = default;
+        };
+
+		struct BigData2
+		{
+			uint64_t data1;
+			int32_t data2;
+
+			[[nodiscard]] auto operator<=>(const BigData2&) const = default;
+		};
+
+		using type_t = std::variant<BigData1, BigData2>;
+		Engine::StaticVector<type_t, 4> vec{};
+
+		constexpr auto param1{ BigData1{1, 2.f, 3u} };
+		constexpr auto param2{ BigData2{4ul, 5} };
+		constexpr auto param3{ BigData1{6, 7.f, 8u} };
+
+		Engine::ContainerUtils::pushBack(vec, param1);
+		Engine::ContainerUtils::pushBack(vec, param2);
+		Engine::ContainerUtils::pushBack(vec, param3);
+
+		checkElements(vec, std::to_array<type_t>({ param1, param2, param3 }));
+
+	}
+
 }
 
 

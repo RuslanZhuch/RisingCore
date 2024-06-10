@@ -1,3 +1,5 @@
+#pragma once
+
 #include <type_traits>
 #include <concepts>
 #include <memory>
@@ -21,7 +23,7 @@ namespace Engine::ContainerUtils
 	concept Vector = ContainerWithSize<VecType> && ContainerWithCapacity<VecType> && VectorWithData<VecType>;
 
 	template <Vector VecType, typename PushType>
-	requires std::is_same_v<typename std::decay_t<VecType>::type_t, std::decay_t<PushType>>
+	requires std::is_convertible_v<std::decay_t<PushType>, typename std::decay_t<VecType>::type_t>
 	void pushBack(VecType& vector, PushType pushElement) requires requires { requires sizeof(PushType) <= sizeof(void*); }
 	{
 		if (getNumOfElements(vector) < getCapacity(vector))
@@ -29,7 +31,7 @@ namespace Engine::ContainerUtils
 	}
 
 	template <Vector VecType, typename PushType>
-	requires std::is_same_v<typename std::decay_t<VecType>::type_t, std::decay_t<PushType>>
+	requires std::is_convertible_v<std::decay_t<PushType>, typename std::decay_t<VecType>::type_t>
 	void pushBack(VecType& vector, const PushType& pushElement) requires requires { requires sizeof(PushType) > sizeof(void*); }
 	{
 		if (getNumOfElements(vector) < getCapacity(vector))

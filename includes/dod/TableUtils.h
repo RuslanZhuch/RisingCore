@@ -12,6 +12,7 @@
 #include <concepts>
 #include <cmath>
 #include <cstring>
+#include <span>
 
 namespace Dod::DataUtils
 {
@@ -264,6 +265,14 @@ namespace Dod::DataUtils
 			return *(reinterpret_cast<type_t*>(table.dataBegin) + elId);
 		}
 
+	}
+
+	template <CommonData::CMonoTable TableType>
+	[[nodiscard]] auto getRaw(const TableType& table) noexcept
+	{
+		using type_t = std::tuple_element_t<0, typename TableType::types_t>;
+
+		return std::span<const type_t>(&get(table, 0), static_cast<size_t>(getNumFilledElements(table)));
 	}
 
 	template <CommonData::CMonoImTable T>

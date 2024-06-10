@@ -221,6 +221,24 @@ protected:
 
 	}
 
+	template <typename T>
+	void checkRaw(std::vector<T>&& expectedValues)
+	{
+
+		const auto impl = [&](auto && table) {
+
+			const auto raw{ Dod::DataUtils::getRaw(table) };
+			
+			ASSERT_EQ(expectedValues.size(), raw.size());
+			ASSERT_TRUE(std::equal(expectedValues.begin(), expectedValues.end(), raw.begin()));
+		};
+
+		impl(this->table);
+		impl(Dod::MutTable(this->table));
+		impl(Dod::ImTable(this->table));
+
+	}
+
 	template <typename ... T>
 	void checkTable(std::tuple<std::vector<T>...>&& expectedValues) requires requires(T ... t) {
 		{std::tuple_size_v<std::tuple<T...>> > 1 };
@@ -703,6 +721,20 @@ TEST_F(GetAllIntDouble, GetAllElements)
 	this->checkTable<int, double>({ {1, 3}, {2., 4.} });
 
 	this->pushBack(2, 5, 6.);
+
+}
+
+TEST_F(GetInt, GetRawElements)
+{
+
+	this->init(4);
+
+	this->pushBack(1, 10);
+	this->pushBack(2, 20);
+	this->pushBack(3, 30);
+	this->pushBack(4, 40);
+
+	this->checkRaw(this->genCheckVector(10, 20, 30, 40));
 
 }
 
