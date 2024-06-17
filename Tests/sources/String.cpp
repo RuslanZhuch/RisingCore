@@ -28,6 +28,12 @@ TEST(String, Assignment)
 	Engine::StringUtils::assign(str, "New string data");
 	ASSERT_TRUE(str == "New string data");
 
+	str = Engine::StringUtils::assign<decltype(str)>("New string data 2");
+	ASSERT_TRUE(str == "New string data 2");
+
+	const auto str2{ Engine::StringUtils::assign<Engine::String>("New string data 3") };
+	ASSERT_TRUE(str2 == "New string data 3");
+
 }
 
 TEST(String, Compare)
@@ -42,4 +48,6 @@ TEST(String, Compare)
 	EXPECT_EQ(str1, str2);
 	EXPECT_TRUE(str1 != str3);
 	EXPECT_TRUE(str2 != str3);
+
+	EXPECT_TRUE(str1 == "String 1");
 }

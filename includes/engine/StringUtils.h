@@ -17,6 +17,14 @@ namespace Engine::StringUtils
 			std::memcpy(string.internalData.data(), inStr.data(), inStr.size());
 	}
 
+	template <typename StringType>
+	StringType assign(std::string_view inStr) noexcept
+	{
+		StringType string{};
+		assign(string, inStr);
+		return string;
+	}
+
 }
 
 template <typename BufferType>
