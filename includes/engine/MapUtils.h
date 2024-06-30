@@ -70,7 +70,7 @@ namespace Engine::ContainerUtils
 		if (getNumOfElements(map) < getCapacity(map))
 		{
 			map.data.keys[map.size] = key;
-			map.data.values[map.size] = 0;
+			map.data.values[map.size] = {};
 
 			return map.data.values[map.size++];
 		}
