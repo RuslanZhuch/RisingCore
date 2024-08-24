@@ -5,11 +5,6 @@
 
 void Types::Cats::CryingCat2::setValueByName(std::string_view name, const rapidjson::Value& value) noexcept
 {
-    if (name == "name")
-    {
-        Engine::ContextUtils::assignToVariable(this->name, value);
-        return;
-    }
 }
 
 void Types::Cats::CryingCat::setValueByName(std::string_view name, const rapidjson::Value& value) noexcept
