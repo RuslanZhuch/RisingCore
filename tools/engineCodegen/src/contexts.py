@@ -513,6 +513,8 @@ def generate_shared_init(handler, contexts_data):
     for instance in contexts_data:
         class_name = _to_class_name(instance.context_name)
         generator.generate_line(handler, "Game::Context::{}::Data {}Context;".format(class_name, instance.instance_name))
+    
+def generate_shared_load(handler, contexts_data):
     for instance in contexts_data:
         class_name = _to_class_name(instance.context_name)
         generator.generate_line(handler, "{}Context.load();".format(instance.instance_name))

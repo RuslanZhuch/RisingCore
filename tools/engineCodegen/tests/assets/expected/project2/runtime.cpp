@@ -4,13 +4,27 @@
 #include <dod/SharedContext.h>
 #include <engine/Timer.h>
 
+namespace
+{
+}
+
+namespace
+{
+    Game::ExecutionBlock::Executor1 executor1;
+    Game::ExecutionBlock::Executor2 executor2;
+}
+
+struct DependenciesMask
+{
+
+    uint64_t part1{};
+};
+
 int main()
 {
 
-    Game::ExecutionBlock::Executor1 executor1;
     executor1.loadContext();
     executor1.initiate();
-    Game::ExecutionBlock::Executor2 executor2;
     executor2.loadContext();
     executor2.initiate();
 

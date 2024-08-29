@@ -65,7 +65,7 @@
             "executorContextName": "target1"
         },
         {
-            "instanceName": "sharedInst1",
+            "instanceName": "sharedInst2",
             "executorName": "executor2",
             "executorContextName": "target2"
         },
@@ -74,5 +74,28 @@
             "executorName": "executor3",
             "executorContextName": "shared3"
         }
-    ]
+    ],
+    "structure": {
+        "executor2": {
+            "inputs": { 
+                "sharedInst1": "shared1", 
+                "sharedInst2": "shared2", 
+                "sharedInst3": "shared3",
+                "sharedInst4": "shared4"
+            },
+            "outputs": {
+                "sharedInst1": "target1",
+                "sharedInst2": "target2"
+            }
+        },
+        "executor3": {
+            "inputs": { 
+                "sharedInst1": "shared1_2",
+                "sharedInst3": "shared2_2" 
+            },
+            "outputs": {
+                "sharedInst3": "shared3"
+            }
+        }
+    }
 }

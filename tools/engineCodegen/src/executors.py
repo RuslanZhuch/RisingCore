@@ -85,6 +85,10 @@ def gen_inits(handler, executors_data, workspace_data):
         name = get_name(data)
         class_name = "Game::ExecutionBlock::" + _to_class_name(name)
         generator.generate_variable(handler, class_name, name)
+
+def gen_loads(handler, executors_data, workspace_data):
+    for data in executors_data:
+        name = get_name(data)
         generator.generate_line(handler, name + ".loadContext();")
         #gen_shared_context_init(handler, data, workspace_data)
         generator.generate_line(handler, name + ".initiate();")

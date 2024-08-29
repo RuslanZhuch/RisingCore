@@ -11,31 +11,45 @@
 #include <dod/SharedContext.h>
 #include <engine/Timer.h>
 
-int main()
+namespace
 {
     Game::Context::SContext1::Data poolInst1Context;
     Game::Context::SContext1::Data poolInst2Context;
     Game::Context::SContext2::Data poolInst3Context;
+}
+
+namespace
+{
+    Game::ExecutionBlock::Executor1 executor1;
+    Game::ExecutionBlock::Executor2 executor2;
+    Game::ExecutionBlock::Executor3 executor3;
+    Game::ExecutionBlock::Executor4 executor4;
+    Game::ExecutionBlock::Executor5 executor5;
+    Game::ExecutionBlock::Executor6 executor6;
+}
+
+struct DependenciesMask
+{
+
+    uint64_t part1{};
+};
+
+int main()
+{
     poolInst1Context.load();
     poolInst2Context.load();
     poolInst3Context.load();
 
-    Game::ExecutionBlock::Executor1 executor1;
     executor1.loadContext();
     executor1.initiate();
-    Game::ExecutionBlock::Executor2 executor2;
     executor2.loadContext();
     executor2.initiate();
-    Game::ExecutionBlock::Executor3 executor3;
     executor3.loadContext();
     executor3.initiate();
-    Game::ExecutionBlock::Executor4 executor4;
     executor4.loadContext();
     executor4.initiate();
-    Game::ExecutionBlock::Executor5 executor5;
     executor5.loadContext();
     executor5.initiate();
-    Game::ExecutionBlock::Executor6 executor6;
     executor6.loadContext();
     executor6.initiate();
 

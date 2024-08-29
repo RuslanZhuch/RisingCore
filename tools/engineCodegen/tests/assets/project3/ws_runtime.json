@@ -102,5 +102,52 @@
             "executorName": "executor4",
             "executorContextName": "pool3"
         }
-    ]
+    ],
+    "structure": {
+        "executor1": {
+            "inputs": { 
+            },
+            "outputs": {
+                "poolInst1": "pool1"
+            }
+        },
+        "executor2": {
+            "inputs": { 
+            },
+            "outputs": {
+                "poolInst2": "pool2",
+                "poolInst3": "pool3"
+            }
+        },
+        "executor3": {
+            "inputs": { 
+                "poolInst1": "pool1"
+            },
+            "outputs": {
+            }
+        },
+        "executor4": {
+            "inputs": { 
+                "poolInst2": "pool2"
+            },
+            "outputs": {
+                "poolInst3": "pool3"
+            }
+        },
+        "executor5": {
+            "inputs": { 
+                "poolInst2": "pool2",
+                "poolInst3": "pool3"
+            },
+            "outputs": {
+            }
+        },
+        "executor6": {
+            "inputs": { 
+                "poolInst3": "pool3"
+            },
+            "outputs": {
+            }
+        }
+    }
 }

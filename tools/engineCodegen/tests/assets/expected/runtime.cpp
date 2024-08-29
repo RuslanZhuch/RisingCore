@@ -8,24 +8,38 @@
 #include <dod/SharedContext.h>
 #include <engine/Timer.h>
 
-int main()
+namespace
 {
     Game::Context::SContext1::Data sharedInst1Context;
     Game::Context::SContext1::Data sharedInst2Context;
     Game::Context::SContext2::Data sharedInst3Context;
     Game::Context::SContext2::Data sharedInst4Context;
+}
+
+namespace
+{
+    Game::ExecutionBlock::Executor1 executor1;
+    Game::ExecutionBlock::Executor2 executor2;
+    Game::ExecutionBlock::Executor3 executor3;
+}
+
+struct DependenciesMask
+{
+
+    uint64_t part1{};
+};
+
+int main()
+{
     sharedInst1Context.load();
     sharedInst2Context.load();
     sharedInst3Context.load();
     sharedInst4Context.load();
 
-    Game::ExecutionBlock::Executor1 executor1;
     executor1.loadContext();
     executor1.initiate();
-    Game::ExecutionBlock::Executor2 executor2;
     executor2.loadContext();
     executor2.initiate();
-    Game::ExecutionBlock::Executor3 executor3;
     executor3.loadContext();
     executor3.initiate();
 
@@ -56,7 +70,7 @@ int main()
             sharedInst4Context.reset();
 
             executor2.modifyTarget1(sharedInst1Context);
-            executor2.modifyTarget2(sharedInst1Context);
+            executor2.modifyTarget2(sharedInst2Context);
             executor3.modifyShared3(sharedInst3Context);
 
             executor1.flushSharedLocalContexts();

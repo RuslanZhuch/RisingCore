@@ -2,6 +2,20 @@
 #include <dod/SharedContext.h>
 #include <engine/Timer.h>
 
+namespace
+{
+}
+
+namespace
+{
+}
+
+struct DependenciesMask
+{
+
+    uint64_t part1{};
+};
+
 int main()
 {
 

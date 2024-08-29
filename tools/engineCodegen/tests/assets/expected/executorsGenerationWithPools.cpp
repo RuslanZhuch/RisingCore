@@ -1,18 +1,6 @@
 Game::ExecutionBlock::Executor1 executor1;
-executor1.loadContext();
-executor1.initiate();
 Game::ExecutionBlock::Executor2 executor2;
-executor2.loadContext();
-executor2.initiate();
 Game::ExecutionBlock::Executor3 executor3;
-executor3.loadContext();
-executor3.initiate();
 Game::ExecutionBlock::Executor4 executor4;
-executor4.loadContext();
-executor4.initiate();
 Game::ExecutionBlock::Executor5 executor5;
-executor5.loadContext();
-executor5.initiate();
 Game::ExecutionBlock::Executor6 executor6;
-executor6.loadContext();
-executor6.initiate();

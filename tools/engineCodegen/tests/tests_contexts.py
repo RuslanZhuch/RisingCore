@@ -348,6 +348,16 @@ class TestContexts(unittest.TestCase):
         
         utils.assert_files(self, "dest/gen_scontexts_init.cpp", "assets/expected/gen_scontexts_init.cpp")
         
+    def test_generate_shared_contexts_load(self):
+        instances_data = contexts.load_shared_context_instances("assets/project1/ws_runtime.json")
+        handler = generator.generate_file("dest", "gen_scontexts_load.cpp")
+        self.assertIsNotNone(handler)
+        contexts.generate_shared_load(handler, instances_data)
+        
+        handler.close()
+        
+        utils.assert_files(self, "dest/gen_scontexts_load.cpp", "assets/expected/gen_scontexts_load.cpp")
+        
     def test_generate_shared_contexts_usage(self):
         instances_data = contexts.load_shared_context_instances("assets/project3/ws_runtime.json")
         handler = generator.generate_file("dest", "gen_scontexts_usage.cpp")
@@ -395,14 +405,17 @@ class TestContexts(unittest.TestCase):
         workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
         
         merge_data = contexts.load_shared_context_merge(workspace_data)
-        self.assertEqual(len(merge_data), 2)
+        self.assertEqual(len(merge_data), 3)
         
         self.assertIsNotNone(merge_data["sharedInst1"])
-        self.assertEqual(len(merge_data["sharedInst1"]), 2)
+        self.assertEqual(len(merge_data["sharedInst1"]), 1)
         self.assertEqual(merge_data["sharedInst1"][0].executor_name, "executor2")
         self.assertEqual(merge_data["sharedInst1"][0].executor_scontext, "target1")
-        self.assertEqual(merge_data["sharedInst1"][1].executor_name, "executor2")
-        self.assertEqual(merge_data["sharedInst1"][1].executor_scontext, "target2")
+        
+        self.assertIsNotNone(merge_data["sharedInst2"])
+        self.assertEqual(len(merge_data["sharedInst2"]), 1)
+        self.assertEqual(merge_data["sharedInst2"][0].executor_name, "executor2")
+        self.assertEqual(merge_data["sharedInst2"][0].executor_scontext, "target2")
         
         self.assertIsNotNone(merge_data["sharedInst3"])
         self.assertEqual(len(merge_data["sharedInst3"]), 1)

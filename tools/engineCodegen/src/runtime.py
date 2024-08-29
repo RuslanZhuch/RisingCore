@@ -1,6 +1,7 @@
 import generator
 import executors
 import contexts
+import structures
 import loader
 
 class ContextUsage:
@@ -28,6 +29,10 @@ def _get_validated_shared_context_instaces(workspace_shared_contexts_file, conte
     instances_data = contexts.load_shared_context_instances(workspace_shared_contexts_file)
     validated_instances = contexts.get_validated_context_instances(contexts_data, instances_data)
     return validated_instances
+
+def _get_structure_data(workspace_shared_contexts_file) -> list[contexts.ContextUsage]:
+    data = loader.load_file_data(workspace_shared_contexts_file)
+    return data["structure"]
 
 def _generate_commands(handler):
     def cycle_body(handler):
@@ -137,12 +142,27 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
     generator.generate_line(handler, "#include <dod/SharedContext.h>")
     generator.generate_line(handler, "#include <engine/Timer.h>")
     handler.newline(1)
-    
+
+    def shared_contexts_init_body(namespace_handler):
+        contexts.generate_shared_init(namespace_handler, validated_shared_context_instances)
+    generator.generate_block(handler, "namespace", shared_contexts_init_body)
+    handler.newline(1)
+
+    def shared_executors_init_body(namespace_handler):
+        executors.gen_inits(handler, executors_data, workspace_context_data)
+    generator.generate_block(handler, "namespace", shared_executors_init_body)
+    handler.newline(1)
+
+    structure = _get_structure_data(workspace_shared_contexts_file)
+    structure_contexts_list = structures.get_contexts_list(structure)
+    structures.generate_deps_structure(handler, len(structure_contexts_list))
+    handler.newline(1)
+
     def fill_function(self, handler):
-        contexts.generate_shared_init(handler, validated_shared_context_instances)
+        contexts.generate_shared_load(handler, validated_shared_context_instances)
         handler.newline(1)
         
-        executors.gen_inits(handler, executors_data, workspace_context_data)
+        executors.gen_loads(handler, executors_data, workspace_context_data)
     
         def cycle_function(handler):
             def impl(handler):
