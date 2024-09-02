@@ -17,6 +17,7 @@ import contexts
 import loader
 import types_manager
 
+import gen_base_test
 import utils
 
 def load_shared_contexts():
@@ -25,11 +26,7 @@ def load_shared_contexts():
         "assets/contexts/sContext2.json"
     ])
 
-class TestContexts(unittest.TestCase):
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
-        self.maxDiff = None
-    
+class TestContexts(gen_base_test.TestBaseGen):
     def test_load_context_data(self):
         context_raw_data = loader.load_file_data("assets/contexts/lContext1.json")
         context_data = contexts.load_data(context_raw_data)
@@ -58,44 +55,21 @@ class TestContexts(unittest.TestCase):
         self.assertEqual(context_data.tables_data[0].capacity, 512)
         self.assertEqual(context_data.tables_data[1].capacity, 1024)
         
-    def test_gen_context1_buffer_decls(self):
-        context_raw_data = loader.load_file_data("assets/contexts/lContext1.json")
-        
-        handler = generator.generate_file("dest", "gen_lContext1_buffer_decls.cpp")
-        self.assertIsNotNone(handler)
-        context_data = contexts.load_data(context_raw_data)
-        contexts.generate_context_buffer_decls(handler, context_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_lContext1_buffer_decls.cpp", "assets/expected/gen_lContext1_buffer_decls.cpp")
-        
-
-    def test_gen_context1_data(self):
-        context_raw_data = loader.load_file_data("assets/contexts/lContext1.json")
-        
-        handler = generator.generate_file("dest", "gen_lContext1_data.cpp")
-        self.assertIsNotNone(handler)
-        context_data = contexts.load_data(context_raw_data)
-        contexts.generate_context_data(handler, context_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_lContext1_data.cpp", "assets/expected/gen_lContext1_data.cpp")
-        
     def test_gen_context1_def(self):
-        types_file_data = loader.load_file_data("assets/project1/types_contexts_data.json")
-        types_cache = types_manager.cache_types([types_file_data])
+        def logic(gen_file_name):
+            types_file_data = loader.load_file_data("assets/project1/types_contexts_data.json")
+            types_cache = types_manager.cache_types([types_file_data])
+            contexts.generate_context_def("dest", "assets/contexts/lContext1.json", types_cache)
         
-        contexts.generate_context_def("dest", "assets/contexts/lContext1.json", types_cache)
-        utils.assert_files(self, "dest/lContext1Context.h", "assets/expected/lContext1Context.h")
+        self._test_gen(logic, "dest/lContext1Context.h", "assets/expected/lContext1Context.h")
         
     def test_gen_context2_def(self):
-        types_file_data = loader.load_file_data("assets/project1/types_contexts_data.json")
-        types_cache = types_manager.cache_types([types_file_data])
+        def logic(gen_file_name):
+            types_file_data = loader.load_file_data("assets/project1/types_contexts_data.json")
+            types_cache = types_manager.cache_types([types_file_data])
+            contexts.generate_context_def("dest", "assets/contexts/lContext2.json", types_cache)
         
-        contexts.generate_context_def("dest", "assets/contexts/lContext2.json", types_cache)
-        utils.assert_files(self, "dest/lContext2Context.h", "assets/expected/lContext2Context.h")
+        self._test_gen(logic, "dest/lContext2Context.h", "assets/expected/lContext2Context.h")
         
     def test_gen_context1_load(self):
         file_path = "assets/contexts/lContext1.json"
@@ -168,32 +142,6 @@ class TestContexts(unittest.TestCase):
         handler.close()
         
         utils.assert_files(self, "dest/gen_lContext5_merge.cpp", "assets/expected/gen_lContext5_merge.cpp")
-          
-    def test_gen_context6_data(self):
-        context_raw_data = loader.load_file_data("assets/contexts/lContext6.json")
-        
-        handler = generator.generate_file("dest", "gen_lContext6_data.cpp")
-        self.assertIsNotNone(handler)
-    
-        context_data = contexts.load_data(context_raw_data)
-        contexts.generate_context_data(handler, context_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_lContext6_data.cpp", "assets/expected/gen_lContext6_data.cpp")
-        
-    def test_gen_context6_data_convertion(self):
-        context_raw_data = loader.load_file_data("assets/contexts/lContext6.json")
-        
-        handler = generator.generate_file("dest", "gen_lContext6_data_convertion.cpp")
-        self.assertIsNotNone(handler)
-    
-        context_data = contexts.load_data(context_raw_data)
-        contexts.generate_data_converter(handler, context_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_lContext6_data_convertion.cpp", "assets/expected/gen_lContext6_data_convertion.cpp")
         
     def test_gen_context6_def(self):
         types_file_data = loader.load_file_data("assets/project1/types_contexts_data.json")

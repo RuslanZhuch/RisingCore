@@ -43,10 +43,3 @@ def get_includes_list(cached_types : TypesCache, types_to_include : list[str]) -
         includes_list.append(path)
         
     return includes_list
-
-def gen_includes(handler, cached_types : list[TypesCache], types_to_include : list[str]):
-    includes_list = get_includes_list(cached_types, types_to_include)
-    
-    for path in includes_list:
-        generator.generate_line(handler, "#include <{}>".format(path))
-    

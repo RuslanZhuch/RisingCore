@@ -50,19 +50,6 @@ class TestTyoes(unittest.TestCase):
         self.assertEqual(includes_list[0], "engine/String.h")
         self.assertEqual(includes_list[1], "assets/types/cpp/cats/Crying.h")
 
-    def test_gen_types_includes(self):
-        
-        types_default_file_data = loader.load_file_data("assets/project1/types_default.json")
-        types_additional_file_data = loader.load_file_data("assets/project1/types_additional.json")
-        types_cache = types_manager.cache_types([types_default_file_data, types_additional_file_data])
-        
-        handler = generator.generate_file("dest", "gen_types_includes1.cpp")
-        self.assertIsNotNone(handler)
-        types_manager.gen_includes(handler, types_cache, ["float", "float", "bool", "Types::Cats::CryingCat", "Engine::String", "int32_t", "Types::Cats::CryingCat", "double", "Types::Cats::CryingCat2"])
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_types_includes1.cpp", "assets/expected/gen_types_includes1.cpp")
-
     def test_get_list_of_types(self):
         
         type_schema_data = loader.load_file_data("assets/types/group1Deser.json")

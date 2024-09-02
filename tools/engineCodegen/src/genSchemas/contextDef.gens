@@ -1,0 +1,104 @@
+#pragma once
+
+${for include_file in include_files_list: }$
+#include${" <{}>".format(include_file)}$
+${ :end-for }$
+#include <dod/Tables.h>
+#include <dod/DataUtils.h>
+#include <dod/MemPool.h>
+
+#pragma warning(push)
+#pragma warning(disable : 4625)
+#pragma warning(disable : 4626)
+#pragma warning(disable : 4820)
+
+namespace Game::Context::${context_class_name}$
+{
+${for table_data in tables_data_list: }$
+    struct Buffer${"", to_class_name(table_data.name)}$ : public Dod::DTable<${", ".join(table_data.data_type_list)}$>
+    {
+
+    };
+
+${ :end-for }$
+${for table_data in tables_data_list: }$
+    struct CBuffer${"", to_class_name(table_data.name)}$ : public Dod::ImTable<${", ".join(table_data.data_type_list)}$>
+    {
+
+    };
+
+${ :end-for }$
+    struct Data
+    {
+        void load() noexcept;
+        void reset() noexcept;
+        void merge(const Data& other) noexcept;
+
+${for variable_data in variables_data_list: }$
+        ${"", variable_data["type"]}$ ${"", variable_data["name"]}$${"", variable_data["initial"]}$;
+${ :end-for }$
+        Dod::MemPool memory;
+${for table_data in tables_data_list: }$
+        Buffer${"", to_class_name(table_data.name)}$ ${"", table_data.name}$;
+${ :end-for }$
+    };
+
+    struct CData
+    {
+
+${for table_data in tables_data_list: }$
+        CBuffer${write("", to_class_name(table_data.name))}$ ${"", table_data.name}$;
+${ :end-for }$
+    };
+
+    [[nodiscard]] static CData convertToConst(const Data& context) noexcept
+    {
+        return { ${", ".join(conversions_list)}$ };
+    }
+
+}
+
+namespace Game::Context
+{
+${for table_data in tables_data_list: }$${if len(table_data.data_type_full_list) >= 2:}$
+    [[nodiscard]] static auto decoupleData(${context_class_name}$::Buffer${"", to_class_name(table_data.name)}$& ${"", table_data.name}$ToDecouple) noexcept
+    {
+        struct Output
+        {
+
+${for type_name in table_data.data_type_full_list: }$
+            Dod::MutTable<${"", table_data.data_type_full_list[type_name]}$> ${type_name}$;${ :end-for }$
+        };
+        const auto data{ Dod::DataUtils::get(${"", table_data.name}$ToDecouple) };
+        return Output(${", ".join([f"std::get<{i}>(data)" for i in list(range(len(table_data.data_type_list)))])}$);
+    }
+
+    [[nodiscard]] static auto decoupleData(const ${context_class_name}$::CBuffer${"", to_class_name(table_data.name)}$& ${"", table_data.name}$ToDecouple) noexcept
+    {
+        struct Output
+        {
+
+${for type_name in table_data.data_type_full_list: }$
+            Dod::ImTable<${"", table_data.data_type_full_list[type_name]}$> ${type_name}$;${ :end-for }$
+        };
+        const auto data{ Dod::DataUtils::get(${"", table_data.name}$ToDecouple) };
+        return Output(${", ".join([f"std::get<{i}>(data)" for i in list(range(len(table_data.data_type_list)))])}$);
+    }
+
+${:end-if}$${ :end-for }$
+${for table_data in tables_data_list: }$${if len(table_data.data_type_full_list) >= 2:}$
+${
+parameters = ["{} {}".format(table_data.data_type_full_list[type_name], type_name) for type_name in table_data.data_type_full_list]
+parameters.append("bool bStrobe = true")
+arguments = ["{}Dst".format(table_data.name), "bStrobe"]
+arguments.extend(table_data.data_name_list)
+}$
+    static void addData(${context_class_name}$::Buffer${"", to_class_name(table_data.name)}$& ${"", table_data.name}$Dst, ${", ".join(parameters)}$) noexcept
+    {
+        ${"Dod::DataUtils::pushBack({});".format(", ".join(arguments))}$
+    }
+
+${:end-if}$${ :end-for }$
+}
+
+#pragma warning(pop)

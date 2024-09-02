@@ -2,6 +2,10 @@
 import loader
 import generator
 import types_manager
+from templite import Templite
+
+import os
+current_directory = os.path.dirname(os.path.abspath(__file__))
 
 class SharedMerge:
     def __init__(self, executor_name, executor_scontext):
@@ -249,9 +253,10 @@ def generate_context_def(dest_path, context_file_path, types_cache):
     context_name = _to_class_name(loader.load_name(context_file_path))
     handler = generator.generate_file(dest_path, "{}Context.h".format(context_name))
     
-    generator.generate_line(handler, "#pragma once")
-    generator.generate_empty(handler)
-    
+
+#    generator.generate_line(handler, "#pragma once")
+#    generator.generate_empty(handler)
+#    
     context_data = load_data(context_raw_data)
     list_of_types = []
     
@@ -264,39 +269,69 @@ def generate_context_def(dest_path, context_file_path, types_cache):
     for table in context_data.tables_data:
         list_of_types.extend(table.data_type_list)
         
-    types_manager.gen_includes(handler, types_cache, list_of_types)
         
     #generator.generate_line(handler, "#include <{}>".format(buffer.data_type))
             
-    generator.generate_line(handler, "#include <dod/Tables.h>")
-    generator.generate_line(handler, "#include <dod/DataUtils.h>")
-    generator.generate_line(handler, "#include <dod/MemPool.h>")
-    generator.generate_empty(handler)
+#    generator.generate_line(handler, "#include <dod/Tables.h>")
+#    generator.generate_line(handler, "#include <dod/DataUtils.h>")
+#    generator.generate_line(handler, "#include <dod/MemPool.h>")
+#    generator.generate_empty(handler)
+#    
+#    generator.generate_line(handler, "#pragma warning(push)")
+#    generator.generate_line(handler, "#pragma warning(disable : 4625)")
+#    generator.generate_line(handler, "#pragma warning(disable : 4626)")
+#    generator.generate_line(handler, "#pragma warning(disable : 4820)")
+#    generator.generate_empty(handler)
     
-    generator.generate_line(handler, "#pragma warning(push)")
-    generator.generate_line(handler, "#pragma warning(disable : 4625)")
-    generator.generate_line(handler, "#pragma warning(disable : 4626)")
-    generator.generate_line(handler, "#pragma warning(disable : 4820)")
-    generator.generate_empty(handler)
-    
-    def namespace_body(namespace_handler):
-        context_data = load_data(context_raw_data)
-        generate_context_buffer_decls(namespace_handler, context_data)
-        generate_context_data(namespace_handler, context_data)
-        generator.generate_empty(namespace_handler)
-        generate_data_converter(namespace_handler, context_data)
-        generator.generate_empty(namespace_handler)
+#    def namespace_body(namespace_handler):
+#        context_data = load_data(context_raw_data)
+#        generate_context_buffer_decls(namespace_handler, context_data)
+#        generate_context_data(namespace_handler, context_data)
+#        generator.generate_empty(namespace_handler)
+#        generate_data_converter(namespace_handler, context_data)
+#        generator.generate_empty(namespace_handler)
+#
+#    generator.generate_block(handler, "namespace Game::Context::{}".format(context_name), namespace_body)
+#    generator.generate_empty(handler)
+#    
+#    def helpers_namespace_body(helpers_namespace_handler):  
+#        generate_context_getters(helpers_namespace_handler, context_data, context_name)
+#        generate_context_setters(helpers_namespace_handler, context_data, context_name)
+#    generator.generate_block(handler, "namespace Game::Context", helpers_namespace_body)
+#    
+#    generator.generate_empty(handler)
+#    generator.generate_line(handler, "#pragma warning(pop)")
 
-    generator.generate_block(handler, "namespace Game::Context::{}".format(context_name), namespace_body)
-    generator.generate_empty(handler)
+    includes_list = types_manager.get_includes_list(types_cache, list_of_types)
+    context_data = load_data(context_raw_data)
+
+#    for data in context_data.tables_data:
+#        print("name", data.name)
+
+    objects_data = []
+    for object in context_data.objects_data:
+        initial = ""
+        if object.initial is not None:
+            initial = "{}"
+        objects_data.append({
+            "name": object.name,
+            "type": object.data_type,
+            "initial": initial
+        })
+    convertion_list_tables = [ "Dod::ImTable<{}>(context.{})".format(", ".join(table.data_type_list), table.name) for table in context_data.tables_data ]
     
-    def helpers_namespace_body(helpers_namespace_handler):  
-        generate_context_getters(helpers_namespace_handler, context_data, context_name)
-        generate_context_setters(helpers_namespace_handler, context_data, context_name)
-    generator.generate_block(handler, "namespace Game::Context", helpers_namespace_body)
-    
-    generator.generate_empty(handler)
-    generator.generate_line(handler, "#pragma warning(pop)")
+    parameters = {
+        "context_class_name": context_name,
+        "include_files_list": includes_list,
+        "tables_data_list": context_data.tables_data,
+        "variables_data_list": objects_data,
+        "conversions_list": convertion_list_tables
+    }
+
+    t = Templite(filename=current_directory + "/genSchemas/contextDef.gens")
+    file_data = t.render(**parameters)
+    with open("{}/{}Context.h".format(dest_path, context_name), 'w') as file:
+        file.write(file_data)
     
 def generate_context_impl(dest_path, context_file_path):
     context_raw_data = loader.load_file_data(context_file_path)
