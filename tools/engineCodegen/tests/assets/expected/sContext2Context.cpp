@@ -21,6 +21,7 @@ namespace Game::Context::SContext2
         Engine::ContextUtils::loadVariable(this->var, loadingDataArray, 0);
 
 
+
     }
 
     void Data::reset() noexcept

@@ -144,11 +144,12 @@ class TestContexts(gen_base_test.TestBaseGen):
         utils.assert_files(self, "dest/gen_lContext5_merge.cpp", "assets/expected/gen_lContext5_merge.cpp")
         
     def test_gen_context6_def(self):
-        types_file_data = loader.load_file_data("assets/project1/types_contexts_data.json")
-        types_cache = types_manager.cache_types([types_file_data])
+        def logic(gen_file_name):
+            types_file_data = loader.load_file_data("assets/project1/types_contexts_data.json")
+            types_cache = types_manager.cache_types([types_file_data])
+            contexts.generate_context_def("dest", "assets/contexts/lContext6.json", types_cache)
         
-        contexts.generate_context_def("dest", "assets/contexts/lContext6.json", types_cache)
-        utils.assert_files(self, "dest/lContext6Context.h", "assets/expected/lContext6Context.h")
+        self._test_gen(logic, "dest/lContext6Context.h", "assets/expected/lContext6Context.h")
 
     def test_gen_context6_reset(self):
         file_path = "assets/contexts/lContext6.json"

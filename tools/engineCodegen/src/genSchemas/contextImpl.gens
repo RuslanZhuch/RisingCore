@@ -1,0 +1,75 @@
+#include "${context_class_name}$Context.h"
+
+#include <engine/contextUtils.h>
+
+namespace Game::Context::${context_class_name}$
+{
+
+    void Data::load() noexcept
+    {
+${total_elements = len(context_data.objects_data) + len(context_data.tables_data)}$
+
+        const auto doc{ ${"Engine::ContextUtils::loadFileDataRoot(\"{}\")".format(context_file_path)}$ };
+        const auto& inputDataOpt{ Engine::ContextUtils::gatherContextData(doc, ${total_elements}$) };
+
+        if (!inputDataOpt.has_value())
+        {
+            return;
+        }
+
+        const auto& loadingDataArray{ inputDataOpt.value() };
+
+${for object in context_data.objects_data: }$
+        Engine::ContextUtils::loadVariable${"(this->{}, loadingDataArray, {});".format(object.name, object.el_id)}$
+${ :end-for }$
+
+${for table in context_data.tables_data: }$
+        const auto ${"{}Capacity{{ Engine::ContextUtils::getDataCapacity<{}>(loadingDataArray, {}) }};".format(table.name, ", ".join(table.data_type_list), table.el_id)}$
+${ :end-for }$
+
+${if len(context_data.tables_data) > 0:}$
+        int32_t needBytes{ 64 };
+${for table in context_data.tables_data: }$
+        ${"needBytes += {}Capacity.numOfBytes;".format(table.name)}$
+${ :end-for }$
+
+        this->memory.allocate(needBytes);
+        Dod::MemTypes::capacity_t header{};
+
+${for table in context_data.tables_data: }$
+        Engine::ContextUtils::initData${"(this->{0}, {0}Capacity, this->memory, header);".format(table.name)}$
+        Engine::ContextUtils::loadDataContent${"(this->{}, loadingDataArray, {});".format(table.name, table.el_id)}$
+${ :end-for }$
+${:end-if}$
+
+    }
+
+    void Data::reset() noexcept
+    {
+${for table in context_data.tables_data: }$
+        Dod::DataUtils::flush${"(this->{});".format(table.name)}$
+${ :end-for }$
+    }
+
+    void Data::merge([[maybe_unused]] const Data& other) noexcept
+    {
+${for object in context_data.objects_data: }$
+${if object.merge_type != ContextData.MERGE_TYPE_NONE: }$
+${if object.merge_type == ContextData.MERGE_TYPE_ASSIGN: }$
+        ${"this->{0} = other.{0};".format(object.name)}$
+${:elif object.merge_type == ContextData.MERGE_TYPE_ADD:}$
+        ${"this->{0} += other.{0};".format(object.name)}$
+${:elif object.merge_type == ContextData.MERGE_TYPE_ASSIGN_NON_ZERO:}$
+        ${"if (other.{0})".format(object.name)}$
+            ${"this->{0} = other.{0};".format(object.name)}$
+${:end-if}$
+${:end-if}$
+${:end-if}$
+${for table in context_data.tables_data: }$
+${if table.merge_type != ContextData.MERGE_TYPE_NONE: }$
+        Dod::DataUtils::append${"(this->{0}, Dod::ImTable(other.{0}));".format(table.name)}$
+${:end-if}$
+${ :end-for }$
+    }
+
+}
