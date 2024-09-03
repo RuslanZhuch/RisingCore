@@ -1,0 +1,39 @@
+#include "${class_name}$Executor.h"
+
+namespace Game::ExecutionBlock
+{
+
+    void ${class_name}$::loadContext() noexcept
+    {
+${contexts_local = executor_data.get("contextsLocal")}$
+${if contexts_local is not None:}$
+${for context in contexts_local:}$
+${for element in context["list"]:}$
+        ${"this->{}Context.load();".format(element)}$
+${:end-for}$
+${:end-for}$
+
+${:end-if}$
+    }
+
+    void ${class_name}$::initiate() noexcept
+    {
+        this->initImpl();
+    }
+
+    void ${class_name}$::update(float dt) noexcept
+    {
+        this->updateImpl(dt);
+    }
+
+    void ${class_name}$::flushSharedLocalContexts() noexcept
+    {
+${contexts_to_flush = executor_data.get("contextsToFlush")}$
+${if contexts_to_flush is not None:}$
+${for flush_context in contexts_to_flush:}$
+        ${"this->{}Context.reset();".format(flush_context)}$
+${:end-for}$
+${:end-if}$
+    }
+
+}

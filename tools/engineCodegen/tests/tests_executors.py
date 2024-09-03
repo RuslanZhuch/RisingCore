@@ -18,6 +18,7 @@ import generator
 import runtime
 import loader
 
+import gen_base_test
 import utils
 
 EXPECT_NUM_OF_EXECUTORS = 3
@@ -35,11 +36,7 @@ def load_executors_for_class():
 def create_target_file():
     return runtime.generate_runtime_file("dest")
 
-class TestExecutors(unittest.TestCase):
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
-        self.maxDiff = None
-        
+class TestExecutors(gen_base_test.TestBaseGen):
     def test_load_executors(self):
         executors_data = load_executors()
         self.assertEqual(len(executors_data), EXPECT_NUM_OF_EXECUTORS)
@@ -374,21 +371,21 @@ class TestExecutors(unittest.TestCase):
         utils.assert_files(self, "dest/gen_executor_2_contexts_decl.cpp", "assets/expected/gen_executor_2_contexts_decl.cpp")
         
     def test_gen_executor_test1_header(self):
-        executors_data = load_executors_for_class()
-        self.assertEqual(len(executors_data), 1)
+        def logic(gen_file_name):
+            executors_data = load_executors_for_class()
+            self.assertEqual(len(executors_data), 1)
+            executors.gen_header("dest", executors_data[0])
         
-        executors.gen_header("dest", executors_data[0])
-        
-        utils.assert_files(self, "dest/Test1Executor.h", "assets/expected/Test1Executor.h")
+        self._test_gen(logic, "dest/Test1Executor.h", "assets/expected/Test1Executor.h")
 
     def test_gen_executor_test1_source(self):
-        executors_data = load_executors_for_class()
-        self.assertEqual(len(executors_data), 1)
+        def logic(gen_file_name):
+            executors_data = load_executors_for_class()
+            self.assertEqual(len(executors_data), 1)
+            executors.gen_source("dest", executors_data[0])
         
-        executors.gen_source("dest", executors_data[0])
-        
-        utils.assert_files(self, "dest/Test1Executor.cpp", "assets/expected/Test1Executor.cpp")
-        
+        self._test_gen(logic, "dest/Test1Executor.cpp", "assets/expected/Test1Executor.cpp")
+
     def test_gen_executor_one_segment(self):
         executors_data = executors.load(["assets/executors/executorWithOneSegment.json"])
         self.assertEqual(len(executors_data), 1)

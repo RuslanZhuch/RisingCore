@@ -1,0 +1,66 @@
+#pragma once
+
+${for context_name in contexts_list_unique:}$
+#include ${"<Contexts/{}Context.h>".format(context_name)}$
+${:end-for}$
+
+#include <dod/MemPool.h>
+#include <dod/SharedContext.h>
+
+#pragma warning(push)
+#pragma warning(disable : 4625)
+#pragma warning(disable : 4626)
+
+namespace Game::ExecutionBlock
+{
+    class ${class_name}$
+    {
+    public:
+        void loadContext() noexcept;
+        void initiate() noexcept;
+        void update(float dt) noexcept;
+        void flushSharedLocalContexts() noexcept;
+${if contexts_write_to is not None:}$
+${for context in contexts_write_to:}$
+${
+context_type = to_class_name(context["type"])
+class_name = "Context::{}::Data".format(context_type)
+}$
+${for element in context["list"]:}$
+${method_name = "modify{}".format(to_class_name(element))}$
+${argument = "{}&".format(class_name)}$
+        ${"void modify{}({}&) noexcept;".format(to_class_name(element), class_name)}$
+${:end-for}$
+${:end-for}$
+${:end-if}$
+
+    private:
+        void initImpl() noexcept;
+        void updateImpl(float dt) noexcept;
+
+    public:
+        Dod::MemPool memory;
+${contexts_local = executor_data.get("contextsLocal")}$
+${if contexts_local is not None:}$
+${for context in contexts_local:}$
+${class_name = "Context::{}::Data".format(to_class_name(context["type"]))}$
+${for element in context["list"]:}$
+${field_name = "{}Context".format(element)}$
+        ${"{} {};".format(class_name, field_name)}$
+${:end-for}$
+${:end-for}$
+${:end-if}$
+${contexts_shared = executor_data.get("contextsShared")}$
+${if contexts_shared is not None:}$
+${for context in contexts_shared:}$
+${class_name = "Context::{}::CData".format(to_class_name(context["type"]))}$
+${for element in context["list"]:}$
+${field_name = "{}Context".format(element)}$
+        ${"{} {};".format(class_name, field_name)}$
+${:end-for}$
+${:end-for}$
+${:end-if}$
+    };
+}
+
+#pragma warning(pop)

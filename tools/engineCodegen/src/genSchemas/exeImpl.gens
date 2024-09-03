@@ -1,0 +1,13 @@
+${"#include \"{}\"".format(file_name_header)}$
+
+using namespace Game::ExecutionBlock;
+
+void ${class_name}$::initImpl() noexcept
+{
+
+}
+
+void ${class_name}$::updateImpl([[maybe_unused]] float dt) noexcept
+{
+
+}

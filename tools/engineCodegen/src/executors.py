@@ -1,6 +1,10 @@
 import loader
 import generator
 import injectors
+from templite import Templite
+
+import os
+current_directory = os.path.dirname(os.path.abspath(__file__))
 
 class SharedUsage:
     def __init__(self, shared_instance, executor_scontext):
@@ -152,11 +156,7 @@ def gen_header(folder, executor_data):
     executor_name = get_name(executor_data)
     class_name = _to_class_name(executor_name)
     file_name = class_name + "Executor.h"
-    handler = generator.generate_file(folder, file_name)
-    
-    generator.generate_line(handler, "#pragma once")
-    generator.generate_empty(handler)
-    
+
     contexts_list = []
             
     contexts_local = executor_data.get("contextsLocal")
@@ -176,84 +176,34 @@ def gen_header(folder, executor_data):
     
     contexts_list_unique = list(set(contexts_list))
     contexts_list_unique.sort()
-    for context_name in contexts_list_unique:
-        generator.generate_line(handler, "#include <Contexts/{}Context.h>".format(context_name))
-            
-    generator.generate_empty(handler)
-    
-    generator.generate_line(handler, "#include <dod/MemPool.h>")
-    generator.generate_line(handler, "#include <dod/SharedContext.h>")
-    generator.generate_empty(handler)
-    
-    def namespace_block_data(handler):
-        def class_data(class_handler):
-            generator.generate_class_public_method(class_handler, "loadContext", "void", [], False)
-            generator.generate_class_public_method(class_handler, "initiate", "void", [], False)
-            generator.generate_class_public_method(class_handler, "update", "void", ['float dt'], False)
-            generator.generate_class_public_method(class_handler, "flushSharedLocalContexts", "void", [], False)
-            generator.generate_class_private_method(class_handler, "initImpl", "void", [], False)
-            generator.generate_class_private_method(class_handler, "updateImpl", "void", ['float dt'], False)
-            
-            contexts_write_to = executor_data.get("contextsWriteTo")
-            if contexts_write_to is not None:
-                for context in contexts_write_to:
-                    context_type = _to_class_name(context["type"])
-                    class_name = "Context::{}::Data".format(context_type)
-                    for element in context["list"]:
-                        method_name = "modify{}".format(_to_class_name(element))
-                        argument = "{}&".format(class_name)
-                        generator.generate_class_public_method(class_handler, method_name, "void", [argument], False)
-            
-            generator.generate_class_variable(class_handler, "Dod::MemPool", "memory")
-            
-            gen_contexts_decl(class_handler, executor_data)
-                                    
-        generator.generate_class(handler, class_name, class_data)
-        
-    generator.generate_line(handler, "#pragma warning(push)")
-    generator.generate_line(handler, "#pragma warning(disable : 4625)")
-    generator.generate_line(handler, "#pragma warning(disable : 4626)")
-    generator.generate_empty(handler)
-    
-    generator.generate_block(handler, "namespace Game::ExecutionBlock", namespace_block_data)
-    
-    generator.generate_empty(handler)
-    generator.generate_line(handler, "#pragma warning(pop)")
-    
+
+    parameters = {
+        "contexts_list_unique": contexts_list_unique,
+        "class_name": class_name,
+        "contexts_write_to": contexts_write_to,
+        "executor_data": executor_data,
+    }
+
+    t = Templite(filename=current_directory + "/genSchemas/exeHeader.gens")
+    file_data = t.render(**parameters)
+    with open(folder + "/" + file_name, 'w') as file:
+        file.write(file_data)
+
 def gen_source(folder, executor_data):
     executor_name = get_name(executor_data)
     class_name = _to_class_name(executor_name)
-    file_name_header = class_name + "Executor.h"
     file_name_source = class_name + "Executor.cpp"
-    handler = generator.generate_file(folder, file_name_source)
 
-    generator.generate_line(handler, "#include \"{}\"".format(file_name_header))
-    generator.generate_empty(handler)
-    
-    def namespace_block_data(handler):
-        def class_data(class_handler):
-            def load_body(self, handler):
-                gen_body_contexts_load(handler, executor_data)
-            generator.generate_class_public_method(class_handler, "loadContext", "void", [], False, load_body)
-            
-            def init_body(self, handler):
-                gen_body_init(handler, executor_data)
-                
-            generator.generate_class_public_method(class_handler, "initiate", "void", [], False, init_body)
-            
-            def update_body(self, handler):
-                gen_body_update(handler, executor_data)
-            generator.generate_class_public_method(class_handler, "update", "void", ['float dt'], False, update_body)
-            
-            def flush_body(self, handler):
-                gen_body_flush(handler, executor_data)
-            generator.generate_class_public_method(class_handler, "flushSharedLocalContexts", "void", [], False, flush_body)
-                        
-        generator.generate_class_impl(handler, class_name, class_data)
-        generator.generate_empty(handler)
-        
-    generator.generate_block(handler, "namespace Game::ExecutionBlock", namespace_block_data)
-    
+    parameters = {
+        "class_name": class_name,
+        "executor_data": executor_data,
+    }
+
+    t = Templite(filename=current_directory + "/genSchemas/exeSource.gens")
+    file_data = t.render(**parameters)
+    with open(folder + "/" + file_name_source, 'w') as file:
+        file.write(file_data)
+
 def inject_modify_methods(folder, executor_data):
     executor_name = get_name(executor_data)
     class_name = _to_class_name(executor_name)
@@ -319,15 +269,27 @@ def gen_implementation(folder, executor_data):
     if generator.get_file_generated(folder, file_name_source):
         return
     
-    handler = generator.generate_file(folder, file_name_source)
+    parameters = {
+        "class_name": class_name,
+        "executor_data": executor_data,
+        "file_name_header": file_name_header,
+    }
 
-    generator.generate_line(handler, "#include \"{}\"".format(file_name_header))
-    generator.generate_empty(handler)
-    generator.generate_line(handler, "using namespace Game::ExecutionBlock;")
-    
-    def class_data(class_handler):
-        generator.generate_class_public_method(class_handler, "initImpl", "void", [], False)
-        generator.generate_class_public_method(class_handler, "updateImpl", "void", ['[[maybe_unused]] float dt'], False)
-    
-    generator.generate_class_impl(handler, class_name, class_data)
-    
+    t = Templite(filename=current_directory + "/genSchemas/exeImpl.gens")
+    file_data = t.render(**parameters)
+    with open(folder + "/" + file_name_source, 'w') as file:
+        file.write(file_data)
+
+#    handler = generator.generate_file(folder, file_name_source)
+#
+#    generator.generate_line(handler, "#include \"{}\"".format(file_name_header))
+#    generator.generate_empty(handler)
+#    generator.generate_line(handler, "using namespace Game::ExecutionBlock;")
+#    
+#    def class_data(class_handler):
+#        generator.generate_class_public_method(class_handler, "initImpl", "void", [], False)
+#        generator.generate_class_public_method(class_handler, "updateImpl", "void", ['[[maybe_unused]] float dt'], False)
+#    
+#    generator.generate_class_impl(handler, class_name, class_data)
+#    
+#
