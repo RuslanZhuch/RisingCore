@@ -84,6 +84,9 @@ def get_executors_per_contexts(structure, contexts_list : list[str]):
 
     return executors_per_contexts
 
+def get_num_of_parts_for_deps_structure(num_of_channels : int):
+    return int((num_of_channels - 1) / CHANNELS_PER_PART) + 1
+
 def generate_deps_structure(handler, num_of_channels : int):
     def struct_body_const(struct_handler):
         num_of_parts = int((num_of_channels - 1) / CHANNELS_PER_PART) + 1

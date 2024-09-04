@@ -101,36 +101,6 @@ class TestExecutors(gen_base_test.TestBaseGen):
         self.assertEqual(usage["executor6"][0].shared_instance, "poolInst3")
         self.assertEqual(usage["executor6"][0].executor_scontext, "pool3")
         
-    def test_gen_executor_1_shared_context_init(self):
-        executors_data = load_executors()
-        self.assertEqual(len(executors_data), EXPECT_NUM_OF_EXECUTORS)
-        
-        handler = generator.generate_file("dest", "gen_executor_1_shared_context_init.cpp")
-        self.assertIsNotNone(handler)
-        
-        workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
-        
-        executors.gen_shared_context_init(handler, executors_data[0], workspace_data)
-        handler.close()
-        
-        descriptor_file = open("dest/gen_executor_1_shared_context_init.cpp", "r")
-        file_data = descriptor_file.read()
-        self.assertEqual(file_data, "")
-        
-    def test_gen_executor_2_shared_context_init(self):
-        executors_data = load_executors()
-        self.assertEqual(len(executors_data), EXPECT_NUM_OF_EXECUTORS)
-        
-        handler = generator.generate_file("dest", "gen_executor_2_shared_context_init.cpp")
-        self.assertIsNotNone(handler)
-        
-        workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
-        
-        executors.gen_shared_context_init(handler, executors_data[1], workspace_data)
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_executor_2_shared_context_init.cpp", "assets/expected/gen_executor_2_shared_context_init.cpp")
-                
     def test_gen_executor_headers(self):
         executors_data = load_executors()
         self.assertEqual(len(executors_data), EXPECT_NUM_OF_EXECUTORS)

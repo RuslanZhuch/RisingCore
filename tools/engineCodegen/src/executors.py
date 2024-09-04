@@ -64,21 +64,6 @@ def load_pool_context_usage(workspace_data):
         
     return output
 
-def gen_shared_context_init(handler, executor_data, workspace_data):
-    usage_full_data = load_shared_context_usage(workspace_data)
-    pool_context_usage = load_pool_context_usage(workspace_data)
-    if pool_context_usage is not None:
-        usage_full_data.update(pool_context_usage)
-    
-    executor_name = get_name(executor_data)
-    
-    usage_data = usage_full_data.get(executor_name)
-    if usage_data is None:
-        return
-    
-    for usage in usage_data:
-        generator.generate_line(handler, "{}.{}Context = &{}Context;".format(executor_name, usage.executor_scontext, usage.shared_instance))
-
 def gen_headers(handler, executors_data):
     for data in executors_data:
         name = _to_class_name(get_name(data))
@@ -96,7 +81,7 @@ def gen_loads(handler, executors_data, workspace_data):
         generator.generate_line(handler, name + ".loadContext();")
         #gen_shared_context_init(handler, data, workspace_data)
         generator.generate_line(handler, name + ".initiate();")
-        
+
 def gen_updates(handler, executors_data):
     for data in executors_data:
         name = get_name(data)
@@ -107,12 +92,41 @@ def gen_shared_setup(handler, executor_data, setup_desc_list : list[SharedUsage]
     
     for desc in setup_desc_list:
         generator.generate_line(handler, executor_name + ".{}Context = computedP{}_{}Context;".format(desc.executor_scontext, pool_index, desc.shared_instance))
-        
+
+class SharedSetupDesc:
+    def __init__(self, executor_scontext: str, pool_index: int, shared_instance: str):
+        self.executor_scontext = executor_scontext
+        self.pool_index = pool_index
+        self.shared_instance = shared_instance
+
+def get_shared_setup(executor_data, setup_desc_list : list[SharedUsage], pool_index : int):
+    shared_setup_descs_list = []
+
+    executor_name = get_name(executor_data)
+    
+    for desc in setup_desc_list:
+        shared_setup_descs_list.append(SharedSetupDesc(
+            desc.executor_scontext, 
+            pool_index, 
+            desc.shared_instance
+        ))
+
+    return shared_setup_descs_list, executor_name
+          
+
 def gen_flush(handler, executors_data):
     for data in executors_data:
         name = get_name(data)
         generator.generate_line(handler, name + ".flushSharedLocalContexts();")
         
+def get_flush(executors_data):
+    flush_descs_list = []
+    for data in executors_data:
+        name = get_name(data)
+        flush_descs_list.append(name)
+
+    return flush_descs_list
+
 def gen_body_flush(handler, executor_data):
     contexts_to_flush = executor_data.get("contextsToFlush")
     if contexts_to_flush is None:
@@ -279,17 +293,3 @@ def gen_implementation(folder, executor_data):
     file_data = t.render(**parameters)
     with open(folder + "/" + file_name_source, 'w') as file:
         file.write(file_data)
-
-#    handler = generator.generate_file(folder, file_name_source)
-#
-#    generator.generate_line(handler, "#include \"{}\"".format(file_name_header))
-#    generator.generate_empty(handler)
-#    generator.generate_line(handler, "using namespace Game::ExecutionBlock;")
-#    
-#    def class_data(class_handler):
-#        generator.generate_class_public_method(class_handler, "initImpl", "void", [], False)
-#        generator.generate_class_public_method(class_handler, "updateImpl", "void", ['[[maybe_unused]] float dt'], False)
-#    
-#    generator.generate_class_impl(handler, class_name, class_data)
-#    
-#

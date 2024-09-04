@@ -122,132 +122,6 @@ def load_data(context_raw_data : dict):
     
     return ContextData(objects_data, buffers_data, tables_data)
 
-def generate_context_buffer_decls(handler, context_data : ContextData):
-        
-    def struct_body(struct_handler):
-        pass
-            
-    for table in context_data.tables_data:
-        generator.generate_struct(handler, "Buffer{} : public Dod::DTable<{}>".format(_to_class_name(table.name), ", ".join(table.data_type_list)), struct_body)
-        generator.generate_empty(handler)
-            
-    for table in context_data.tables_data:
-        generator.generate_struct(handler, "CBuffer{} : public Dod::ImTable<{}>".format(_to_class_name(table.name), ", ".join(table.data_type_list)), struct_body)
-        generator.generate_empty(handler)
-
-
-def generate_context_data(handler, context_data : ContextData):
-        
-    def struct_body(struct_handler):
-        generator.generate_struct_method(struct_handler, "load", "void", [], False)
-        generator.generate_struct_method(struct_handler, "reset", "void", [], False)
-        generator.generate_struct_method(struct_handler, "merge", "void", ["const Data& other"], False)
-        
-        for object in context_data.objects_data:
-            initial = 0 if object.initial != 0 and object.initial is not None else object.initial
-            generator.generate_struct_variable(struct_handler, object.data_type, object.name, initial)
-            
-        generator.generate_struct_variable(struct_handler, "Dod::MemPool", "memory", None)
-        for buffer in context_data.buffers_data:
-            type = "Dod::DBBuffer<{}>".format(buffer.data_type)
-            generator.generate_struct_variable(struct_handler, type, buffer.name, None)
-            
-        for table in context_data.tables_data:
-            type = "Buffer{}".format(_to_class_name(table.name))
-            generator.generate_struct_variable(struct_handler, type, table.name, None)
-            
-    generator.generate_struct(handler, "Data", struct_body)
-    generator.generate_empty(handler)
-
-    def struct_body_const(struct_handler):
-        for buffer in context_data.buffers_data:
-            type = "Dod::ImBuffer<{}>".format(buffer.data_type)
-            generator.generate_struct_variable(struct_handler, type, buffer.name, None)
-            
-        for table in context_data.tables_data:
-            type = "CBuffer{}".format(_to_class_name(table.name))
-            generator.generate_struct_variable(struct_handler, type, table.name, None)
-            
-    generator.generate_struct(handler, "CData", struct_body_const)
-
-def generate_data_converter(handler, context_data : ContextData):
-    function_name = "[[nodiscard]] static CData convertToConst(const Data& context) noexcept"
-
-    def function_body(handler):
-        convertion_list_buffers = [ "Dod::DataUtils::createImFromBuffer(context.{})".format(buffer.name) for buffer in context_data.buffers_data ]
-        convertion_list_tables = [ "Dod::ImTable<{}>(context.{})".format(", ".join(table.data_type_list), table.name) for table in context_data.tables_data ]
-
-        conversion_list = convertion_list_buffers + convertion_list_tables
-        conversion_list_str = ", ".join(conversion_list)
-        generator.generate_line(handler, "return {{ {} }};".format(conversion_list_str))
-
-    generator.generate_block(handler, function_name, function_body)    
-
-def generate_context_getters(handler, context_data : ContextData, context_name : str):
-    
-    for table in context_data.tables_data:
-        if "nohelpers" in table.flags or len(table.data_type_list) <= 1:
-            continue
-        data_name = table.name
-        data_name_capital = _to_class_name(data_name)
-        context_name = _to_class_name(context_name)
-        function_name = "[[nodiscard]] static auto decoupleData({}::Buffer{}& {}ToDecouple) noexcept".format(context_name, data_name_capital, data_name)
-        
-        def function_body(handler):
-            def struct_data(struct_handler):
-                for type_name in table.data_type_full_list:
-                    generator.generate_struct_variable(struct_handler, "Dod::MutTable<{}>".format(table.data_type_full_list[type_name]), type_name)
-
-            generator.generate_struct(handler, "Output", struct_data)
-            
-            generator.generate_line(handler, "const auto data{{ Dod::DataUtils::get({}ToDecouple) }};".format(data_name))
-
-            output_values = ["std::get<{}>(data)".format(index) for index in range(0, len(table.data_type_list))]
-                
-            output = "return Output({});".format(", ".join(output_values))
-            generator.generate_line(handler, output)
-            
-        generator.generate_block(handler, function_name, function_body)
-        generator.generate_empty(handler)
-
-        function_name_const = "[[nodiscard]] static auto decoupleData(const {}::CBuffer{}& {}ToDecouple) noexcept".format(context_name, data_name_capital, data_name)
-        
-        def function_body_const(handler):
-            def struct_data(struct_handler):
-                for type_name in table.data_type_full_list:
-                    generator.generate_struct_variable(struct_handler, "Dod::ImTable<{}>".format(table.data_type_full_list[type_name]), type_name)
-
-            generator.generate_struct(handler, "Output", struct_data)
-            
-            generator.generate_line(handler, "const auto data{{ Dod::DataUtils::get({}ToDecouple) }};".format(data_name))
-
-            output_values = ["std::get<{}>(data)".format(index) for index in range(0, len(table.data_type_list))]
-                
-            output = "return Output({});".format(", ".join(output_values))
-            generator.generate_line(handler, output)
-            
-        generator.generate_block(handler, function_name_const, function_body_const)
-        generator.generate_empty(handler)
-
-def generate_context_setters(handler, context_data : ContextData, context_name : str):
-    
-    for table in context_data.tables_data:
-        if "nohelpers" in table.flags or len(table.data_type_list) <= 1:
-            continue
-        data_name = table.name
-        data_name_capital = _to_class_name(data_name)
-        parameters = ["{} {}".format(table.data_type_full_list[type_name], type_name) for type_name in table.data_type_full_list]
-        parameters.append("bool bStrobe = true")
-        function_name = "static void addData({}::Buffer{}& {}Dst, {}) noexcept".format(context_name, data_name_capital, data_name, ", ".join(parameters))
-        
-        def function_body(handler):
-            arguments = ["{}Dst".format(data_name), "bStrobe"]
-            arguments.extend(table.data_name_list)
-            generator.generate_line(handler, "Dod::DataUtils::pushBack({});".format(", ".join(arguments)))
-            
-        generator.generate_block(handler, function_name, function_body)
-        generator.generate_empty(handler)
-
 def generate_context_def(dest_path, context_file_path, types_cache):
     context_raw_data = loader.load_file_data(context_file_path)
     context_name = _to_class_name(loader.load_name(context_file_path))
@@ -338,6 +212,14 @@ def generate_shared_flush(handler, workspace_data):
     for context in flush_data:
         generator.generate_line(handler, "{}Context.reset();".format(context))
     
+def get_shared_flush(workspace_data):
+    flush_list = []
+    flush_data = load_shared_context_to_flush(workspace_data)
+    for context in flush_data:
+        flush_list.append(context)
+
+    return flush_list
+    
 def generate_pools_flush(handler, workspace_data):
     pools = workspace_data.get("poolContextsInstances")
     if pools is None:
@@ -345,6 +227,17 @@ def generate_pools_flush(handler, workspace_data):
     flush_data = [pool["instanceName"] for pool in pools]
     for context in flush_data:
         generator.generate_line(handler, "{}Context.reset();".format(context))
+
+def get_pools_flush(workspace_data):
+    pools_flush_list = []
+    pools = workspace_data.get("poolContextsInstances")
+    if pools is None:
+        return pools_flush_list
+    flush_data = [pool["instanceName"] for pool in pools]
+    for context in flush_data:
+        pools_flush_list.append(context)
+
+    return pools_flush_list
     
 def load_shared_context_merge(workspace_data):    
     output = dict()
@@ -414,6 +307,28 @@ def generate_shared_usage(handler, contexts_data : list[ContextUsage], pool_id :
             ))
             break
 
+class SharedUsageDesc:
+    def __init__(self, pool_id: int, instance_name: str, context_name: str, data_instance_name: str):
+        self.pool_id = pool_id
+        self.instance_name = instance_name
+        self.context_name = context_name
+        self.data_instance_name = data_instance_name
+
+def get_shared_usage(contexts_data : list[ContextUsage], pool_id : int, instance_names : list[str]):
+    shared_usage_descs_list = []
+    for instance_name in instance_names:
+        for data in contexts_data:
+            if data.instance_name != instance_name:
+                continue
+            shared_usage_descs_list.append(SharedUsageDesc(
+                pool_id,
+                instance_name,
+                _to_class_name(data.context_name),
+                data.instance_name
+            ))
+            break
+    return shared_usage_descs_list
+
 def generate_shared_merge(handler, workspace_data):
     merge_data = load_shared_context_merge(workspace_data)
     if merge_data is None:
@@ -426,6 +341,31 @@ def generate_shared_merge(handler, workspace_data):
             executor_scontext = merge_context.executor_scontext
             generator.generate_line(handler, "{}.modify{}({}Context);".format(executor_name, _to_class_name(executor_scontext), instance_name))
             #generator.generate_line(handler, "{}Context.merge({}.{}Context);".format(instance_name, executor_name, executor_scontext))
+
+class SharedMergeDesc:
+    def __init__(self, executor_name: str, executor_scontext: str, instance_name: str):
+        self.executor_name = executor_name
+        self.executor_scontext = executor_scontext
+        self.instance_name = instance_name
+
+def get_shared_merge(workspace_data):
+    shared_merge_descs_list = []
+    merge_data = load_shared_context_merge(workspace_data)
+    if merge_data is None:
+        return shared_merge_descs_list
+    
+    for instance_name in merge_data:
+        merge_context_full = merge_data[instance_name]
+        for merge_context in merge_context_full:
+            executor_name = merge_context.executor_name
+            executor_scontext = merge_context.executor_scontext
+            shared_merge_descs_list.append(SharedMergeDesc(
+                executor_name,
+                _to_class_name(executor_scontext),
+                instance_name
+            ))
+            
+    return shared_merge_descs_list
     
 def generate_pools_merge(handler, workspace_data : dict[any], block_id : int):
     merge_data = load_pool_context_merge(workspace_data)
@@ -459,4 +399,51 @@ def generate_pools_merge(handler, workspace_data : dict[any], block_id : int):
                 continue
             executor_scontext = merge_context.executor_scontext
             generator.generate_line(handler, "{}.modify{}({}Context);".format(executor_name, _to_class_name(executor_scontext), instance_name))
-            #generator.generate_line(handler, "{}Context.merge({}.{}Context);".format(instance_name, executor_name, executor_scontext))
+
+class PoolsMergeDesc:
+    def __init__(self, executor_name: str, executor_scontext: str, instance_name: str):
+        self.executor_name = executor_name
+        self.executor_scontext = executor_scontext
+        self.instance_name = instance_name
+
+def get_pools_merge(workspace_data : dict[any], block_id : int):
+    pools_merge_descs_list = []
+
+    merge_data = load_pool_context_merge(workspace_data)
+    if merge_data is None:
+        return pools_merge_descs_list
+    
+    schema = workspace_data.get("schema")
+    if schema is None:
+        return pools_merge_descs_list
+    
+    if len(schema) <= block_id or block_id < 0:
+        return pools_merge_descs_list
+    
+    block = schema[block_id]
+    wait_rules = block.get("waitPools")
+    if wait_rules is None:
+        return pools_merge_descs_list
+    
+    prev_block_executors = []
+    if block_id > 0:
+        prev_block = schema[block_id - 1]
+        prev_block_executors.extend(prev_block["executors"])
+    
+    for instance_name in wait_rules:
+        merge_context_full = merge_data.get(instance_name)
+        if merge_context_full is None:
+            continue
+        for merge_context in merge_context_full:
+            executor_name = merge_context.executor_name
+            if executor_name not in prev_block_executors:
+                continue
+            executor_scontext = merge_context.executor_scontext
+            pools_merge_descs_list.append(PoolsMergeDesc(
+                executor_name,
+                _to_class_name(executor_scontext),
+                instance_name
+            ))
+
+    return pools_merge_descs_list
+

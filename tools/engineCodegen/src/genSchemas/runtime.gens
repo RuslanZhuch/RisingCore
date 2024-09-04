@@ -1,0 +1,101 @@
+${if len(unique_contexts_instances) > 0:}$${for instance in unique_contexts_instances:}$#include <Contexts/${"", to_class_name(instance)}$Context.h>
+
+${:end-for}$${:end-if}$
+
+${for data in executors_data:}$
+${name = to_class_name(data.get("name"))}$
+${"#include <executors/{}Executor.h>".format(name)}$
+
+${:end-for}$
+#include <dod/SharedContext.h>
+#include <engine/Timer.h>
+
+namespace
+{
+${for instance in contexts_data:}$
+${class_name = to_class_name(instance.context_name)}$
+    ${"Game::Context::{}::Data {}Context;".format(class_name, instance.instance_name)}$
+${:end-for}$
+}
+
+namespace
+{
+${for data in executors_data:}$
+${class_name = "Game::ExecutionBlock::" + to_class_name(data.get("name"))}$
+    ${"{} {};".format(class_name, data.get("name"))}$
+${:end-for}$
+}
+
+struct DependenciesMask
+{
+
+${for partId in range(0, num_of_parts_in_deps_mask):}$
+    uint64_t part${"", partId+1}${};
+${:end-for}$
+};
+
+int main()
+{
+${for instance in contexts_data:}$
+    ${"", instance.instance_name}$Context.load();
+${:end-for}$
+
+${for data in executors_data:}$
+${name = data.get("name")}$
+    ${name}$.loadContext();
+    ${name}$.initiate();
+${:end-for}$
+
+    Timer timer;
+    float deltaTime{};
+    while(true)
+    {
+        if (deltaTime >= 1.f / 60.f)
+        {
+
+${for executor_update_block in executors_update_descs:}$
+${for merge_desc in executor_update_block.pools_merge_descs_list:}$
+            ${"", merge_desc.executor_name}$.modify${"", merge_desc.executor_scontext}$(${"", merge_desc.instance_name}$Context);
+${:end-for}$
+
+${for usage_desc in executor_update_block.shared_usage_decs_list:}$
+            const auto computedP${"", usage_desc.pool_id}$_${"", usage_desc.instance_name}$Context{ Game::Context::${"", usage_desc.context_name}$::convertToConst(${"", usage_desc.data_instance_name}$Context) };
+${:end-for}$
+
+${for executor_desc in executor_update_block.executors_descs_list:}$
+${for shared_setup_desc in executor_desc.shared_setup_descs_list:}$
+            ${"", executor_desc.executor_name}$.${"", shared_setup_desc.executor_scontext}$Context = computedP${"", shared_setup_desc.pool_index}$_${"", shared_setup_desc.shared_instance}$Context;
+${:end-for}$
+            ${"", executor_desc.executor_name}$.update(deltaTime);
+${:end-for}$
+
+${:end-for}$
+${for flush_desc in pools_flush_descs:}$
+            ${"", flush_desc}$Context.reset();
+${:end-for}$
+${for flush_desc in shared_flush_descs:}$
+            ${"", flush_desc}$Context.reset();
+${:end-for}$
+
+${for merge_desc in shared_merge_descs:}$
+            ${"", merge_desc.executor_name}$.modify${"", merge_desc.executor_scontext}$(${"", merge_desc.instance_name}$Context);
+${:end-for}$
+
+${for flush_desc in executors_flush:}$
+            ${flush_desc}$.flushSharedLocalContexts();
+${:end-for}$
+
+            for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
+            {
+                if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
+                {
+                    return 0;
+                }
+            }
+            deltaTime = {};
+        }
+
+        timer.tick();
+        deltaTime += timer.getDeltaTime();
+    }
+}
