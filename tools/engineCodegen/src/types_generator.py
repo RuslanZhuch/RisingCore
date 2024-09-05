@@ -90,7 +90,6 @@ def generate_impls(output_file_path : str, file_schema : dict, cache : types_man
         os.makedirs(output_directory)
     
     output_name = os.path.basename(output_file_path)
-#    handler = generator.generate_file(output_directory, output_name)
     
     parameters = {
         "function_data_list": function_data_list,
@@ -101,23 +100,3 @@ def generate_impls(output_file_path : str, file_schema : dict, cache : types_man
     file_data = t.render(**parameters)
     with open("{}/{}".format(output_directory, output_name), 'w') as file:
         file.write(file_data)
-
-#    generator.generate_line(handler, "#include <engine/contextUtils.h>")
-#    generator.generate_line(handler, "#include <engine/String.h>")
-#    generator.generate_empty(handler)
-#        
-#    generator.generate_line(handler, "#include <{}>".format(type_path))
-#    generator.generate_empty(handler)
-#    
-#    for function_data in function_data_list:
-#        function_signature = "void {}::setValueByName(std::string_view name, const rapidjson::Value& value) noexcept".format(function_data.name)
-#        
-#        def block(block_handler):
-#            for variable in function_data.variables:
-#                def variable_block(variable_handler):
-#                    generator.generate_line(variable_handler, "Engine::ContextUtils::assignToVariable(this->{}, value);".format(variable))
-#                    generator.generate_line(variable_handler, "return;")
-#                generator.generate_block(block_handler, "if (name == \"{}\")".format(variable), variable_block)
-#        
-#        generator.generate_block(handler, function_signature, block)
-#        generator.generate_empty(handler)
