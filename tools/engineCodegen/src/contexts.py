@@ -1,6 +1,5 @@
 
 import loader
-import generator
 import types_manager
 from templite import Templite
 
@@ -207,11 +206,6 @@ def load_shared_context_instances(file) -> list[ContextUsage]:
 def load_shared_context_to_flush(workspace_data):
     return workspace_data["sharedContextsInstancesToFlush"]
     
-def generate_shared_flush(handler, workspace_data):
-    flush_data = load_shared_context_to_flush(workspace_data)
-    for context in flush_data:
-        generator.generate_line(handler, "{}Context.reset();".format(context))
-    
 def get_shared_flush(workspace_data):
     flush_list = []
     flush_data = load_shared_context_to_flush(workspace_data)
@@ -219,14 +213,6 @@ def get_shared_flush(workspace_data):
         flush_list.append(context)
 
     return flush_list
-    
-def generate_pools_flush(handler, workspace_data):
-    pools = workspace_data.get("poolContextsInstances")
-    if pools is None:
-        return
-    flush_data = [pool["instanceName"] for pool in pools]
-    for context in flush_data:
-        generator.generate_line(handler, "{}Context.reset();".format(context))
 
 def get_pools_flush(workspace_data):
     pools_flush_list = []
@@ -283,29 +269,6 @@ def get_validated_context_instances(contexts_data, shared_contexts_instances) ->
         validated.append(instance)
         
     return validated
-    
-def generate_shared_init(handler, contexts_data):
-    for instance in contexts_data:
-        class_name = _to_class_name(instance.context_name)
-        generator.generate_line(handler, "Game::Context::{}::Data {}Context;".format(class_name, instance.instance_name))
-    
-def generate_shared_load(handler, contexts_data):
-    for instance in contexts_data:
-        class_name = _to_class_name(instance.context_name)
-        generator.generate_line(handler, "{}Context.load();".format(instance.instance_name))
-    
-def generate_shared_usage(handler, contexts_data : list[ContextUsage], pool_id : int, instance_names : list[str]):
-    for instance_name in instance_names:
-        for data in contexts_data:
-            if data.instance_name != instance_name:
-                continue
-            generator.generate_line(handler, "const auto computedP{}_{}Context{{ Game::Context::{}::convertToConst({}Context) }};".format(
-                pool_id,
-                instance_name,
-                _to_class_name(data.context_name),
-                data.instance_name
-            ))
-            break
 
 class SharedUsageDesc:
     def __init__(self, pool_id: int, instance_name: str, context_name: str, data_instance_name: str):
@@ -328,19 +291,6 @@ def get_shared_usage(contexts_data : list[ContextUsage], pool_id : int, instance
             ))
             break
     return shared_usage_descs_list
-
-def generate_shared_merge(handler, workspace_data):
-    merge_data = load_shared_context_merge(workspace_data)
-    if merge_data is None:
-        return
-    
-    for instance_name in merge_data:
-        merge_context_full = merge_data[instance_name]
-        for merge_context in merge_context_full:
-            executor_name = merge_context.executor_name
-            executor_scontext = merge_context.executor_scontext
-            generator.generate_line(handler, "{}.modify{}({}Context);".format(executor_name, _to_class_name(executor_scontext), instance_name))
-            #generator.generate_line(handler, "{}Context.merge({}.{}Context);".format(instance_name, executor_name, executor_scontext))
 
 class SharedMergeDesc:
     def __init__(self, executor_name: str, executor_scontext: str, instance_name: str):
@@ -366,39 +316,6 @@ def get_shared_merge(workspace_data):
             ))
             
     return shared_merge_descs_list
-    
-def generate_pools_merge(handler, workspace_data : dict[any], block_id : int):
-    merge_data = load_pool_context_merge(workspace_data)
-    if merge_data is None:
-        return
-    
-    schema = workspace_data.get("schema")
-    if schema is None:
-        return
-    
-    if len(schema) <= block_id or block_id < 0:
-        return
-    
-    block = schema[block_id]
-    wait_rules = block.get("waitPools")
-    if wait_rules is None:
-        return
-    
-    prev_block_executors = []
-    if block_id > 0:
-        prev_block = schema[block_id - 1]
-        prev_block_executors.extend(prev_block["executors"])
-    
-    for instance_name in wait_rules:
-        merge_context_full = merge_data.get(instance_name)
-        if merge_context_full is None:
-            continue
-        for merge_context in merge_context_full:
-            executor_name = merge_context.executor_name
-            if executor_name not in prev_block_executors:
-                continue
-            executor_scontext = merge_context.executor_scontext
-            generator.generate_line(handler, "{}.modify{}({}Context);".format(executor_name, _to_class_name(executor_scontext), instance_name))
 
 class PoolsMergeDesc:
     def __init__(self, executor_name: str, executor_scontext: str, instance_name: str):

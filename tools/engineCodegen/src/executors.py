@@ -75,24 +75,6 @@ def gen_inits(handler, executors_data, workspace_data):
         class_name = "Game::ExecutionBlock::" + _to_class_name(name)
         generator.generate_variable(handler, class_name, name)
 
-def gen_loads(handler, executors_data, workspace_data):
-    for data in executors_data:
-        name = get_name(data)
-        generator.generate_line(handler, name + ".loadContext();")
-        #gen_shared_context_init(handler, data, workspace_data)
-        generator.generate_line(handler, name + ".initiate();")
-
-def gen_updates(handler, executors_data):
-    for data in executors_data:
-        name = get_name(data)
-        generator.generate_line(handler, name + ".update(deltaTime);")
-
-def gen_shared_setup(handler, executor_data, setup_desc_list : list[SharedUsage], pool_index : int):
-    executor_name = get_name(executor_data)
-    
-    for desc in setup_desc_list:
-        generator.generate_line(handler, executor_name + ".{}Context = computedP{}_{}Context;".format(desc.executor_scontext, pool_index, desc.shared_instance))
-
 class SharedSetupDesc:
     def __init__(self, executor_scontext: str, pool_index: int, shared_instance: str):
         self.executor_scontext = executor_scontext
@@ -112,12 +94,6 @@ def get_shared_setup(executor_data, setup_desc_list : list[SharedUsage], pool_in
         ))
 
     return shared_setup_descs_list, executor_name
-          
-
-def gen_flush(handler, executors_data):
-    for data in executors_data:
-        name = get_name(data)
-        generator.generate_line(handler, name + ".flushSharedLocalContexts();")
         
 def get_flush(executors_data):
     flush_descs_list = []
@@ -127,45 +103,6 @@ def get_flush(executors_data):
 
     return flush_descs_list
 
-def gen_body_flush(handler, executor_data):
-    contexts_to_flush = executor_data.get("contextsToFlush")
-    if contexts_to_flush is None:
-        return
-    
-    for flush_context in contexts_to_flush:
-        generator.generate_line(handler, "this->{}Context.reset();".format(flush_context))
-        
-def gen_body_init(handler, executor_data):
-    generator.generate_line(handler, "this->initImpl();")
-  
-def gen_body_contexts_load(handler, executor_data):
-    contexts_local = executor_data.get("contextsLocal")
-    if contexts_local is not None:
-        for context in contexts_local:
-            for element in context["list"]:
-                generator.generate_line(handler, "this->{}Context.load();".format(element))
-        generator.generate_empty(handler)
-            
-def gen_body_update(handler, executor_data):   
-    generator.generate_line(handler, "this->updateImpl(dt);")
-        
-def gen_contexts_decl(handler, executor_data):   
-    contexts_local = executor_data.get("contextsLocal")
-    if contexts_local is not None:
-        for context in contexts_local:
-            class_name = "Context::{}::Data".format(_to_class_name(context["type"]))
-            for element in context["list"]:
-                field_name = "{}Context".format(element)
-                generator.generate_class_variable(handler, class_name, field_name)
-    
-    contexts_shared = executor_data.get("contextsShared")
-    if contexts_shared is not None:
-        for context in contexts_shared:
-            class_name = "Context::{}::CData".format(_to_class_name(context["type"]))
-            for element in context["list"]:
-                field_name = "{}Context".format(element)
-                generator.generate_class_variable(handler, class_name, field_name)
-        
 def gen_header(folder, executor_data):
     executor_name = get_name(executor_data)
     class_name = _to_class_name(executor_name)

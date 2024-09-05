@@ -140,42 +140,7 @@ class TestContexts(gen_base_test.TestBaseGen):
         
         self.assertEqual(data[2].context_name, "sContext2")
         self.assertEqual(data[2].instance_name, "poolInst3")
-        
-    def test_generate_shared_contexts_init(self):
-        instances_data = contexts.load_shared_context_instances("assets/project1/ws_runtime.json")
-        handler = generator.generate_file("dest", "gen_scontexts_init.cpp")
-        self.assertIsNotNone(handler)
-        contexts.generate_shared_init(handler, instances_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_scontexts_init.cpp", "assets/expected/gen_scontexts_init.cpp")
-        
-    def test_generate_shared_contexts_load(self):
-        instances_data = contexts.load_shared_context_instances("assets/project1/ws_runtime.json")
-        handler = generator.generate_file("dest", "gen_scontexts_load.cpp")
-        self.assertIsNotNone(handler)
-        contexts.generate_shared_load(handler, instances_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_scontexts_load.cpp", "assets/expected/gen_scontexts_load.cpp")
-        
-    def test_generate_shared_contexts_usage(self):
-        instances_data = contexts.load_shared_context_instances("assets/project3/ws_runtime.json")
-        handler = generator.generate_file("dest", "gen_scontexts_usage.cpp")
-        self.assertIsNotNone(handler)
-        pool_id = 1
-        contexts.generate_shared_usage(handler, instances_data, pool_id, [
-            "poolInst1",
-            "poolInst2",
-            "poolInst3"
-        ])
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_scontexts_usage.cpp", "assets/expected/gen_scontexts_usage.cpp")
-        
+
     def test_get_shared_contexts_flush(self):
         workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
         flush_data = contexts.load_shared_context_to_flush(workspace_data)
@@ -183,27 +148,7 @@ class TestContexts(gen_base_test.TestBaseGen):
         self.assertEqual(flush_data[0], "sharedInst1")
         self.assertEqual(flush_data[1], "sharedInst2")
         self.assertEqual(flush_data[2], "sharedInst4")
-        
-    def test_generate_shared_contexts_flush(self):
-        handler = generator.generate_file("dest", "gen_shared_contexts_flush.cpp")
-        self.assertIsNotNone(handler)
-        workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
-        contexts.generate_shared_flush(handler, workspace_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_shared_contexts_flush.cpp", "assets/expected/gen_shared_contexts_flush.cpp")
-       
-    def test_generate_pools_contexts_flush(self):
-        handler = generator.generate_file("dest", "gen_pools_contexts_flush.cpp")
-        self.assertIsNotNone(handler)
-        workspace_data = loader.load_runtime_data("assets/project3/ws_runtime.json")
-        contexts.generate_pools_flush(handler, workspace_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_pools_contexts_flush.cpp", "assets/expected/gen_pools_contexts_flush.cpp")
-              
+
     def test_load_shared_contexts_merge(self):
         workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
         
@@ -247,36 +192,3 @@ class TestContexts(gen_base_test.TestBaseGen):
         self.assertEqual(len(merge_data["poolInst3"]), 1)
         self.assertEqual(merge_data["poolInst3"][0].executor_name, "executor4")
         self.assertEqual(merge_data["poolInst3"][0].executor_scontext, "pool3")
-                        
-    def test_generate_shared_contexts_merge(self):
-        handler = generator.generate_file("dest", "gen_shared_contexts_merge.cpp")
-        self.assertIsNotNone(handler)
-        workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
-        contexts.generate_shared_merge(handler, workspace_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_shared_contexts_merge.cpp", "assets/expected/gen_shared_contexts_merge.cpp")
-                        
-    def test_generate_shared_contexts_merge_with_pools(self):
-        handler = generator.generate_file("dest", "gen_shared_contexts_merge_with_pools.cpp")
-        self.assertIsNotNone(handler)
-        workspace_data = loader.load_runtime_data("assets/project3/ws_runtime.json")
-        contexts.generate_shared_merge(handler, workspace_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_shared_contexts_merge_with_pools.cpp", "assets/expected/gen_shared_contexts_merge_with_pools.cpp")
-
-    def test_generate_pools_merge(self):
-        handler = generator.generate_file("dest", "gen_pools_merge.cpp")
-        self.assertIsNotNone(handler)
-        workspace_data = loader.load_runtime_data("assets/project3/ws_runtime.json")
-        contexts.generate_pools_merge(handler, workspace_data, 0)
-        contexts.generate_pools_merge(handler, workspace_data, 1)
-        contexts.generate_pools_merge(handler, workspace_data, 2)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_pools_merge.cpp", "assets/expected/gen_pools_merge.cpp")
-       
