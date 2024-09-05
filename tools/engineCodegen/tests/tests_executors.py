@@ -100,54 +100,6 @@ class TestExecutors(gen_base_test.TestBaseGen):
         self.assertEqual(len(usage["executor6"]), 1)
         self.assertEqual(usage["executor6"][0].shared_instance, "poolInst3")
         self.assertEqual(usage["executor6"][0].executor_scontext, "pool3")
-        
-    def test_gen_executor_headers(self):
-        executors_data = load_executors()
-        self.assertEqual(len(executors_data), EXPECT_NUM_OF_EXECUTORS)
-        
-        handler = generator.generate_file("dest", "executors_headers.cpp")
-        self.assertIsNotNone(handler)
-        
-        executors.gen_headers(handler, executors_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/executors_headers.cpp", "assets/expected/executors_headers.cpp")
-                
-    def test_gen_executor_init(self):
-        executors_data = load_executors()
-        self.assertEqual(len(executors_data), EXPECT_NUM_OF_EXECUTORS)
-        
-        handler = create_target_file()
-        self.assertIsNotNone(handler)
-        
-        workspace_data = loader.load_runtime_data("assets/project1/ws_runtime.json")
-        executors.gen_inits(handler, executors_data, workspace_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/runtime.cpp", "assets/expected/executorsGeneration.cpp")
-
-    def test_gen_executor_init_with_pools(self):
-        executors_data = executors.load([
-            "assets/project3/executors/executor1.json",
-            "assets/project3/executors/executor2.json",
-            "assets/project3/executors/executor3.json",
-            "assets/project3/executors/executor4.json",
-            "assets/project3/executors/executor5.json",
-            "assets/project3/executors/executor6.json"
-        ])
-        self.assertEqual(len(executors_data), 6)
-        
-        handler = generator.generate_file("dest", "executorsGenerationWithPools.cpp")
-        self.assertIsNotNone(handler)
-        
-        workspace_data = loader.load_runtime_data("assets/project3/ws_runtime.json")
-        executors.gen_inits(handler, executors_data, workspace_data)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/executorsGenerationWithPools.cpp", "assets/expected/executorsGenerationWithPools.cpp")
 
     def test_gen_executor_test1_header(self):
         def logic(gen_file_name):

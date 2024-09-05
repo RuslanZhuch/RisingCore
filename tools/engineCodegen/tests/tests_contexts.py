@@ -12,7 +12,6 @@ sys.path.append(root_dir)
 import sys
 sys.path.append("../src")
 
-import generator
 import contexts
 import loader
 import types_manager

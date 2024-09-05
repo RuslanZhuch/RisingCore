@@ -64,17 +64,6 @@ def load_pool_context_usage(workspace_data):
         
     return output
 
-def gen_headers(handler, executors_data):
-    for data in executors_data:
-        name = _to_class_name(get_name(data))
-        generator.generate_line(handler, "#include <executors/{}Executor.h>".format(name))
-
-def gen_inits(handler, executors_data, workspace_data):
-    for data in executors_data:
-        name = get_name(data)
-        class_name = "Game::ExecutionBlock::" + _to_class_name(name)
-        generator.generate_variable(handler, class_name, name)
-
 class SharedSetupDesc:
     def __init__(self, executor_scontext: str, pool_index: int, shared_instance: str):
         self.executor_scontext = executor_scontext

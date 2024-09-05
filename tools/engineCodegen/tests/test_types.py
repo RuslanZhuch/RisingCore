@@ -11,7 +11,6 @@ import sys
 sys.path.append("../src")
 
 import utils
-import generator
 import loader
 import types_manager
 import types_generator

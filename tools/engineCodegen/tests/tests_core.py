@@ -4,7 +4,6 @@ import sys
 sys.path.append("../src")
 
 import loader
-import generator
 
 class TestCore(unittest.TestCase):
     def test_load_data_executor1(self):

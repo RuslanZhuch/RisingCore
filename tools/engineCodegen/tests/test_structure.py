@@ -4,8 +4,6 @@ import sys
 sys.path.append("../src")
 import loader
 import structures
-import generator
-import utils
 
 class TestCore(unittest.TestCase):
     def test_get_contexts_list(self):
@@ -111,93 +109,26 @@ class TestCore(unittest.TestCase):
         self.assertEqual(executors_per_contexts[6], ["executor6"])
         self.assertEqual(executors_per_contexts[7], ["executor5"])
 
-    def test_gen_deps_structure_1block_one(self):
-        handler = generator.generate_file("dest", "gen_deps_structure_1block.cpp")
-        self.assertIsNotNone(handler)
-        structures.generate_deps_structure(handler, 1)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_deps_structure_1block.cpp", "assets/expected/gen_deps_structure_1block.cpp")
-
-    def test_gen_deps_structure_1block_half(self):
-        handler = generator.generate_file("dest", "gen_deps_structure_1block.cpp")
-        self.assertIsNotNone(handler)
-        structures.generate_deps_structure(handler, 32)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_deps_structure_1block.cpp", "assets/expected/gen_deps_structure_1block.cpp")
-
-    def test_gen_deps_structure_1block_full(self):
-        handler = generator.generate_file("dest", "gen_deps_structure_1block.cpp")
-        self.assertIsNotNone(handler)
-        structures.generate_deps_structure(handler, 64)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_deps_structure_1block.cpp", "assets/expected/gen_deps_structure_1block.cpp")
-    
-    def test_gen_deps_structure_2blocks(self):
-        handler = generator.generate_file("dest", "gen_deps_structure_2blocks.cpp")
-        self.assertIsNotNone(handler)
-        structures.generate_deps_structure(handler, 65)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_deps_structure_2blocks.cpp", "assets/expected/gen_deps_structure_2blocks.cpp")
+    def test_get_num_of_parts_for_deps_structure(self):
+        self.assertEqual(structures.get_num_of_parts_for_deps_structure(1), 1)
+        self.assertEqual(structures.get_num_of_parts_for_deps_structure(32), 1)
+        self.assertEqual(structures.get_num_of_parts_for_deps_structure(64), 1)
+        self.assertEqual(structures.get_num_of_parts_for_deps_structure(65), 2)
 
     def test_gen_deps_for_executor_1block(self):
-        handler = generator.generate_file("dest", "gen_deps_for_executor_1block.cpp")
-        self.assertIsNotNone(handler)
         executor_name = "executor1"
         deps_mask = [1, 0, 0, 0, 0, 1, 1, 0]
-        structures.generate_deps_for_executor(handler, executor_name, deps_mask)
+        desc = structures.get_deps_descs_for_executor(executor_name, deps_mask)
         
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_deps_for_executor_1block.cpp", "assets/expected/gen_deps_for_executor_1block.cpp")
+        self.assertEqual(desc.executor_name, executor_name)
+        self.assertEqual(desc.initials, "0x61")
 
     def test_gen_deps_for_executor_2block(self):
-        handler = generator.generate_file("dest", "gen_deps_for_executor_2blocks.cpp")
-        self.assertIsNotNone(handler)
         executor_name = "executor1"
         deps_mask = [1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0]
-        structures.generate_deps_for_executor(handler, executor_name, deps_mask)
-        
-        handler.close()
-        
-        utils.assert_files(self, "dest/gen_deps_for_executor_2blocks.cpp", "assets/expected/gen_deps_for_executor_2blocks.cpp")
-
-#    def test_find_inputs_dependencies_1(self):
-#        data = loader.load_file_data("assets/structures/dummy_structures.json")
-#        schema = data[1]
-#        structure = schema["structure"]
-#
-#        inputs_deps = dict()
-#
-#        for executor_name in structure:
-#            executor_io = structure[executor_name]
-#            if "inputs" not in executor_io:
-#                continue
-#            inputs = executor_io["inputs"]
-#            for input in inputs:
-#                if input not in inputs_deps:
-#                    inputs_deps[input] = []
-#                inputs_deps[input].append(executor_name)
-#        
-#        self.assertEqual(len(inputs_deps), 3)
-#
-#        self.assertEqual(len(inputs_deps["context1Inst1"]), 2)
-#        self.assertEqual(inputs_deps["context1Inst1"][0], "executor2")
-#        self.assertEqual(inputs_deps["context1Inst1"][1], "executor3")
-#
-#        self.assertEqual(len(inputs_deps["context2Inst1"]), 1)
-#        self.assertEqual(inputs_deps["context2Inst1"][0], "executor4")
-#
-#        self.assertEqual(len(inputs_deps["context3Inst1"]), 2)
-#        self.assertEqual(inputs_deps["context3Inst1"][0], "executor4")
-#        self.assertEqual(inputs_deps["context3Inst1"][1], "executor5")
+        desc = structures.get_deps_descs_for_executor(executor_name, deps_mask)
+        self.assertEqual(desc.executor_name, executor_name)
+        self.assertEqual(desc.initials, "0x3d3d3d3d,0x3d3d3d3d3d3d3d3d")
 
     def test_create_structure_1exe(self):
         data = loader.load_file_data("assets/structures/dummy_structures.json")

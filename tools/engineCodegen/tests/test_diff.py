@@ -14,7 +14,6 @@ sys.path.append("../src")
 import shutil
 
 import utils
-import generator
 import loader
 import diff
 

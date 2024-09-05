@@ -1,6 +1,4 @@
 
-import generator
-
 class TypesCache:
     def __init__(self, type_names, paths):
         self.type_names = type_names

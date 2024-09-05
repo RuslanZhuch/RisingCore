@@ -1,7 +1,5 @@
 import types_manager
 
-import generator
-
 from templite import Templite
 
 import os

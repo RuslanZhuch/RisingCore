@@ -1,5 +1,3 @@
-import generator
-
 CHANNELS_PER_PART = 64
 
 def get_contexts_list(structure):
@@ -87,15 +85,12 @@ def get_executors_per_contexts(structure, contexts_list : list[str]):
 def get_num_of_parts_for_deps_structure(num_of_channels : int):
     return int((num_of_channels - 1) / CHANNELS_PER_PART) + 1
 
-def generate_deps_structure(handler, num_of_channels : int):
-    def struct_body_const(struct_handler):
-        num_of_parts = int((num_of_channels - 1) / CHANNELS_PER_PART) + 1
-        for partId in range(0, num_of_parts):
-            generator.generate_struct_variable(struct_handler, "uint64_t", "part{}".format(partId + 1), 0)
-            
-    generator.generate_struct(handler, "DependenciesMask", struct_body_const)
+class ExecutorDepsDesc:
+    def __init__(self, executor_name: str, initials: str):
+        self.executor_name = executor_name
+        self.initials = initials
 
-def generate_deps_for_executor(handler, executor_name : str, deps_mask : list[int]):
+def get_deps_descs_for_executor(executor_name : str, deps_mask : list[int]):
     num_of_flags = len(deps_mask)
     num_of_parts = int((num_of_flags - 1) / CHANNELS_PER_PART) + 1
     num_of_virtual_flags_for_parts = num_of_parts * CHANNELS_PER_PART
@@ -112,4 +107,7 @@ def generate_deps_for_executor(handler, executor_name : str, deps_mask : list[in
         hex_str = hex(bitmask_int)
         initials.append(hex_str)
 
-    generator.generate_line(handler, "DependenciesMask {}DepsMask{{ {} }};".format(executor_name, ",".join(initials)))
+    return ExecutorDepsDesc(
+        executor_name,
+        ",".join(initials)
+    )

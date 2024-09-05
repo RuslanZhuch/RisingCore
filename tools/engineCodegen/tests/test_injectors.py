@@ -12,10 +12,6 @@ sys.path.append(root_dir)
 import sys
 sys.path.append("../src")
 
-import executors
-import generator
-import runtime
-import loader
 import injectors
 
 import utils
