@@ -1,0 +1,18 @@
+#include <engine/contextUtils.h>
+#include <engine/String.h>
+
+#include <${type_path}$>
+
+${for function_data in function_data_list:}$
+void ${"", function_data.name}$::setValueByName(std::string_view name, const rapidjson::Value& value) noexcept
+{
+${for variable in function_data.variables:}$
+    if (name == "${variable}$")
+    {
+        Engine::ContextUtils::assignToVariable(this->${variable}$, value);
+        return;
+    }
+${:end-for}$
+}
+
+${:end-for}$
