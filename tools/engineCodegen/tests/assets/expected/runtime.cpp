@@ -29,6 +29,72 @@ struct DependenciesMask
     uint64_t part1{};
 };
 
+struct OptionalExecutorsMask
+{
+    auto getIsEnabled(int32_t executorId) 
+    {
+        const auto batchId{ executorId / 64 };
+        const auto localIndex{ executorId % 64 };
+        return mask[batchId] & (1 << localIndex) != 0;
+    }
+    uint64_t mask[1];
+};
+
+namespace
+{
+    OptionalExecutorsMask enabledExecutors{};
+}
+
+namespace
+{
+    void mergeContext1Inst1()
+    {
+        if (enabledExecutors.getIsEnabled(2))
+            executor8.modifyContext1Output(context1Inst1Context);
+    }
+
+    void mergeContext2Inst1()
+    {
+        executor7.modifyContext2Output(context2Inst1Context);
+    }
+
+    void mergeContext3Inst1()
+    {
+        if (enabledExecutors.getIsEnabled(0))
+            executor1.modifyContext3Output(context3Inst1Context);
+    }
+
+    void mergeContext4Inst1()
+    {
+        executor2.modifyContext4Output(context4Inst1Context);
+        if (enabledExecutors.getIsEnabled(1))
+            executor3.modifyContext4Output(context4Inst1Context);
+    }
+
+    void mergeContext5Inst1()
+    {
+        executor4.modifyContext5Output(context5Inst1Context);
+    }
+
+    void mergeContext6Inst1()
+    {
+        executor2.modifyContext6Output(context6Inst1Context);
+        executor4.modifyContext6Output(context6Inst1Context);
+    }
+
+    void mergeContext7Inst1()
+    {
+        executor6.modifyContext7Output(context7Inst1Context);
+    }
+
+    void mergeContext8Inst1()
+    {
+        executor5.modifyContext8Output(context8Inst1Context);
+        executor7.modifyContext8Output(context8Inst1Context);
+    }
+
+}
+
 int main()
 {
     sharedInst1Context.load();
@@ -50,6 +116,16 @@ int main()
         if (deltaTime >= 1.f / 60.f)
         {
 
+
+            DependenciesMask contextsReadyMask{ 0x3 };
+            int8_t context1Inst1MergesLeft{ 1 }
+            int8_t context2Inst1MergesLeft{ 1 }
+            int8_t context3Inst1MergesLeft{ 1 }
+            int8_t context4Inst1MergesLeft{ 2 }
+            int8_t context5Inst1MergesLeft{ 1 }
+            int8_t context6Inst1MergesLeft{ 2 }
+            int8_t context7Inst1MergesLeft{ 1 }
+            int8_t context8Inst1MergesLeft{ 2 }
 
             const auto computedP1_sharedInst1Context{ Game::Context::SContext1::convertToConst(sharedInst1Context) };
             const auto computedP1_sharedInst2Context{ Game::Context::SContext1::convertToConst(sharedInst2Context) };

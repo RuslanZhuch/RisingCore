@@ -30,7 +30,8 @@
                 "outputs": {
                     "context3Inst1": "context3Output"
                 },
-                "isAnchor": true
+                "isAnchor": true,
+                "isOptional": true
             },
             "executor2": {
                 "inputs": { 
@@ -48,7 +49,8 @@
                 },
                 "outputs": {
                     "context4Inst1": "context4Output"
-                }
+                },
+                "isOptional": true
             },
             "executor4": {
                 "inputs": { 
@@ -89,7 +91,8 @@
                 },
                 "outputs": {
                     "context1Inst1": "context1Output"
-                }
+                },
+                "isOptional": true
             }
         }
     }

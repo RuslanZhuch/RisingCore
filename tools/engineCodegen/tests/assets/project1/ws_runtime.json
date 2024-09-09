@@ -76,26 +76,77 @@
         }
     ],
     "structure": {
-        "executor2": {
+        "executor1": {
             "inputs": { 
-                "sharedInst1": "shared1", 
-                "sharedInst2": "shared2", 
-                "sharedInst3": "shared3",
-                "sharedInst4": "shared4"
+                "context1Inst1": "context1Input" 
             },
             "outputs": {
-                "sharedInst1": "target1",
-                "sharedInst2": "target2"
-            }
+                "context3Inst1": "context3Output"
+            },
+            "isAnchor": true,
+            "isOptional": true
+        },
+        "executor2": {
+            "inputs": { 
+                "context2Inst1": "context2Input" 
+            },
+            "outputs": {
+                "context4Inst1": "context4Output",
+                "context6Inst1": "context6Output"
+            },
+            "isAnchor": true
         },
         "executor3": {
             "inputs": { 
-                "sharedInst1": "shared1_2",
-                "sharedInst3": "shared2_2" 
+                "context3Inst1": "context3Input" 
             },
             "outputs": {
-                "sharedInst3": "shared3"
+                "context4Inst1": "context4Output"
+            },
+            "isOptional": true
+        },
+        "executor4": {
+            "inputs": { 
+                "context4Inst1": "context4Input" 
+            },
+            "outputs": {
+                "context5Inst1": "context5Output",
+                "context6Inst1": "context6Output"
             }
+        },
+        "executor5": {
+            "inputs": { 
+                "context5Inst1": "context5Input"
+            },
+            "outputs": {
+                "context8Inst1": "context8Output"
+            }
+        },
+        "executor6": {
+            "inputs": { 
+                "context6Inst1": "context6Input"
+            },
+            "outputs": {
+                "context7Inst1": "context7Output"
+            }
+        },
+        "executor7": {
+            "inputs": { 
+                "context7Inst1": "context7Input"
+            },
+            "outputs": {
+                "context2Inst1": "context2Output",
+                "context8Inst1": "context8Output"
+            }
+        },
+        "executor8": {
+            "inputs": { 
+                "context8Inst1": "context8Input"
+            },
+            "outputs": {
+                "context1Inst1": "context1Output"
+            },
+            "isOptional": true
         }
     }
 }

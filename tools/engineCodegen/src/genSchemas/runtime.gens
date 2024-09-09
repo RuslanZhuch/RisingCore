@@ -34,6 +34,39 @@ ${for partId in range(0, num_of_parts_in_deps_mask):}$
 ${:end-for}$
 };
 
+struct OptionalExecutorsMask
+{
+    auto getIsEnabled(int32_t executorId) 
+    {
+        const auto batchId{ executorId / 64 };
+        const auto localIndex{ executorId % 64 };
+        return mask[batchId] & (1 << localIndex) != 0;
+    }
+    uint64_t mask[${"", num_of_optiona_executors}$];
+};
+
+namespace
+{
+    OptionalExecutorsMask enabledExecutors{};
+}
+
+namespace
+{
+${for context_data in executors_per_contexts:}$
+    void merge${"", to_class_name(context_data.context_instance_name)}$()
+    {
+${for data in context_data.data_non_opt:}$
+        ${"", data.executor_name}$.modify${"", to_class_name(data.context_target_name)}$(${"", context_data.context_instance_name}$Context);
+${:end-for}$
+${for data in context_data.data_opt:}$
+        if (enabledExecutors.getIsEnabled(${"", data.optional_executor_id}$))
+            ${"", data.executor_name}$.modify${"", to_class_name(data.context_target_name)}$(${"", context_data.context_instance_name}$Context);
+${:end-for}$
+    }
+
+${:end-for}$
+}
+
 int main()
 {
 ${for instance in contexts_data:}$
@@ -53,6 +86,11 @@ ${:end-for}$
         if (deltaTime >= 1.f / 60.f)
         {
 
+
+            DependenciesMask contextsReadyMask{ ${initial_context_mask}$ };
+${for desc in executors_per_contexts:}$
+            int8_t ${"", desc.context_instance_name}$MergesLeft{ ${"", len(desc.data)}$ }
+${:end-for}$
 ${for executor_update_block in executors_update_descs:}$
 ${for merge_desc in executor_update_block.pools_merge_descs_list:}$
             ${"", merge_desc.executor_name}$.modify${"", merge_desc.executor_scontext}$(${"", merge_desc.instance_name}$Context);

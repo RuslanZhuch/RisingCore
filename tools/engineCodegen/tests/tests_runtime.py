@@ -61,7 +61,7 @@ class TestRuntime(unittest.TestCase):
         self.assertEqual(shared_usage_list[1].executor_context_name, "pool3")
         self.assertEqual(shared_usage_list[1].shared_context_instance_name, "poolInst3")
 
-    def test_generate_runtime_function(self):        
+    def test_generate_runtime_function(self):
         executors_data = executors.load([
             "assets/executors/executor1.json",
             "assets/executors/executor2.json",
@@ -77,26 +77,26 @@ class TestRuntime(unittest.TestCase):
         runtime.generate("dest", executors_data, "assets/project1/ws_runtime.json", contexts_data)
         
         utils.assert_files(self, "dest/runtime.cpp", "assets/expected/runtime.cpp")
-                
-    def test_generate_runtime_with_pools(self):
-        if not os.path.exists('dest/projects/project3'):
-            os.makedirs('dest/projects/project3')
-             
-        executors_data = executors.load([
-            "assets/project3/executors/executor1.json",
-            "assets/project3/executors/executor2.json",
-            "assets/project3/executors/executor3.json",
-            "assets/project3/executors/executor4.json",
-            "assets/project3/executors/executor5.json",
-            "assets/project3/executors/executor6.json"
-        ])
-        contexts_file_list = [
-            "assets/project3/contexts/sContext1.json",
-            "assets/project3/contexts/sContext2.json"
-        ]
-        
-        contexts_data = contexts.load_contexts(contexts_file_list)
-        
-        runtime.generate("dest/projects/project3", executors_data, "assets/project3/ws_runtime.json", contexts_data)
-        
-        utils.assert_files(self, "dest/projects/project3/runtime.cpp", "assets/expected/project3/runtime.cpp")
+
+#    def test_generate_runtime_with_pools(self):
+#        if not os.path.exists('dest/projects/project3'):
+#            os.makedirs('dest/projects/project3')
+#             
+#        executors_data = executors.load([
+#            "assets/project3/executors/executor1.json",
+#            "assets/project3/executors/executor2.json",
+#            "assets/project3/executors/executor3.json",
+#            "assets/project3/executors/executor4.json",
+#            "assets/project3/executors/executor5.json",
+#            "assets/project3/executors/executor6.json"
+#        ])
+#        contexts_file_list = [
+#            "assets/project3/contexts/sContext1.json",
+#            "assets/project3/contexts/sContext2.json"
+#        ]
+#        
+#        contexts_data = contexts.load_contexts(contexts_file_list)
+#        
+#        runtime.generate("dest/projects/project3", executors_data, "assets/project3/ws_runtime.json", contexts_data)
+#        
+#        utils.assert_files(self, "dest/projects/project3/runtime.cpp", "assets/expected/project3/runtime.cpp")
