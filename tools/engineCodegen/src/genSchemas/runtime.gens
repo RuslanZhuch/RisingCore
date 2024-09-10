@@ -9,6 +9,7 @@ ${"#include <executors/{}Executor.h>".format(name)}$
 ${:end-for}$
 #include <dod/SharedContext.h>
 #include <engine/Timer.h>
+#include <engine/Bitmask.h>
 
 namespace
 {
@@ -26,23 +27,23 @@ ${class_name = "Game::ExecutionBlock::" + to_class_name(data.get("name"))}$
 ${:end-for}$
 }
 
-struct DependenciesMask
-{
-
-${for partId in range(0, num_of_parts_in_deps_mask):}$
-    uint64_t part${"", partId+1}${};
-${:end-for}$
-};
-
 struct OptionalExecutorsMask
 {
     auto getIsEnabled(int32_t executorId) 
     {
         const auto batchId{ executorId / 64 };
         const auto localIndex{ executorId % 64 };
-        return mask[batchId] & (1 << localIndex) != 0;
+        return this->mask[batchId] & (1 << localIndex) != 0;
     }
     uint64_t mask[${"", num_of_optiona_executors}$];
+};
+
+struct FlowContext
+{
+    Engine::Bitmask::Bitmask<${num_of_parts_in_deps_mask}$> contextsReadyMask{ ${initial_context_mask}$ };
+${for desc in executors_per_contexts:}$
+    int16_t ${"", desc.context_instance_name}$ExecutorsLeft{ ${"", len(desc.data)}$ };
+${:end-for}$
 };
 
 namespace
@@ -67,6 +68,31 @@ ${:end-for}$
 ${:end-for}$
 }
 
+namespace
+{
+    bool tryRunNextExecutor(FlowContext& flowContext)
+    {
+        return false;
+    }
+
+    bool tryMergeNextContext(FlowContext& flowContext)
+    {
+${context_id = 0}$
+${for desc in executors_per_contexts:}$
+        if (flowContext.${"", desc.context_instance_name}$ExecutorsLeft == 0)
+        {
+            merge${"", to_class_name(desc.context_instance_name)}$();
+            --flowContext.${"", desc.context_instance_name}$ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.contextsReadyMask, ${context_id}$);
+            return true;
+        }
+
+${context_id = context_id + 1}$
+${:end-for}$
+        return false;
+    }
+}
+
 int main()
 {
 ${for instance in contexts_data:}$
@@ -86,42 +112,17 @@ ${:end-for}$
         if (deltaTime >= 1.f / 60.f)
         {
 
+            FlowContext flowContext{};
 
-            DependenciesMask contextsReadyMask{ ${initial_context_mask}$ };
-${for desc in executors_per_contexts:}$
-            int8_t ${"", desc.context_instance_name}$MergesLeft{ ${"", len(desc.data)}$ }
-${:end-for}$
-${for executor_update_block in executors_update_descs:}$
-${for merge_desc in executor_update_block.pools_merge_descs_list:}$
-            ${"", merge_desc.executor_name}$.modify${"", merge_desc.executor_scontext}$(${"", merge_desc.instance_name}$Context);
-${:end-for}$
+            while(true)
+            {
+                bool bChangeOccured{ false };
+                bChangeOccured = tryRunNextExecutor(flowContext);
+                bChangeOccured |= tryMergeNextContext(flowContext);
 
-${for usage_desc in executor_update_block.shared_usage_decs_list:}$
-            const auto computedP${"", usage_desc.pool_id}$_${"", usage_desc.instance_name}$Context{ Game::Context::${"", usage_desc.context_name}$::convertToConst(${"", usage_desc.data_instance_name}$Context) };
-${:end-for}$
-
-${for executor_desc in executor_update_block.executors_descs_list:}$
-${for shared_setup_desc in executor_desc.shared_setup_descs_list:}$
-            ${"", executor_desc.executor_name}$.${"", shared_setup_desc.executor_scontext}$Context = computedP${"", shared_setup_desc.pool_index}$_${"", shared_setup_desc.shared_instance}$Context;
-${:end-for}$
-            ${"", executor_desc.executor_name}$.update(deltaTime);
-${:end-for}$
-
-${:end-for}$
-${for flush_desc in pools_flush_descs:}$
-            ${"", flush_desc}$Context.reset();
-${:end-for}$
-${for flush_desc in shared_flush_descs:}$
-            ${"", flush_desc}$Context.reset();
-${:end-for}$
-
-${for merge_desc in shared_merge_descs:}$
-            ${"", merge_desc.executor_name}$.modify${"", merge_desc.executor_scontext}$(${"", merge_desc.instance_name}$Context);
-${:end-for}$
-
-${for flush_desc in executors_flush:}$
-            ${flush_desc}$.flushSharedLocalContexts();
-${:end-for}$
+                if (!bChangeOccured)
+                    break;
+            }
 
             for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
             {

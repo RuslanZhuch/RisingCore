@@ -107,6 +107,9 @@
     <ClCompile Include="sources\Algorithms.cpp">
       <Filter>sources</Filter>
     </ClCompile>
+    <ClCompile Include="sources\Bitmask.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
     <ClCompile Include="sources\Contexts.cpp">
       <Filter>sources</Filter>
     </ClCompile>

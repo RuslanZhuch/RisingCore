@@ -7,6 +7,7 @@
 
 #include <dod/SharedContext.h>
 #include <engine/Timer.h>
+#include <engine/Bitmask.h>
 
 namespace
 {
@@ -23,21 +24,28 @@ namespace
     Game::ExecutionBlock::Executor3 executor3;
 }
 
-struct DependenciesMask
-{
-
-    uint64_t part1{};
-};
-
 struct OptionalExecutorsMask
 {
     auto getIsEnabled(int32_t executorId) 
     {
         const auto batchId{ executorId / 64 };
         const auto localIndex{ executorId % 64 };
-        return mask[batchId] & (1 << localIndex) != 0;
+        return this->mask[batchId] & (1 << localIndex) != 0;
     }
     uint64_t mask[1];
+};
+
+struct FlowContext
+{
+    Engine::Bitmask::Bitmask<1> contextsReadyMask{ 0x3 };
+    int16_t context1Inst1ExecutorsLeft{ 1 };
+    int16_t context2Inst1ExecutorsLeft{ 1 };
+    int16_t context3Inst1ExecutorsLeft{ 1 };
+    int16_t context4Inst1ExecutorsLeft{ 2 };
+    int16_t context5Inst1ExecutorsLeft{ 1 };
+    int16_t context6Inst1ExecutorsLeft{ 2 };
+    int16_t context7Inst1ExecutorsLeft{ 1 };
+    int16_t context8Inst1ExecutorsLeft{ 2 };
 };
 
 namespace
@@ -95,6 +103,142 @@ namespace
 
 }
 
+namespace
+{
+    bool tryRunNextExecutor(FlowContext& flowContext)
+    {
+        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        {
+            tryRunExecutor1();
+            --flowContext.context3Inst1ExecutorsLeft;
+            return true;
+        }
+
+        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        {
+            tryRunExecutor2();
+            --flowContext.context4Inst1ExecutorsLeft;
+            --flowContext.context6Inst1ExecutorsLeft;
+            return true;
+        }
+
+        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        {
+            tryRunExecutor3();
+            --flowContext.context4Inst1ExecutorsLeft;
+            return true;
+        }
+
+        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        {
+            tryRunExecutor4();
+            --flowContext.context5Inst1ExecutorsLeft;
+            --flowContext.context6Inst1ExecutorsLeft;
+            return true;
+        }
+
+        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        {
+            tryRunExecutor5();
+            --flowContext.context8Inst1ExecutorsLeft;
+            return true;
+        }
+
+        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        {
+            tryRunExecutor6();
+            --flowContext.context7Inst1ExecutorsLeft;
+            return true;
+        }
+
+        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        {
+            tryRunExecutor7();
+            --flowContext.context2Inst1ExecutorsLeft;
+            --flowContext.context8Inst1ExecutorsLeft;
+            return true;
+        }
+
+        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        {
+            tryRunExecutor8();
+            --flowContext.context1Inst1ExecutorsLeft;
+            return true;
+        }
+
+        return false;
+    }
+
+    bool tryMergeNextContext(FlowContext& flowContext)
+    {
+        if (flowContext.context1Inst1ExecutorsLeft == 0)
+        {
+            mergeContext1Inst1();
+            --flowContext.context1Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.contextsReadyMask, 0);
+            return true;
+        }
+
+        if (flowContext.context2Inst1ExecutorsLeft == 0)
+        {
+            mergeContext2Inst1();
+            --flowContext.context2Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.contextsReadyMask, 1);
+            return true;
+        }
+
+        if (flowContext.context3Inst1ExecutorsLeft == 0)
+        {
+            mergeContext3Inst1();
+            --flowContext.context3Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.contextsReadyMask, 2);
+            return true;
+        }
+
+        if (flowContext.context4Inst1ExecutorsLeft == 0)
+        {
+            mergeContext4Inst1();
+            --flowContext.context4Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.contextsReadyMask, 3);
+            return true;
+        }
+
+        if (flowContext.context5Inst1ExecutorsLeft == 0)
+        {
+            mergeContext5Inst1();
+            --flowContext.context5Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.contextsReadyMask, 4);
+            return true;
+        }
+
+        if (flowContext.context6Inst1ExecutorsLeft == 0)
+        {
+            mergeContext6Inst1();
+            --flowContext.context6Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.contextsReadyMask, 5);
+            return true;
+        }
+
+        if (flowContext.context7Inst1ExecutorsLeft == 0)
+        {
+            mergeContext7Inst1();
+            --flowContext.context7Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.contextsReadyMask, 6);
+            return true;
+        }
+
+        if (flowContext.context8Inst1ExecutorsLeft == 0)
+        {
+            mergeContext8Inst1();
+            --flowContext.context8Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.contextsReadyMask, 7);
+            return true;
+        }
+
+        return false;
+    }
+}
+
 int main()
 {
     sharedInst1Context.load();
@@ -116,43 +260,17 @@ int main()
         if (deltaTime >= 1.f / 60.f)
         {
 
+            FlowContext flowContext{};
 
-            DependenciesMask contextsReadyMask{ 0x3 };
-            int8_t context1Inst1MergesLeft{ 1 }
-            int8_t context2Inst1MergesLeft{ 1 }
-            int8_t context3Inst1MergesLeft{ 1 }
-            int8_t context4Inst1MergesLeft{ 2 }
-            int8_t context5Inst1MergesLeft{ 1 }
-            int8_t context6Inst1MergesLeft{ 2 }
-            int8_t context7Inst1MergesLeft{ 1 }
-            int8_t context8Inst1MergesLeft{ 2 }
+            while(true)
+            {
+                bool bChangeOccured{ false };
+                bChangeOccured = tryRunNextExecutor(flowContext);
+                bChangeOccured |= tryMergeNextContext(flowContext);
 
-            const auto computedP1_sharedInst1Context{ Game::Context::SContext1::convertToConst(sharedInst1Context) };
-            const auto computedP1_sharedInst2Context{ Game::Context::SContext1::convertToConst(sharedInst2Context) };
-            const auto computedP1_sharedInst3Context{ Game::Context::SContext2::convertToConst(sharedInst3Context) };
-            const auto computedP1_sharedInst4Context{ Game::Context::SContext2::convertToConst(sharedInst4Context) };
-
-            executor1.update(deltaTime);
-            executor2.shared1Context = computedP1_sharedInst1Context;
-            executor2.shared2Context = computedP1_sharedInst2Context;
-            executor2.shared3Context = computedP1_sharedInst3Context;
-            executor2.shared4Context = computedP1_sharedInst4Context;
-            executor2.update(deltaTime);
-            executor3.shared1_2Context = computedP1_sharedInst1Context;
-            executor3.shared2_2Context = computedP1_sharedInst3Context;
-            executor3.update(deltaTime);
-
-            sharedInst1Context.reset();
-            sharedInst2Context.reset();
-            sharedInst4Context.reset();
-
-            executor2.modifyTarget1(sharedInst1Context);
-            executor2.modifyTarget2(sharedInst2Context);
-            executor3.modifyShared3(sharedInst3Context);
-
-            executor1.flushSharedLocalContexts();
-            executor2.flushSharedLocalContexts();
-            executor3.flushSharedLocalContexts();
+                if (!bChangeOccured)
+                    break;
+            }
 
             for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
             {

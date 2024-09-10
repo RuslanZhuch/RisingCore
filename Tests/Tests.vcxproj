@@ -130,6 +130,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Algorithms.cpp" />
+    <ClCompile Include="sources\Bitmask.cpp" />
     <ClCompile Include="sources\Contexts.cpp" />
     <ClCompile Include="sources\DataStream.cpp" />
     <ClCompile Include="sources\DataUtilsForTables.cpp" />
