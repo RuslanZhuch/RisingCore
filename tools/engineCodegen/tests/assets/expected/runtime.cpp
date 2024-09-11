@@ -38,6 +38,7 @@ struct OptionalExecutorsMask
 struct FlowContext
 {
     Engine::Bitmask::Bitmask<1> contextsReadyMask{ 0x3 };
+    Engine::Bitmask::Bitmask<1> completedExecutors{ };
     int16_t context1Inst1ExecutorsLeft{ 1 };
     int16_t context2Inst1ExecutorsLeft{ 1 };
     int16_t context3Inst1ExecutorsLeft{ 1 };
@@ -107,62 +108,70 @@ namespace
 {
     bool tryRunNextExecutor(FlowContext& flowContext)
     {
-        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x1 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 0))
         {
             tryRunExecutor1();
             --flowContext.context3Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.completedExecutors, 0);
             return true;
         }
 
-        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x2 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 1))
         {
             tryRunExecutor2();
             --flowContext.context4Inst1ExecutorsLeft;
             --flowContext.context6Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.completedExecutors, 1);
             return true;
         }
 
-        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x4 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 2))
         {
             tryRunExecutor3();
             --flowContext.context4Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.completedExecutors, 2);
             return true;
         }
 
-        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x8 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 3))
         {
             tryRunExecutor4();
             --flowContext.context5Inst1ExecutorsLeft;
             --flowContext.context6Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.completedExecutors, 3);
             return true;
         }
 
-        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x10 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 4))
         {
             tryRunExecutor5();
             --flowContext.context8Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.completedExecutors, 4);
             return true;
         }
 
-        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x20 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 5))
         {
             tryRunExecutor6();
             --flowContext.context7Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.completedExecutors, 5);
             return true;
         }
 
-        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x40 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 6))
         {
             tryRunExecutor7();
             --flowContext.context2Inst1ExecutorsLeft;
             --flowContext.context8Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.completedExecutors, 6);
             return true;
         }
 
-        if (Engine::Bitmask::get(flowContext.contextsReadyMask, {}))
+        if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x80 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 7))
         {
             tryRunExecutor8();
             --flowContext.context1Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.completedExecutors, 7);
             return true;
         }
 

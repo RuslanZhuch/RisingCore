@@ -41,6 +41,7 @@ struct OptionalExecutorsMask
 struct FlowContext
 {
     Engine::Bitmask::Bitmask<${num_of_parts_in_deps_mask}$> contextsReadyMask{ ${initial_context_mask}$ };
+    Engine::Bitmask::Bitmask<1> completedExecutors{ };
 ${for desc in executors_per_contexts:}$
     int16_t ${"", desc.context_instance_name}$ExecutorsLeft{ ${"", len(desc.data)}$ };
 ${:end-for}$
@@ -72,6 +73,20 @@ namespace
 {
     bool tryRunNextExecutor(FlowContext& flowContext)
     {
+${executor_el_id = 0}$
+${for data in executors_deps_contexts:}$
+        if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { ${"", data.depenency_contexts_mask}$ }) && !Engine::Bitmask::get(flowContext.completedExecutors, ${executor_el_id}$))
+        {
+            tryRun${"", to_class_name(data.executor_name)}$();
+${for context_name in data.contexts_list:}$
+            --flowContext.${context_name}$ExecutorsLeft;
+${:end-for}$
+            Engine::Bitmask::set(flowContext.completedExecutors, ${executor_el_id}$);
+            return true;
+        }
+
+${executor_el_id = executor_el_id + 1}$
+${:end-for}$
         return false;
     }
 

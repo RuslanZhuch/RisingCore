@@ -110,6 +110,41 @@ class TestCore(unittest.TestCase):
         self.assertEqual(masks_list[7].executor_name, "executor8")
         self.assertEqual(masks_list[7].mask, [0, 0, 0, 0, 0, 0, 0, 1])
         
+    def test_get_executors_dep_contexts(self):
+        data = loader.load_file_data("assets/structures/dummy_structures.json")
+        schema = data[1]
+        structure = schema["structure"]
+
+        contexts_list = structures.get_contexts_list(structure)
+
+        data = structures.get_executors_deps_contexts(structure, contexts_list)
+
+        self.assertEqual(len(data), 8)
+        self.assertEqual(data[0].executor_name, "executor1")
+        self.assertEqual(data[0].contexts_list, ["context3Inst1"])
+        self.assertEqual(data[0].depenency_contexts_mask, "0x1")
+        self.assertEqual(data[1].executor_name, "executor2")
+        self.assertEqual(data[1].contexts_list, ["context4Inst1", "context6Inst1"])
+        self.assertEqual(data[1].depenency_contexts_mask, "0x2")
+        self.assertEqual(data[2].executor_name, "executor3")
+        self.assertEqual(data[2].contexts_list, ["context4Inst1"])
+        self.assertEqual(data[2].depenency_contexts_mask, "0x4")
+        self.assertEqual(data[3].executor_name, "executor4")
+        self.assertEqual(data[3].contexts_list, ["context5Inst1", "context6Inst1"])
+        self.assertEqual(data[3].depenency_contexts_mask, "0x8")
+        self.assertEqual(data[4].executor_name, "executor5")
+        self.assertEqual(data[4].contexts_list, ["context8Inst1"])
+        self.assertEqual(data[4].depenency_contexts_mask, "0x10")
+        self.assertEqual(data[5].executor_name, "executor6")
+        self.assertEqual(data[5].contexts_list, ["context7Inst1"])
+        self.assertEqual(data[5].depenency_contexts_mask, "0x20")
+        self.assertEqual(data[6].executor_name, "executor7")
+        self.assertEqual(data[6].contexts_list, ["context2Inst1", "context8Inst1"])
+        self.assertEqual(data[6].depenency_contexts_mask, "0x40")
+        self.assertEqual(data[7].executor_name, "executor8")
+        self.assertEqual(data[7].contexts_list, ["context1Inst1"])
+        self.assertEqual(data[7].depenency_contexts_mask, "0x80")
+        
     def test_get_executors_per_contexts(self):
         data = loader.load_file_data("assets/structures/dummy_structures.json")
         schema = data[1]
@@ -196,13 +231,17 @@ class TestCore(unittest.TestCase):
         self.assertEqual(executors_per_contexts[6].data_non_opt[0].context_target_name, "context7Output")
 
         self.assertEqual(executors_per_contexts[7].context_instance_name, "context8Inst1")
-        self.assertEqual(len(executors_per_contexts[7].data), 1)
-        self.assertEqual(len(executors_per_contexts[7].data_non_opt), 1)
+        self.assertEqual(len(executors_per_contexts[7].data), 2)
+        self.assertEqual(len(executors_per_contexts[7].data_non_opt), 2)
         self.assertEqual(len(executors_per_contexts[7].data_opt), 0)
         self.assertEqual(executors_per_contexts[7].data[0].executor_name, "executor5")
         self.assertEqual(executors_per_contexts[7].data[0].context_target_name, "context8Output")
+        self.assertEqual(executors_per_contexts[7].data[1].executor_name, "executor7")
+        self.assertEqual(executors_per_contexts[7].data[1].context_target_name, "context8Output")
         self.assertEqual(executors_per_contexts[7].data_non_opt[0].executor_name, "executor5")
         self.assertEqual(executors_per_contexts[7].data_non_opt[0].context_target_name, "context8Output")
+        self.assertEqual(executors_per_contexts[7].data_non_opt[1].executor_name, "executor7")
+        self.assertEqual(executors_per_contexts[7].data_non_opt[1].context_target_name, "context8Output")
 
     def test_get_number_of_parts(self):
         self.assertEqual(structures.compute_number_of_parts(1), 1)

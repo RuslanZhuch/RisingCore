@@ -79,6 +79,34 @@ def convert_to_mask(deps_mask : list[int]):
 
     return ",".join(initials)
 
+class ExecutorDepsContexts:
+    def __init__(self, executor_name: str = "", contexts_list: list[str] = [], depenency_contexts_mask: str = ""):
+        self.executor_name = executor_name
+        self.contexts_list = contexts_list
+        self.depenency_contexts_mask = depenency_contexts_mask
+
+def get_executors_deps_contexts(structure, contexts_list : list[str]):
+    data = []
+
+    executors_names = list(structure.keys())
+    for executor_name in executors_names:
+        executor_io = structure[executor_name]
+        desc = ExecutorDepsContexts()
+        desc.executor_name = executor_name
+        if "outputs" in executor_io:
+            inputs = executor_io["outputs"]
+            desc.contexts_list = list(inputs.keys())
+        if "inputs" in executor_io:
+            inputs = executor_io["inputs"]
+            mask = [0] * len(contexts_list)
+            for input in inputs:
+                el_id = contexts_list.index(input)
+                mask[el_id] = 1
+            desc.depenency_contexts_mask = convert_to_mask(mask)
+        data.append(desc)
+
+    return data
+
 class ExecutorDepsMask:
     def __init__(self, executor_name: str, mask: list[int]):
         self.executor_name = executor_name

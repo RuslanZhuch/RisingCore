@@ -152,6 +152,8 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
     initial_context_mask = structures.convert_to_mask(initial_context_states)
     executors_deps_descs_list =  [structures.get_deps_descs_for_executor(executor_deps_mask.executor_name, executor_deps_mask.mask) for executor_deps_mask in executors_deps_masks] 
 
+    executors_deps_contexts = structures.get_executors_deps_contexts(structure, structure_contexts_list)
+
     optional_executors = structures.get_optional_executors(structure)
     num_of_optiona_executors = structures.compute_number_of_parts(len(optional_executors))
 
@@ -167,6 +169,7 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
         "executors_per_contexts": executors_per_contexts,
         "num_of_optiona_executors": num_of_optiona_executors,
         "optional_executors": optional_executors,
+        "executors_deps_contexts": executors_deps_contexts,
         "executors_update_descs": _get_executors_update(workspace_context_data, executors_data, validated_shared_context_instances),
         "pools_flush_descs": contexts.get_pools_flush(workspace_context_data),
         "shared_flush_descs": contexts.get_shared_flush(workspace_context_data),

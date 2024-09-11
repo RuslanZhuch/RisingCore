@@ -82,7 +82,8 @@
                     "context7Inst1": "context7Input"
                 },
                 "outputs": {
-                    "context2Inst1": "context2Output"
+                    "context2Inst1": "context2Output",
+                    "context8Inst1": "context8Output"
                 }
             },
             "executor8": {
