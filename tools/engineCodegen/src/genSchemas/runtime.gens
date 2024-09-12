@@ -57,6 +57,9 @@ namespace
 ${for context_data in executors_per_contexts:}$
     void merge${"", to_class_name(context_data.context_instance_name)}$()
     {
+${if context_data.is_need_to_reset:}$
+        ${"", context_data.context_instance_name}$Context.reset();
+${:end-if}$
 ${for data in context_data.data_non_opt:}$
         ${"", data.executor_name}$.modify${"", to_class_name(data.context_target_name)}$(${"", context_data.context_instance_name}$Context);
 ${:end-for}$
@@ -71,13 +74,35 @@ ${:end-for}$
 
 namespace
 {
-    bool tryRunNextExecutor(FlowContext& flowContext)
+${for executor_name in mandatory_executors:}$
+    void tryRun${"", to_class_name(executor_name)}$(float dt)
+    {
+        ${executor_name}$.update(dt);
+    }
+
+${:end-for}$
+${el_id = 0}$
+${for executor_name in optional_executors:}$
+    void tryRun${"", to_class_name(executor_name)}$(float dt)
+    {
+        if (!enabledExecutors.getIsEnabled(${el_id}$))
+            return;
+        ${executor_name}$.update(dt);
+    }
+
+${el_id = el_id + 1}$
+${:end-for}$
+}
+
+namespace
+{
+    bool tryRunNextExecutor(FlowContext& flowContext, float dt)
     {
 ${executor_el_id = 0}$
 ${for data in executors_deps_contexts:}$
         if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { ${"", data.depenency_contexts_mask}$ }) && !Engine::Bitmask::get(flowContext.completedExecutors, ${executor_el_id}$))
         {
-            tryRun${"", to_class_name(data.executor_name)}$();
+            tryRun${"", to_class_name(data.executor_name)}$(dt);
 ${for context_name in data.contexts_list:}$
             --flowContext.${context_name}$ExecutorsLeft;
 ${:end-for}$
@@ -132,7 +157,7 @@ ${:end-for}$
             while(true)
             {
                 bool bChangeOccured{ false };
-                bChangeOccured = tryRunNextExecutor(flowContext);
+                bChangeOccured = tryRunNextExecutor(flowContext, deltaTime);
                 bChangeOccured |= tryMergeNextContext(flowContext);
 
                 if (!bChangeOccured)

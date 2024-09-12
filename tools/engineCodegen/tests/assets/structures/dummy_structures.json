@@ -23,77 +23,85 @@
             "executor5"
         ],
         "structure": {
-            "executor1": {
-                "inputs": { 
-                    "context1Inst1": "context1Input" 
+            "contextsToFlush": [
+                "context2Inst1",
+                "context8Inst1"
+            ],
+            "executors": {
+                "executor1": {
+                    "inputs": { 
+                        "context1Inst1": "context1Input" 
+                    },
+                    "outputs": {
+                        "context3Inst1": "context3Output"
+                    },
+                    "isAnchor": true,
+                    "isOptional": true
                 },
-                "outputs": {
-                    "context3Inst1": "context3Output"
+                "executor2": {
+                    "inputs": { 
+                        "context2Inst1": "context2Input" 
+                    },
+                    "outputs": {
+                        "context4Inst1": "context4Output",
+                        "context6Inst1": "context6Output"
+                    },
+                    "isAnchor": true
                 },
-                "isAnchor": true,
-                "isOptional": true
-            },
-            "executor2": {
-                "inputs": { 
-                    "context2Inst1": "context2Input" 
+                "executor3": {
+                    "inputs": { 
+                        "context3Inst1": "context3Input" 
+                    },
+                    "outputs": {
+                        "context4Inst1": "context4Output",
+                        "context9Inst1": "context9Output"
+                    },
+                    "isOptional": true
                 },
-                "outputs": {
-                    "context4Inst1": "context4Output",
-                    "context6Inst1": "context6Output"
+                "executor4": {
+                    "inputs": { 
+                        "context4Inst1": "context4Input" 
+                    },
+                    "outputs": {
+                        "context5Inst1": "context5Output",
+                        "context6Inst1": "context6Output"
+                    }
                 },
-                "isAnchor": true
-            },
-            "executor3": {
-                "inputs": { 
-                    "context3Inst1": "context3Input" 
+                "executor5": {
+                    "inputs": { 
+                        "context5Inst1": "context5Input"
+                    },
+                    "outputs": {
+                        "context8Inst1": "context8Output"
+                    }
                 },
-                "outputs": {
-                    "context4Inst1": "context4Output"
+                "executor6": {
+                    "inputs": { 
+                        "context6Inst1": "context6Input"
+                    },
+                    "outputs": {
+                        "context7Inst1": "context7Output",
+                        "context9Inst1": "context9Output"
+                    }
                 },
-                "isOptional": true
-            },
-            "executor4": {
-                "inputs": { 
-                    "context4Inst1": "context4Input" 
+                "executor7": {
+                    "inputs": { 
+                        "context7Inst1": "context7Input"
+                    },
+                    "outputs": {
+                        "context2Inst1": "context2Output",
+                        "context8Inst1": "context8Output"
+                    }
                 },
-                "outputs": {
-                    "context5Inst1": "context5Output",
-                    "context6Inst1": "context6Output"
+                "executor8": {
+                    "inputs": { 
+                        "context8Inst1": "context8Input"
+                    },
+                    "outputs": {
+                        "context1Inst1": "context1Output"
+                    },
+                    "isOptional": true
                 }
-            },
-            "executor5": {
-                "inputs": { 
-                    "context5Inst1": "context5Input"
-                },
-                "outputs": {
-                    "context8Inst1": "context8Output"
-                }
-            },
-            "executor6": {
-                "inputs": { 
-                    "context6Inst1": "context6Input"
-                },
-                "outputs": {
-                    "context7Inst1": "context7Output"
-                }
-            },
-            "executor7": {
-                "inputs": { 
-                    "context7Inst1": "context7Input"
-                },
-                "outputs": {
-                    "context2Inst1": "context2Output",
-                    "context8Inst1": "context8Output"
-                }
-            },
-            "executor8": {
-                "inputs": { 
-                    "context8Inst1": "context8Input"
-                },
-                "outputs": {
-                    "context1Inst1": "context1Output"
-                },
-                "isOptional": true
             }
         }
     }

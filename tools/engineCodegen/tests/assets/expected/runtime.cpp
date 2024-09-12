@@ -47,6 +47,7 @@ struct FlowContext
     int16_t context6Inst1ExecutorsLeft{ 2 };
     int16_t context7Inst1ExecutorsLeft{ 1 };
     int16_t context8Inst1ExecutorsLeft{ 2 };
+    int16_t context9Inst1ExecutorsLeft{ 2 };
 };
 
 namespace
@@ -64,6 +65,7 @@ namespace
 
     void mergeContext2Inst1()
     {
+        context2Inst1Context.reset();
         executor7.modifyContext2Output(context2Inst1Context);
     }
 
@@ -98,19 +100,77 @@ namespace
 
     void mergeContext8Inst1()
     {
+        context8Inst1Context.reset();
         executor5.modifyContext8Output(context8Inst1Context);
         executor7.modifyContext8Output(context8Inst1Context);
+    }
+
+    void mergeContext9Inst1()
+    {
+        executor6.modifyContext9Output(context9Inst1Context);
+        if (enabledExecutors.getIsEnabled(1))
+            executor3.modifyContext9Output(context9Inst1Context);
     }
 
 }
 
 namespace
 {
-    bool tryRunNextExecutor(FlowContext& flowContext)
+    void tryRunExecutor2(float dt)
+    {
+        executor2.update(dt);
+    }
+
+    void tryRunExecutor4(float dt)
+    {
+        executor4.update(dt);
+    }
+
+    void tryRunExecutor5(float dt)
+    {
+        executor5.update(dt);
+    }
+
+    void tryRunExecutor6(float dt)
+    {
+        executor6.update(dt);
+    }
+
+    void tryRunExecutor7(float dt)
+    {
+        executor7.update(dt);
+    }
+
+    void tryRunExecutor1(float dt)
+    {
+        if (!enabledExecutors.getIsEnabled(0))
+            return;
+        executor1.update(dt);
+    }
+
+    void tryRunExecutor3(float dt)
+    {
+        if (!enabledExecutors.getIsEnabled(1))
+            return;
+        executor3.update(dt);
+    }
+
+    void tryRunExecutor8(float dt)
+    {
+        if (!enabledExecutors.getIsEnabled(2))
+            return;
+        executor8.update(dt);
+    }
+
+}
+
+namespace
+{
+    bool tryRunNextExecutor(FlowContext& flowContext, float dt)
     {
         if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x1 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 0))
         {
-            tryRunExecutor1();
+            tryRunExecutor1(dt);
             --flowContext.context3Inst1ExecutorsLeft;
             Engine::Bitmask::set(flowContext.completedExecutors, 0);
             return true;
@@ -118,7 +178,7 @@ namespace
 
         if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x2 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 1))
         {
-            tryRunExecutor2();
+            tryRunExecutor2(dt);
             --flowContext.context4Inst1ExecutorsLeft;
             --flowContext.context6Inst1ExecutorsLeft;
             Engine::Bitmask::set(flowContext.completedExecutors, 1);
@@ -127,15 +187,16 @@ namespace
 
         if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x4 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 2))
         {
-            tryRunExecutor3();
+            tryRunExecutor3(dt);
             --flowContext.context4Inst1ExecutorsLeft;
+            --flowContext.context9Inst1ExecutorsLeft;
             Engine::Bitmask::set(flowContext.completedExecutors, 2);
             return true;
         }
 
         if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x8 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 3))
         {
-            tryRunExecutor4();
+            tryRunExecutor4(dt);
             --flowContext.context5Inst1ExecutorsLeft;
             --flowContext.context6Inst1ExecutorsLeft;
             Engine::Bitmask::set(flowContext.completedExecutors, 3);
@@ -144,7 +205,7 @@ namespace
 
         if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x10 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 4))
         {
-            tryRunExecutor5();
+            tryRunExecutor5(dt);
             --flowContext.context8Inst1ExecutorsLeft;
             Engine::Bitmask::set(flowContext.completedExecutors, 4);
             return true;
@@ -152,15 +213,16 @@ namespace
 
         if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x20 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 5))
         {
-            tryRunExecutor6();
+            tryRunExecutor6(dt);
             --flowContext.context7Inst1ExecutorsLeft;
+            --flowContext.context9Inst1ExecutorsLeft;
             Engine::Bitmask::set(flowContext.completedExecutors, 5);
             return true;
         }
 
         if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x40 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 6))
         {
-            tryRunExecutor7();
+            tryRunExecutor7(dt);
             --flowContext.context2Inst1ExecutorsLeft;
             --flowContext.context8Inst1ExecutorsLeft;
             Engine::Bitmask::set(flowContext.completedExecutors, 6);
@@ -169,7 +231,7 @@ namespace
 
         if (Engine::Bitmask::includes(flowContext.contextsReadyMask, { 0x80 }) && !Engine::Bitmask::get(flowContext.completedExecutors, 7))
         {
-            tryRunExecutor8();
+            tryRunExecutor8(dt);
             --flowContext.context1Inst1ExecutorsLeft;
             Engine::Bitmask::set(flowContext.completedExecutors, 7);
             return true;
@@ -244,6 +306,14 @@ namespace
             return true;
         }
 
+        if (flowContext.context9Inst1ExecutorsLeft == 0)
+        {
+            mergeContext9Inst1();
+            --flowContext.context9Inst1ExecutorsLeft;
+            Engine::Bitmask::set(flowContext.contextsReadyMask, 8);
+            return true;
+        }
+
         return false;
     }
 }
@@ -274,7 +344,7 @@ int main()
             while(true)
             {
                 bool bChangeOccured{ false };
-                bChangeOccured = tryRunNextExecutor(flowContext);
+                bChangeOccured = tryRunNextExecutor(flowContext, deltaTime);
                 bChangeOccured |= tryMergeNextContext(flowContext);
 
                 if (!bChangeOccured)

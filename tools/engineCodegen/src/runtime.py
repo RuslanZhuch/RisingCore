@@ -154,7 +154,7 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
 
     executors_deps_contexts = structures.get_executors_deps_contexts(structure, structure_contexts_list)
 
-    optional_executors = structures.get_optional_executors(structure)
+    mandatory_executors, optional_executors = structures.get_executors_segmented(structure)
     num_of_optiona_executors = structures.compute_number_of_parts(len(optional_executors))
 
     executors_per_contexts = structures.get_executors_per_contexts(structure, structure_contexts_list, optional_executors)
@@ -168,6 +168,7 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
         "initial_context_mask": initial_context_mask,
         "executors_per_contexts": executors_per_contexts,
         "num_of_optiona_executors": num_of_optiona_executors,
+        "mandatory_executors": mandatory_executors,
         "optional_executors": optional_executors,
         "executors_deps_contexts": executors_deps_contexts,
         "executors_update_descs": _get_executors_update(workspace_context_data, executors_data, validated_shared_context_instances),

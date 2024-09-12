@@ -1,43 +1,38 @@
 CHANNELS_PER_PART = 64
 
+def _get_executors_struct(structure):
+    return structure["executors"]
+
+def _get_contexts_to_flush(structure):
+    return structure["contextsToFlush"]
+
 def get_contexts_list(structure):
     contexts_list = []
     contexts_set = set()
 
-    for executor_name in structure:
-        executor_io = structure[executor_name]
-        if "inputs" not in executor_io:
+    for executor_name in _get_executors_struct(structure):
+        executor_io = _get_executors_struct(structure)[executor_name]
+        if "outputs" not in executor_io:
             continue
-        inputs = executor_io["inputs"]
-        for input in inputs:
-            if input in contexts_set:
+        outputs = executor_io["outputs"]
+        for context in outputs:
+            if context in contexts_set:
                 continue
-            contexts_set.add(input)
-            contexts_list.append(input)
+            contexts_set.add(context)
+            contexts_list.append(context)
 
+    contexts_list.sort()
     return contexts_list
 
 def get_executors_list(structure):
-    return list(structure.keys())
-
-def get_optional_executors(structure):
-    optional_executors = []
-
-    for executor_name in structure:
-        executor_data = structure[executor_name]
-        if "isOptional" not in executor_data:
-            continue
-        if executor_data["isOptional"] is True:
-            optional_executors.append(executor_name)
-
-    return optional_executors
+    return list(_get_executors_struct(structure).keys())
 
 def get_anchors_list(structure):
     anchors_list = []
     is_anchor_key = "isAnchor"
 
-    for executor_name in structure:
-        executor_io = structure[executor_name]
+    for executor_name in _get_executors_struct(structure):
+        executor_io = _get_executors_struct(structure)[executor_name]
 
         if is_anchor_key in executor_io and executor_io[is_anchor_key] is True:
             anchors_list.append(executor_name)
@@ -47,10 +42,10 @@ def get_anchors_list(structure):
 def get_initial_deps_mask(structure, anchors_list : list[str], contexts_list : list[str]):
     mask = [0] * len(contexts_list)
 
-    for executor_name in structure:
+    for executor_name in _get_executors_struct(structure):
         if executor_name not in anchors_list:
             continue
-        executor_io = structure[executor_name]
+        executor_io = _get_executors_struct(structure)[executor_name]
         if "inputs" not in executor_io:
             continue
         inputs = executor_io["inputs"]
@@ -79,6 +74,20 @@ def convert_to_mask(deps_mask : list[int]):
 
     return ",".join(initials)
 
+def get_executors_segmented(structure):
+    mandatory_executors = []
+    optional_executors = []
+
+    for executor_name in _get_executors_struct(structure):
+        executor_data = _get_executors_struct(structure)[executor_name]
+        if "isOptional" not in executor_data:
+            mandatory_executors.append(executor_name)
+            continue
+        if executor_data["isOptional"] is True:
+            optional_executors.append(executor_name)
+
+    return mandatory_executors, optional_executors
+
 class ExecutorDepsContexts:
     def __init__(self, executor_name: str = "", contexts_list: list[str] = [], depenency_contexts_mask: str = ""):
         self.executor_name = executor_name
@@ -88,9 +97,9 @@ class ExecutorDepsContexts:
 def get_executors_deps_contexts(structure, contexts_list : list[str]):
     data = []
 
-    executors_names = list(structure.keys())
+    executors_names = list(_get_executors_struct(structure).keys())
     for executor_name in executors_names:
-        executor_io = structure[executor_name]
+        executor_io = _get_executors_struct(structure)[executor_name]
         desc = ExecutorDepsContexts()
         desc.executor_name = executor_name
         if "outputs" in executor_io:
@@ -115,9 +124,9 @@ class ExecutorDepsMask:
 def get_executors_deps_mask(structure, contexts_list : list[str]):
     masks = []
 
-    executors_names = list(structure.keys())
+    executors_names = list(_get_executors_struct(structure).keys())
     for executor_name in executors_names:
-        executor_io = structure[executor_name]
+        executor_io = _get_executors_struct(structure)[executor_name]
         mask = [0] * len(contexts_list)
         if "inputs" in executor_io:
             inputs = executor_io["inputs"]
@@ -143,8 +152,9 @@ class ExecutorsPerContextDesc:
             self.context_target_name = context_target_name
             self.optional_executor_id = optional_executor_id
 
-    def __init__(self, context_instance_name: str, data_list: list[ExecutorData], data_non_opt: list[ExecutorData], data_opt_list: list[ExecutorData]):
+    def __init__(self, context_instance_name: str, is_need_to_reset: bool, data_list: list[ExecutorData], data_non_opt: list[ExecutorData], data_opt_list: list[ExecutorData]):
         self.context_instance_name = context_instance_name
+        self.is_need_to_reset = is_need_to_reset
         self.data = data_list
         self.data_non_opt = data_non_opt
         self.data_opt = data_opt_list
@@ -152,13 +162,14 @@ class ExecutorsPerContextDesc:
 def get_executors_per_contexts(structure, contexts_list : list[str], optional_executors_list : list[str] = []):
     executors_per_contexts = []
 
-    executors_names = list(structure.keys())
+    executors_names = list(_get_executors_struct(structure).keys())
     for context_instance in contexts_list:
         data = []
         data_non_opt = []
         data_opt = []
+        is_need_to_reset = context_instance in _get_contexts_to_flush(structure)
         for executor_name in executors_names:
-            executor_io = structure[executor_name]
+            executor_io = _get_executors_struct(structure)[executor_name]
             if "outputs" in executor_io:
                 outputs = executor_io["outputs"]
                 if context_instance in outputs:
@@ -170,7 +181,7 @@ def get_executors_per_contexts(structure, contexts_list : list[str], optional_ex
                         data_non_opt.append(ExecutorsPerContextDesc.ExecutorData(executor_name, outputs[context_instance]))
 
         if len(data) > 0 or len(data_opt) > 0:
-            executors_per_contexts.append(ExecutorsPerContextDesc(context_instance, data, data_non_opt, data_opt))
+            executors_per_contexts.append(ExecutorsPerContextDesc(context_instance, is_need_to_reset, data, data_non_opt, data_opt))
 
     return executors_per_contexts
 
