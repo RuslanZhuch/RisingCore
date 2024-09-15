@@ -10,16 +10,20 @@ def get_contexts_list(structure):
     contexts_list = []
     contexts_set = set()
 
-    for executor_name in _get_executors_struct(structure):
-        executor_io = _get_executors_struct(structure)[executor_name]
-        if "outputs" not in executor_io:
-            continue
-        outputs = executor_io["outputs"]
+    def iterate_over_io(io_name: str):
+        if io_name not in executor_io:
+            return
+        outputs = executor_io[io_name]
         for context in outputs:
             if context in contexts_set:
                 continue
             contexts_set.add(context)
             contexts_list.append(context)
+
+    for executor_name in _get_executors_struct(structure):
+        executor_io = _get_executors_struct(structure)[executor_name]
+        iterate_over_io("outputs")
+        iterate_over_io("inputs")
 
     contexts_list.sort()
     return contexts_list
@@ -38,6 +42,28 @@ def get_anchors_list(structure):
             anchors_list.append(executor_name)
 
     return anchors_list
+
+class ExecutorInputsDesc:
+    def __init__(self, input_name: str, instance_name: str):
+        self.input_name = input_name
+        self.instance_name = instance_name
+
+def get_executors_inputs_contexts(structure):
+    data = dict()
+    for executor_name in _get_executors_struct(structure):
+        executor_io = _get_executors_struct(structure)[executor_name]
+        if "inputs" not in executor_io:
+            continue
+        descs_list = []
+        inputs = executor_io["inputs"]
+        for input in inputs:
+            descs_list.append(ExecutorInputsDesc(
+                input_name= inputs[input],
+                instance_name= input
+            ))
+        data[executor_name] = descs_list
+
+    return data
 
 def get_initial_deps_mask(structure, anchors_list : list[str], contexts_list : list[str]):
     mask = [0] * len(contexts_list)

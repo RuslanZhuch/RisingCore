@@ -146,6 +146,7 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
 
     structure = _get_structure_data(workspace_shared_contexts_file)
     structure_contexts_list = structures.get_contexts_list(structure)
+    print("structure_contexts_list", structure_contexts_list)
     anchors_list = structures.get_anchors_list(structure)
     executors_deps_masks = structures.get_executors_deps_mask(structure, structure_contexts_list)
     initial_context_states = structures.get_initial_deps_mask(structure, anchors_list, structure_contexts_list)
@@ -158,6 +159,7 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
     num_of_optiona_executors = structures.compute_number_of_parts(len(optional_executors))
 
     executors_per_contexts = structures.get_executors_per_contexts(structure, structure_contexts_list, optional_executors)
+    executors_inputs_context = structures.get_executors_inputs_contexts(structure)
 
     parameters = {
         "executors_data": executors_data,
@@ -171,6 +173,7 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
         "mandatory_executors": mandatory_executors,
         "optional_executors": optional_executors,
         "executors_deps_contexts": executors_deps_contexts,
+        "executors_inputs_context": executors_inputs_context,
         "executors_update_descs": _get_executors_update(workspace_context_data, executors_data, validated_shared_context_instances),
         "pools_flush_descs": contexts.get_pools_flush(workspace_context_data),
         "shared_flush_descs": contexts.get_shared_flush(workspace_context_data),

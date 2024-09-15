@@ -77,6 +77,10 @@ namespace
 ${for executor_name in mandatory_executors:}$
     void tryRun${"", to_class_name(executor_name)}$(float dt)
     {
+${inputs_data = executors_inputs_context[executor_name]}$
+${for input in inputs_data:}$
+        ${executor_name}$.${"", input.input_name}$Context = Game::Context::${"", to_class_name(input.instance_name)}$::convertToConst(${"", input.instance_name}$Context);
+${:end-for}$
         ${executor_name}$.update(dt);
     }
 
@@ -87,6 +91,10 @@ ${for executor_name in optional_executors:}$
     {
         if (!enabledExecutors.getIsEnabled(${el_id}$))
             return;
+${inputs_data = executors_inputs_context[executor_name]}$
+${for input in inputs_data:}$
+        ${executor_name}$.${"", input.input_name}$Context = Game::Context::${"", to_class_name(input.instance_name)}$::convertToConst(${"", input.instance_name}$Context);
+${:end-for}$
         ${executor_name}$.update(dt);
     }
 
