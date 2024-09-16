@@ -178,8 +178,9 @@ class ExecutorsPerContextDesc:
             self.context_target_name = context_target_name
             self.optional_executor_id = optional_executor_id
 
-    def __init__(self, context_instance_name: str, is_need_to_reset: bool, data_list: list[ExecutorData], data_non_opt: list[ExecutorData], data_opt_list: list[ExecutorData]):
+    def __init__(self, context_instance_name: str, context_el_id: int, is_need_to_reset: bool, data_list: list[ExecutorData], data_non_opt: list[ExecutorData], data_opt_list: list[ExecutorData]):
         self.context_instance_name = context_instance_name
+        self.context_el_id = context_el_id
         self.is_need_to_reset = is_need_to_reset
         self.data = data_list
         self.data_non_opt = data_non_opt
@@ -189,6 +190,8 @@ def get_executors_per_contexts(structure, contexts_list : list[str], optional_ex
     executors_per_contexts = []
 
     executors_names = list(_get_executors_struct(structure).keys())
+
+    context_el_id = 0
     for context_instance in contexts_list:
         data = []
         data_non_opt = []
@@ -207,7 +210,9 @@ def get_executors_per_contexts(structure, contexts_list : list[str], optional_ex
                         data_non_opt.append(ExecutorsPerContextDesc.ExecutorData(executor_name, outputs[context_instance]))
 
         if len(data) > 0 or len(data_opt) > 0:
-            executors_per_contexts.append(ExecutorsPerContextDesc(context_instance, is_need_to_reset, data, data_non_opt, data_opt))
+            executors_per_contexts.append(ExecutorsPerContextDesc(context_instance, context_el_id, is_need_to_reset, data, data_non_opt, data_opt))
+
+        context_el_id = context_el_id + 1
 
     return executors_per_contexts
 

@@ -125,17 +125,15 @@ ${:end-for}$
 
     bool tryMergeNextContext(FlowContext& flowContext)
     {
-${context_id = 0}$
 ${for desc in executors_per_contexts:}$
         if (flowContext.${"", desc.context_instance_name}$ExecutorsLeft == 0)
         {
             merge${"", to_class_name(desc.context_instance_name)}$();
             --flowContext.${"", desc.context_instance_name}$ExecutorsLeft;
-            Engine::Bitmask::set(flowContext.contextsReadyMask, ${context_id}$);
+            Engine::Bitmask::set(flowContext.contextsReadyMask, ${"", desc.context_el_id}$);
             return true;
         }
 
-${context_id = context_id + 1}$
 ${:end-for}$
         return false;
     }
