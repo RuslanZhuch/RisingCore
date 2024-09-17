@@ -100,17 +100,39 @@ def convert_to_mask(deps_mask : list[int]):
 
     return ",".join(initials)
 
+class OptionalExecutorDesc:
+    def __init__(self, executor_name: str, toggle_code: int):
+        self.executor_name = executor_name
+        self.toggle_code = toggle_code
+
+def get_optional_executors_data(structure, optional_executors_list: list[str]):
+    data = []
+    executors_struct = _get_executors_struct(structure)
+
+    for optional_executor in optional_executors_list:
+        if optional_executor not in executors_struct:
+            continue
+        executor_data = executors_struct[optional_executor]
+        if "toggleCode" not in executor_data:
+            continue
+        toggle_code = executor_data["toggleCode"]
+        data.append(OptionalExecutorDesc(
+            optional_executor,
+            toggle_code
+        ))
+
+    return data
+
 def get_executors_segmented(structure):
     mandatory_executors = []
     optional_executors = []
 
     for executor_name in _get_executors_struct(structure):
         executor_data = _get_executors_struct(structure)[executor_name]
-        if "isOptional" not in executor_data:
+        if "toggleCode" not in executor_data:
             mandatory_executors.append(executor_name)
             continue
-        if executor_data["isOptional"] is True:
-            optional_executors.append(executor_name)
+        optional_executors.append(executor_name)
 
     return mandatory_executors, optional_executors
 

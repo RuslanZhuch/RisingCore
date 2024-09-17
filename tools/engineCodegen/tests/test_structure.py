@@ -95,6 +95,22 @@ class TestCore(unittest.TestCase):
         self.assertEqual(executors_opt_list[1], "executor3")
         self.assertEqual(executors_opt_list[2], "executor8")
 
+    def test_get_optional_executors_data(self):
+        data = loader.load_file_data("assets/structures/dummy_structures.json")
+        schema = data[1]
+        structure = schema["structure"]
+
+        _, executors_opt_list = structures.get_executors_segmented(structure)
+        optional_executors_data = structures.get_optional_executors_data(structure, executors_opt_list)
+
+        self.assertEqual(len(optional_executors_data), 3)
+        self.assertEqual(optional_executors_data[0].executor_name, "executor1")
+        self.assertEqual(optional_executors_data[0].toggle_code, 1)
+        self.assertEqual(optional_executors_data[1].executor_name, "executor3")
+        self.assertEqual(optional_executors_data[1].toggle_code, 3)
+        self.assertEqual(optional_executors_data[2].executor_name, "executor8")
+        self.assertEqual(optional_executors_data[2].toggle_code, 8)
+
     def test_get_executors_dep_mask(self):
         data = loader.load_file_data("assets/structures/dummy_structures.json")
         schema = data[1]

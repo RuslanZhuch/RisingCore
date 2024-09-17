@@ -37,6 +37,14 @@ TEST(Bitmask, bitmask1Block)
 	for (int32_t bitId{ 33 }; bitId < 63; ++bitId)
 		EXPECT_FALSE(Engine::Bitmask::get(bitmask, bitId));
 
+	Engine::Bitmask::set(bitmask, 63, false);
+	EXPECT_TRUE(Engine::Bitmask::get(bitmask, 0));
+	EXPECT_TRUE(Engine::Bitmask::get(bitmask, 32));
+	for (int32_t bitId{ 1 }; bitId < 32; ++bitId)
+		EXPECT_FALSE(Engine::Bitmask::get(bitmask, bitId));
+	for (int32_t bitId{ 33 }; bitId < totalBits; ++bitId)
+		EXPECT_FALSE(Engine::Bitmask::get(bitmask, bitId));
+
 }
 
 TEST(Bitmask, bitmask2Blocks)
@@ -54,7 +62,7 @@ TEST(Bitmask, bitmask2Blocks)
 	for (int32_t bitId{ 1 }; bitId < totalBits; ++bitId)
 		EXPECT_FALSE(Engine::Bitmask::get(bitmask, bitId));
 
-	Engine::Bitmask::set(bitmask, 32);
+	Engine::Bitmask::set(bitmask, 32, true);
 	EXPECT_TRUE(Engine::Bitmask::get(bitmask, 0));
 	EXPECT_TRUE(Engine::Bitmask::get(bitmask, 32));
 	for (int32_t bitId{ 1 }; bitId < 32; ++bitId)
@@ -87,7 +95,7 @@ TEST(Bitmask, bitmask2Blocks)
 	for (int32_t bitId{ 71 }; bitId < totalBits; ++bitId)
 		EXPECT_FALSE(Engine::Bitmask::get(bitmask, bitId));
 
-	Engine::Bitmask::set(bitmask, 127);
+	Engine::Bitmask::set(bitmask, 127, true);
 	EXPECT_TRUE(Engine::Bitmask::get(bitmask, 0));
 	EXPECT_TRUE(Engine::Bitmask::get(bitmask, 32));
 	EXPECT_TRUE(Engine::Bitmask::get(bitmask, 63));
@@ -100,6 +108,17 @@ TEST(Bitmask, bitmask2Blocks)
 	for (int32_t bitId{ 64 }; bitId < 70; ++bitId)
 		EXPECT_FALSE(Engine::Bitmask::get(bitmask, bitId));
 	for (int32_t bitId{ 71 }; bitId < 127; ++bitId)
+		EXPECT_FALSE(Engine::Bitmask::get(bitmask, bitId));
+
+	Engine::Bitmask::set(bitmask, 70, false);
+	EXPECT_TRUE(Engine::Bitmask::get(bitmask, 0));
+	EXPECT_TRUE(Engine::Bitmask::get(bitmask, 32));
+	EXPECT_TRUE(Engine::Bitmask::get(bitmask, 63));
+	for (int32_t bitId{ 1 }; bitId < 32; ++bitId)
+		EXPECT_FALSE(Engine::Bitmask::get(bitmask, bitId));
+	for (int32_t bitId{ 33 }; bitId < 63; ++bitId)
+		EXPECT_FALSE(Engine::Bitmask::get(bitmask, bitId));
+	for (int32_t bitId{ 64 }; bitId < 127; ++bitId)
 		EXPECT_FALSE(Engine::Bitmask::get(bitmask, bitId));
 
 }

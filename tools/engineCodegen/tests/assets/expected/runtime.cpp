@@ -24,17 +24,6 @@ namespace
     Game::ExecutionBlock::Executor3 executor3;
 }
 
-struct OptionalExecutorsMask
-{
-    auto getIsEnabled(int32_t executorId) 
-    {
-        const auto batchId{ executorId / 64 };
-        const auto localIndex{ executorId % 64 };
-        return this->mask[batchId] & (1 << localIndex) != 0;
-    }
-    uint64_t mask[1];
-};
-
 struct FlowContext
 {
     Engine::Bitmask::Bitmask<1> contextsReadyMask{ 0x3 };
@@ -53,14 +42,14 @@ struct FlowContext
 
 namespace
 {
-    OptionalExecutorsMask enabledExecutors{};
+    Engine::Bitmask::Bitmask<1> enabledExecutors{ };
 }
 
 namespace
 {
     void mergeContextAInst1()
     {
-        if (enabledExecutors.getIsEnabled(2))
+        if (Engine::Bitmask::get(enabledExecutors, 2))
             executor8.modifyContext1Output(contextAInst1Context);
     }
 
@@ -72,14 +61,14 @@ namespace
 
     void mergeContextCInst1()
     {
-        if (enabledExecutors.getIsEnabled(0))
+        if (Engine::Bitmask::get(enabledExecutors, 0))
             executor1.modifyContext3Output(contextCInst1Context);
     }
 
     void mergeContextDInst1()
     {
         executor2.modifyContext4Output(contextDInst1Context);
-        if (enabledExecutors.getIsEnabled(1))
+        if (Engine::Bitmask::get(enabledExecutors, 1))
             executor3.modifyContext4Output(contextDInst1Context);
     }
 
@@ -109,7 +98,7 @@ namespace
     void mergeContextIInst1()
     {
         executor6.modifyContext9Output(contextIInst1Context);
-        if (enabledExecutors.getIsEnabled(1))
+        if (Engine::Bitmask::get(enabledExecutors, 1))
             executor3.modifyContext9Output(contextIInst1Context);
     }
 
@@ -159,7 +148,7 @@ namespace
 
     void tryRunExecutor1(float dt)
     {
-        if (!enabledExecutors.getIsEnabled(0))
+        if (!Engine::Bitmask::get(enabledExecutors, 0))
             return;
         executor1.context1InputContext = Game::Context::ContextAInst1::convertToConst(contextAInst1Context);
         executor1.update(dt);
@@ -167,7 +156,7 @@ namespace
 
     void tryRunExecutor3(float dt)
     {
-        if (!enabledExecutors.getIsEnabled(1))
+        if (!Engine::Bitmask::get(enabledExecutors, 1))
             return;
         executor3.context3InputContext = Game::Context::ContextCInst1::convertToConst(contextCInst1Context);
         executor3.update(dt);
@@ -175,7 +164,7 @@ namespace
 
     void tryRunExecutor8(float dt)
     {
-        if (!enabledExecutors.getIsEnabled(2))
+        if (!Engine::Bitmask::get(enabledExecutors, 2))
             return;
         executor8.context8InputContext = Game::Context::ContextHInst1::convertToConst(contextHInst1Context);
         executor8.context10InputContext = Game::Context::ContextJInst1::convertToConst(contextJInst1Context);
@@ -389,9 +378,20 @@ int main()
 
             for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
             {
-                if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
-                {
+                const auto cmdData{ Dod::DataUtils::get(sApplicationContext.commands, cmdId) };
+                const auto cmd{ cmdData & 0xF };
+                if (cmd == 1)
                     return 0;
+                if (cmd == 2 || cmd == 3)
+                {
+                    const auto executorCode{ cmdData >> 16 };
+                    const auto bEnable{ cmd == 2 };
+                    if (executorCode == 1)
+                        Engine::Bitmask::set(enabledExecutors, 0, bEnable);
+                    if (executorCode == 3)
+                        Engine::Bitmask::set(enabledExecutors, 1, bEnable);
+                    if (executorCode == 8)
+                        Engine::Bitmask::set(enabledExecutors, 2, bEnable);
                 }
             }
             deltaTime = {};

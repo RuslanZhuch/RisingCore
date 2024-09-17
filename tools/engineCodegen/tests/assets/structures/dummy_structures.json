@@ -36,7 +36,7 @@
                         "contextCInst1": "context3Output"
                     },
                     "isAnchor": true,
-                    "isOptional": true
+                    "toggleCode": 1
                 },
                 "executor2": {
                     "inputs": { 
@@ -57,7 +57,7 @@
                         "contextDInst1": "context4Output",
                         "contextIInst1": "context9Output"
                     },
-                    "isOptional": true
+                    "toggleCode": 3
                 },
                 "executor4": {
                     "inputs": { 
@@ -102,7 +102,7 @@
                     "outputs": {
                         "contextAInst1": "context1Output"
                     },
-                    "isOptional": true
+                    "toggleCode": 8
                 }
             }
         }

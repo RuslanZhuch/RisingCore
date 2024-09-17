@@ -19,6 +19,17 @@ namespace Engine::Bitmask
     }
 
     template <size_t numOfBlocks>
+    void set(Bitmask<numOfBlocks>& bitmask, int32_t bitId, bool isHigh)
+    {
+        const auto batchId{ bitId / 64 };
+        const auto localIndex{ bitId % 64 };
+        if (isHigh)
+            set(bitmask, bitId);
+        else
+            bitmask.mask[batchId] &= ~(size_t{ 1 } << localIndex);
+    }
+
+    template <size_t numOfBlocks>
     [[nodiscard]] bool get(const Bitmask<numOfBlocks>& bitmask, int32_t bitId)
     {
         const auto batchId{ bitId / 64 };

@@ -27,17 +27,6 @@ ${class_name = "Game::ExecutionBlock::" + to_class_name(data.get("name"))}$
 ${:end-for}$
 }
 
-struct OptionalExecutorsMask
-{
-    auto getIsEnabled(int32_t executorId) 
-    {
-        const auto batchId{ executorId / 64 };
-        const auto localIndex{ executorId % 64 };
-        return this->mask[batchId] & (1 << localIndex) != 0;
-    }
-    uint64_t mask[${"", num_of_optiona_executors}$];
-};
-
 struct FlowContext
 {
     Engine::Bitmask::Bitmask<${num_of_parts_in_deps_mask}$> contextsReadyMask{ ${initial_context_mask}$ };
@@ -49,7 +38,7 @@ ${:end-for}$
 
 namespace
 {
-    OptionalExecutorsMask enabledExecutors{};
+    Engine::Bitmask::Bitmask<${"", num_of_optional_executors}$> enabledExecutors{ };
 }
 
 namespace
@@ -64,7 +53,7 @@ ${for data in context_data.data_non_opt:}$
         ${"", data.executor_name}$.modify${"", to_class_name(data.context_target_name)}$(${"", context_data.context_instance_name}$Context);
 ${:end-for}$
 ${for data in context_data.data_opt:}$
-        if (enabledExecutors.getIsEnabled(${"", data.optional_executor_id}$))
+        if (Engine::Bitmask::get(enabledExecutors, ${"", data.optional_executor_id}$))
             ${"", data.executor_name}$.modify${"", to_class_name(data.context_target_name)}$(${"", context_data.context_instance_name}$Context);
 ${:end-for}$
     }
@@ -89,7 +78,7 @@ ${el_id = 0}$
 ${for executor_name in optional_executors:}$
     void tryRun${"", to_class_name(executor_name)}$(float dt)
     {
-        if (!enabledExecutors.getIsEnabled(${el_id}$))
+        if (!Engine::Bitmask::get(enabledExecutors, ${el_id}$))
             return;
 ${inputs_data = executors_inputs_context[executor_name]}$
 ${for input in inputs_data:}$
@@ -172,9 +161,20 @@ ${:end-for}$
 
             for (int32_t cmdId{}; cmdId < Dod::DataUtils::getNumFilledElements(sApplicationContext.commands); ++cmdId)
             {
-                if (Dod::DataUtils::get(sApplicationContext.commands, 0) == 1)
-                {
+                const auto cmdData{ Dod::DataUtils::get(sApplicationContext.commands, cmdId) };
+                const auto cmd{ cmdData & 0xF };
+                if (cmd == 1)
                     return 0;
+                if (cmd == 2 || cmd == 3)
+                {
+                    const auto executorCode{ cmdData >> 16 };
+                    const auto bEnable{ cmd == 2 };
+${el_id = 0}$
+${for data in optional_executors_data:}$
+                    if (executorCode == ${"", data.toggle_code}$)
+                        Engine::Bitmask::set(enabledExecutors, ${el_id}$, bEnable);
+${el_id = el_id + 1}$
+${:end-for}$
                 }
             }
             deltaTime = {};
