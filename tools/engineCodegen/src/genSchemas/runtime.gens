@@ -71,6 +71,7 @@ ${for input in inputs_data:}$
         ${executor_name}$.${"", input.input_name}$Context = Game::Context::${"", to_class_name(input.instance_name)}$::convertToConst(${"", input.instance_name}$Context);
 ${:end-for}$
         ${executor_name}$.update(dt);
+        const auto externalContext{ ${executor_name}$.getExternalContext() };
     }
 
 ${:end-for}$
@@ -85,6 +86,7 @@ ${for input in inputs_data:}$
         ${executor_name}$.${"", input.input_name}$Context = Game::Context::${"", to_class_name(input.instance_name)}$::convertToConst(${"", input.instance_name}$Context);
 ${:end-for}$
         ${executor_name}$.update(dt);
+        const auto externalContext{ ${executor_name}$.getExternalContext() };
     }
 
 ${el_id = el_id + 1}$

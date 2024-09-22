@@ -2,12 +2,12 @@
 
 using namespace Game::ExecutionBlock;
 
-void Executor2::initImpl() noexcept
+void Executor2::initImpl([[maybe_unused]] ExternalContexts& externalContexts) noexcept
 {
 
 }
 
-void Executor2::updateImpl([[maybe_unused]] float dt) noexcept
+void Executor2::updateImpl([[maybe_unused]] ExternalContexts& externalContexts, [[maybe_unused]] float dt) noexcept
 {
 
 }

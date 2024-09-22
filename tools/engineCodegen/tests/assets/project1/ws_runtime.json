@@ -76,9 +76,16 @@
         }
     ],
     "structure": {
-        "contextsToFlush": [
-            "contextBInst1",
-            "contextHInst1"
+        "contextsToPreserve": [
+            "contextAInst1",
+            "contextCInst1",
+            "contextDInst1",
+            "contextEInst1",
+            "contextFInst1",
+            "contextGInst1",
+            "contextIInst1",
+            "contextJInst1",
+            "contextKInst1"
         ],
         "executors": {
             "executor1": {

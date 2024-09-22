@@ -3,8 +3,8 @@ CHANNELS_PER_PART = 64
 def _get_executors_struct(structure):
     return structure["executors"]
 
-def _get_contexts_to_flush(structure):
-    return structure["contextsToFlush"]
+def _get_contexts_to_preserve(structure):
+    return structure["contextsToPreserve"]
 
 def get_contexts_list(structure):
     contexts_list = []
@@ -218,7 +218,7 @@ def get_executors_per_contexts(structure, contexts_list : list[str], optional_ex
         data = []
         data_non_opt = []
         data_opt = []
-        is_need_to_reset = context_instance in _get_contexts_to_flush(structure)
+        is_need_to_reset = context_instance not in _get_contexts_to_preserve(structure)
         for executor_name in executors_names:
             executor_io = _get_executors_struct(structure)[executor_name]
             if "outputs" in executor_io:

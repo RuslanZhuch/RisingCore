@@ -16,6 +16,15 @@ namespace Game::ExecutionBlock
     class ${class_name}$
     {
     public:
+        struct ExternalContexts
+        {
+        };
+
+        struct CExternalContexts
+        {
+        };
+
+    public:
         void loadContext() noexcept;
         void initiate() noexcept;
         void update(float dt) noexcept;
@@ -33,10 +42,11 @@ ${argument = "{}&".format(class_name)}$
 ${:end-for}$
 ${:end-for}$
 ${:end-if}$
+        [[nodiscard]] CExternalContexts getExternalContext() noexcept;
 
     private:
-        void initImpl() noexcept;
-        void updateImpl(float dt) noexcept;
+        void initImpl(ExternalContexts& externalContexts) noexcept;
+        void updateImpl(ExternalContexts& externalContexts, float dt) noexcept;
 
     public:
         Dod::MemPool memory;

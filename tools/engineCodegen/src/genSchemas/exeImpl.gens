@@ -2,12 +2,12 @@ ${"#include \"{}\"".format(file_name_header)}$
 
 using namespace Game::ExecutionBlock;
 
-void ${class_name}$::initImpl() noexcept
+void ${class_name}$::initImpl([[maybe_unused]] ExternalContexts& externalContexts) noexcept
 {
 
 }
 
-void ${class_name}$::updateImpl([[maybe_unused]] float dt) noexcept
+void ${class_name}$::updateImpl([[maybe_unused]] ExternalContexts& externalContexts, [[maybe_unused]] float dt) noexcept
 {
 
 }

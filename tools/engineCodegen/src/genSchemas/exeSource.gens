@@ -3,6 +3,8 @@
 namespace Game::ExecutionBlock
 {
 
+    static Assets::ExternalContexts externalContexts;
+
     void ${class_name}$::loadContext() noexcept
     {
 ${contexts_local = executor_data.get("contextsLocal")}$
@@ -18,12 +20,12 @@ ${:end-if}$
 
     void ${class_name}$::initiate() noexcept
     {
-        this->initImpl();
+        this->initImpl(externalContexts);
     }
 
     void ${class_name}$::update(float dt) noexcept
     {
-        this->updateImpl(dt);
+        this->updateImpl(externalContexts, dt);
     }
 
     void ${class_name}$::flushSharedLocalContexts() noexcept

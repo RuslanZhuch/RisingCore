@@ -3,18 +3,20 @@
 namespace Game::ExecutionBlock
 {
 
+    static Assets::ExternalContexts externalContexts;
+
     void Executor3::loadContext() noexcept
     {
     }
 
     void Executor3::initiate() noexcept
     {
-        this->initImpl();
+        this->initImpl(externalContexts);
     }
 
     void Executor3::update(float dt) noexcept
     {
-        this->updateImpl(dt);
+        this->updateImpl(externalContexts, dt);
     }
 
     void Executor3::flushSharedLocalContexts() noexcept

@@ -18,6 +18,15 @@ namespace Game::ExecutionBlock
     class Executor2
     {
     public:
+        struct ExternalContexts
+        {
+        };
+
+        struct CExternalContexts
+        {
+        };
+
+    public:
         void loadContext() noexcept;
         void initiate() noexcept;
         void update(float dt) noexcept;
@@ -25,10 +34,11 @@ namespace Game::ExecutionBlock
         void modifyTarget1(Context::LContext1::Data&) noexcept;
         void modifyTarget2(Context::LContext3::Data&) noexcept;
         void modifyTarget3(Context::LContext3::Data&) noexcept;
+        [[nodiscard]] CExternalContexts getExternalContext() noexcept;
 
     private:
-        void initImpl() noexcept;
-        void updateImpl(float dt) noexcept;
+        void initImpl(ExternalContexts& externalContexts) noexcept;
+        void updateImpl(ExternalContexts& externalContexts, float dt) noexcept;
 
     public:
         Dod::MemPool memory;

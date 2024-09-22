@@ -146,7 +146,6 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
 
     structure = _get_structure_data(workspace_shared_contexts_file)
     structure_contexts_list = structures.get_contexts_list(structure)
-    print("structure_contexts_list", structure_contexts_list)
     anchors_list = structures.get_anchors_list(structure)
     executors_deps_masks = structures.get_executors_deps_mask(structure, structure_contexts_list)
     initial_context_states = structures.get_initial_deps_mask(structure, anchors_list, structure_contexts_list)

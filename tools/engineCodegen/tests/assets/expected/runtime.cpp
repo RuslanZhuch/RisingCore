@@ -115,35 +115,41 @@ namespace
     {
         executor2.context2InputContext = Game::Context::ContextBInst1::convertToConst(contextBInst1Context);
         executor2.update(dt);
+        const auto externalContext{ executor2.getExternalContext() };
     }
 
     void tryRunExecutor4(float dt)
     {
         executor4.context4InputContext = Game::Context::ContextDInst1::convertToConst(contextDInst1Context);
         executor4.update(dt);
+        const auto externalContext{ executor4.getExternalContext() };
     }
 
     void tryRunExecutor5(float dt)
     {
         executor5.context5InputContext = Game::Context::ContextEInst1::convertToConst(contextEInst1Context);
         executor5.update(dt);
+        const auto externalContext{ executor5.getExternalContext() };
     }
 
     void tryRunExecutor6(float dt)
     {
         executor6.context6InputContext = Game::Context::ContextFInst1::convertToConst(contextFInst1Context);
         executor6.update(dt);
+        const auto externalContext{ executor6.getExternalContext() };
     }
 
     void tryRunExecutor7(float dt)
     {
         executor7.context7InputContext = Game::Context::ContextGInst1::convertToConst(contextGInst1Context);
         executor7.update(dt);
+        const auto externalContext{ executor7.getExternalContext() };
     }
 
     void tryRunExecutor9(float dt)
     {
         executor9.update(dt);
+        const auto externalContext{ executor9.getExternalContext() };
     }
 
     void tryRunExecutor1(float dt)
@@ -152,6 +158,7 @@ namespace
             return;
         executor1.context1InputContext = Game::Context::ContextAInst1::convertToConst(contextAInst1Context);
         executor1.update(dt);
+        const auto externalContext{ executor1.getExternalContext() };
     }
 
     void tryRunExecutor3(float dt)
@@ -160,6 +167,7 @@ namespace
             return;
         executor3.context3InputContext = Game::Context::ContextCInst1::convertToConst(contextCInst1Context);
         executor3.update(dt);
+        const auto externalContext{ executor3.getExternalContext() };
     }
 
     void tryRunExecutor8(float dt)
@@ -169,6 +177,7 @@ namespace
         executor8.context8InputContext = Game::Context::ContextHInst1::convertToConst(contextHInst1Context);
         executor8.context10InputContext = Game::Context::ContextJInst1::convertToConst(contextJInst1Context);
         executor8.update(dt);
+        const auto externalContext{ executor8.getExternalContext() };
     }
 
 }

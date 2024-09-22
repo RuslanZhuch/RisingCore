@@ -19,6 +19,15 @@ namespace Game::ExecutionBlock
     class Test1
     {
     public:
+        struct ExternalContexts
+        {
+        };
+
+        struct CExternalContexts
+        {
+        };
+
+    public:
         void loadContext() noexcept;
         void initiate() noexcept;
         void update(float dt) noexcept;
@@ -26,10 +35,11 @@ namespace Game::ExecutionBlock
         void modifyTarget1(Context::Type4::Data&) noexcept;
         void modifyTarget2(Context::Type4::Data&) noexcept;
         void modifyTarget3(Context::Type4::Data&) noexcept;
+        [[nodiscard]] CExternalContexts getExternalContext() noexcept;
 
     private:
-        void initImpl() noexcept;
-        void updateImpl(float dt) noexcept;
+        void initImpl(ExternalContexts& externalContexts) noexcept;
+        void updateImpl(ExternalContexts& externalContexts, float dt) noexcept;
 
     public:
         Dod::MemPool memory;
