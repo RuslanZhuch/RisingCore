@@ -18,10 +18,16 @@ namespace Game::ExecutionBlock
     public:
         struct ExternalContexts
         {
+${for context in external_contexts:}$
+            Context::${"", to_class_name(context.context_type)}$::Data ${"", context.context_name}$Context;
+${:end-for}$
         };
 
         struct CExternalContexts
         {
+${for context in external_contexts:}$
+            Context::${"", to_class_name(context.context_type)}$::CData ${"", context.context_name}$Context;
+${:end-for}$
         };
 
     public:

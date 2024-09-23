@@ -21,10 +21,16 @@ namespace Game::ExecutionBlock
     public:
         struct ExternalContexts
         {
+            Context::Type7::Data external1Context;
+            Context::Type7::Data external2Context;
+            Context::Type8::Data external3Context;
         };
 
         struct CExternalContexts
         {
+            Context::Type7::CData external1Context;
+            Context::Type7::CData external2Context;
+            Context::Type8::CData external3Context;
         };
 
     public:

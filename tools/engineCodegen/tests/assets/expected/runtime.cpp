@@ -1,9 +1,18 @@
-#include <Contexts/SContext1Context.h>
-#include <Contexts/SContext2Context.h>
+
+#include <Contexts/SContextAContext.h>
+#include <Contexts/SContextBContext.h>
+#include <Contexts/SContextCContext.h>
+#include <Contexts/SContextDContext.h>
+#include <Contexts/SContextEContext.h>
+#include <Contexts/SContextFContext.h>
+#include <Contexts/SContextGContext.h>
 
 #include <executors/Executor1Executor.h>
 #include <executors/Executor2Executor.h>
 #include <executors/Executor3Executor.h>
+#include <executors/Executor4Executor.h>
+#include <executors/Executor5Executor.h>
+#include <executors/Executor6Executor.h>
 
 #include <dod/SharedContext.h>
 #include <engine/Timer.h>
@@ -11,17 +20,34 @@
 
 namespace
 {
-    Game::Context::SContext1::Data sharedInst1Context;
-    Game::Context::SContext1::Data sharedInst2Context;
-    Game::Context::SContext2::Data sharedInst3Context;
-    Game::Context::SContext2::Data sharedInst4Context;
+    Game::Context::SContextA::Data contextAInst1Context;
+    Game::Context::SContextB::Data contextBInst1Context;
+    Game::Context::SContextC::Data contextCInst1Context;
+    Game::Context::SContextC::Data contextDInst1Context;
+    Game::Context::SContextD::Data contextEInst1Context;
+    Game::Context::SContextE::Data contextFInst1Context;
+    Game::Context::SContextE::Data contextGInst1Context;
+    Game::Context::SContextF::Data contextHInst1Context;
+    Game::Context::SContextF::Data contextIInst1Context;
+    Game::Context::SContextF::Data contextJInst1Context;
+    Game::Context::SContextG::Data contextKInst1Context;
+
+    Game::Context::EContextA::CData extContextAInst1Context;
+    Game::Context::EContextA::CData extContextAInst2Context;
+    Game::Context::EContextB::CData extContextBInst1Context;
 }
 
 namespace
 {
     Game::ExecutionBlock::Executor1 executor1;
-    Game::ExecutionBlock::Executor2 executor2;
-    Game::ExecutionBlock::Executor3 executor3;
+    Game::ExecutionBlock::Executor1 executor2;
+    Game::ExecutionBlock::Executor2 executor3;
+    Game::ExecutionBlock::Executor3 executor4;
+    Game::ExecutionBlock::Executor3 executor5;
+    Game::ExecutionBlock::Executor4 executor6;
+    Game::ExecutionBlock::Executor5 executor7;
+    Game::ExecutionBlock::Executor6 executor8;
+    Game::ExecutionBlock::Executor6 executor9;
 }
 
 struct FlowContext
@@ -354,10 +380,17 @@ namespace
 
 int main()
 {
-    sharedInst1Context.load();
-    sharedInst2Context.load();
-    sharedInst3Context.load();
-    sharedInst4Context.load();
+    contextAInst1Context.load();
+    contextBInst1Context.load();
+    contextCInst1Context.load();
+    contextDInst1Context.load();
+    contextEInst1Context.load();
+    contextFInst1Context.load();
+    contextGInst1Context.load();
+    contextHInst1Context.load();
+    contextIInst1Context.load();
+    contextJInst1Context.load();
+    contextKInst1Context.load();
 
     executor1.loadContext();
     executor1.initiate();
@@ -365,6 +398,18 @@ int main()
     executor2.initiate();
     executor3.loadContext();
     executor3.initiate();
+    executor4.loadContext();
+    executor4.initiate();
+    executor5.loadContext();
+    executor5.initiate();
+    executor6.loadContext();
+    executor6.initiate();
+    executor7.loadContext();
+    executor7.initiate();
+    executor8.loadContext();
+    executor8.initiate();
+    executor9.loadContext();
+    executor9.initiate();
 
     Timer timer;
     float deltaTime{};

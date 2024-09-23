@@ -6,6 +6,12 @@ def _get_executors_struct(structure):
 def _get_contexts_to_preserve(structure):
     return structure["contextsToPreserve"]
 
+def _get_contexts_mapping(structure):
+    data = structure.get("contextsMapping")
+    if data is None:
+        return {}
+    return data
+
 def get_contexts_list(structure):
     contexts_list = []
     contexts_set = set()
@@ -27,6 +33,30 @@ def get_contexts_list(structure):
 
     contexts_list.sort()
     return contexts_list
+
+def get_contexts_types_list(structure):
+    mapping = _get_contexts_mapping(structure)
+    types = set()
+    for instance_name in mapping:
+        types.add(mapping[instance_name])
+
+    data = list(types)
+    data.sort()
+    return data
+
+class ContextDesc:
+    def __init__(self, context_name: str, instance_name: str):
+        self.context_name = context_name
+        self.instance_name = instance_name
+
+def get_contexts_descs_list(structure):
+    mapping = _get_contexts_mapping(structure)
+    contexts = [
+        ContextDesc(mapping[instance_name], instance_name)
+        for instance_name in sorted(mapping)
+    ]
+
+    return contexts
 
 def get_executors_list(structure):
     return list(_get_executors_struct(structure).keys())
@@ -62,6 +92,35 @@ def get_executors_inputs_contexts(structure):
                 instance_name= input
             ))
         data[executor_name] = descs_list
+
+    return data
+
+def get_executors_type_list(structure):
+    data = set()
+
+    for executor_name in _get_executors_struct(structure):
+        executor_io = _get_executors_struct(structure)[executor_name]
+        executor_type = executor_io["type"]
+        data.add(executor_type)
+
+    type_list = list(data)
+    type_list.sort()
+    return type_list
+
+class ExecutorDesc:
+    def __init__(self, executor_type: str, executor_name: str):
+        self.executor_type = executor_type
+        self.executor_name = executor_name
+
+def get_executors_descs_list(structure):
+    data = list()
+    for executor_name in _get_executors_struct(structure):
+        executor_io = _get_executors_struct(structure)[executor_name]
+        executor_type = executor_io["type"]
+        data.append(ExecutorDesc(
+            executor_type=executor_type,
+            executor_name=executor_name
+        ))
 
     return data
 

@@ -16,6 +16,10 @@ ${:end-for}$
 ${:end-for}$
 
 ${:end-if}$
+${for context in external_contexts:}$
+        externalContexts.${"", context.context_name}$Context.load();
+${:end-for}$
+
     }
 
     void ${class_name}$::initiate() noexcept
@@ -36,6 +40,16 @@ ${for flush_context in contexts_to_flush:}$
         ${"this->{}Context.reset();".format(flush_context)}$
 ${:end-for}$
 ${:end-if}$
+    }
+
+    Assets::CExternalContexts Game::ExecutionBlock::Assets::getExternalContext() noexcept
+    {
+        return CExternalContexts
+        {
+${for context in external_contexts:}$
+            .${"", context.context_name}$Context = Context::${"", to_class_name(context.context_type)}$::convertToConst(externalContexts.${"", context.context_name}$Context),
+${:end-for}$
+        };
     }
 
 }

@@ -1,12 +1,11 @@
-${if len(unique_contexts_instances) > 0:}$${for instance in unique_contexts_instances:}$#include <Contexts/${"", to_class_name(instance)}$Context.h>
-
-${:end-for}$${:end-if}$
-
-${for data in executors_data:}$
-${name = to_class_name(data.get("name"))}$
-${"#include <executors/{}Executor.h>".format(name)}$
-
+${for context_type in contexts_type_list:}$
+#include <Contexts/${context_type}$Context.h>
 ${:end-for}$
+
+${for executor_type in executors_types_list:}$
+#include <executors/${executor_type}$Executor.h>
+${:end-for}$
+
 #include <dod/SharedContext.h>
 #include <engine/Timer.h>
 #include <engine/Bitmask.h>
@@ -15,15 +14,14 @@ namespace
 {
 ${for instance in contexts_data:}$
 ${class_name = to_class_name(instance.context_name)}$
-    ${"Game::Context::{}::Data {}Context;".format(class_name, instance.instance_name)}$
+    Game::Context::${class_name}$::Data ${"", instance.instance_name}$Context;
 ${:end-for}$
 }
 
 namespace
 {
-${for data in executors_data:}$
-${class_name = "Game::ExecutionBlock::" + to_class_name(data.get("name"))}$
-    ${"{} {};".format(class_name, data.get("name"))}$
+${for desc in executors_descs_list:}$
+    Game::ExecutionBlock::${"", to_class_name(desc.executor_type)}$ ${"", desc.executor_name}$;
 ${:end-for}$
 }
 
@@ -136,10 +134,9 @@ ${for instance in contexts_data:}$
     ${"", instance.instance_name}$Context.load();
 ${:end-for}$
 
-${for data in executors_data:}$
-${name = data.get("name")}$
-    ${name}$.loadContext();
-    ${name}$.initiate();
+${for desc in executors_descs_list:}$
+    ${"", desc.executor_name}$.loadContext();
+    ${"", desc.executor_name}$.initiate();
 ${:end-for}$
 
     Timer timer;

@@ -23,6 +23,19 @@
             "executor5"
         ],
         "structure": {
+            "contextsMapping": {
+                "contextAInst1": "SContextA",
+                "contextBInst1": "SContextB",
+                "contextCInst1": "SContextC",
+                "contextDInst1": "SContextC",
+                "contextEInst1": "SContextD",
+                "contextFInst1": "SContextE",
+                "contextGInst1": "SContextE",
+                "contextHInst1": "SContextF",
+                "contextIInst1": "SContextF",
+                "contextJInst1": "SContextF",
+                "contextKInst1": "SContextG"
+            },
             "contextsToPreserve": [
                 "contextAInst1",
                 "contextCInst1",
@@ -36,6 +49,7 @@
             ],
             "executors": {
                 "executor1": {
+                    "type": "Executor1",
                     "inputs": { 
                         "contextAInst1": "context1Input" 
                     },
@@ -46,6 +60,7 @@
                     "toggleCode": 1
                 },
                 "executor2": {
+                    "type": "Executor1",
                     "inputs": { 
                         "contextBInst1": "context2Input" 
                     },
@@ -57,6 +72,7 @@
                     "isAnchor": true
                 },
                 "executor3": {
+                    "type": "Executor2",
                     "inputs": { 
                         "contextCInst1": "context3Input" 
                     },
@@ -67,6 +83,7 @@
                     "toggleCode": 3
                 },
                 "executor4": {
+                    "type": "Executor3",
                     "inputs": { 
                         "contextDInst1": "context4Input" 
                     },
@@ -76,6 +93,7 @@
                     }
                 },
                 "executor5": {
+                    "type": "Executor3",
                     "inputs": { 
                         "contextEInst1": "context5Input"
                     },
@@ -84,6 +102,7 @@
                     }
                 },
                 "executor6": {
+                    "type": "Executor4",
                     "inputs": { 
                         "contextFInst1": "context6Input"
                     },
@@ -93,6 +112,7 @@
                     }
                 },
                 "executor7": {
+                    "type": "Executor5",
                     "inputs": { 
                         "contextGInst1": "context7Input"
                     },
@@ -102,6 +122,7 @@
                     }
                 },
                 "executor8": {
+                    "type": "Executor6",
                     "inputs": { 
                         "contextHInst1": "context8Input",
                         "contextJInst1": "context10Input"

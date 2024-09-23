@@ -64,6 +64,28 @@ def load_pool_context_usage(workspace_data):
         
     return output
 
+class ExternalContextDesc:
+    def __init__(self, type: str, name: str):
+        self.context_type = type
+        self.context_name = name
+
+def load_external_contexts(executors_data):
+    output = list()
+    
+    contexts = executors_data.get("contextsExternal")
+    if contexts is None:
+        return output
+    
+    for context in contexts:
+        context_type = context["type"]
+        for instance_name in context["list"]:
+            output.append(ExternalContextDesc(
+                type= context_type,
+                name= instance_name
+            ))
+
+    return output
+
 class SharedSetupDesc:
     def __init__(self, executor_scontext: str, pool_index: int, shared_instance: str):
         self.executor_scontext = executor_scontext
@@ -117,11 +139,14 @@ def gen_header(folder, executor_data):
     contexts_list_unique = list(set(contexts_list))
     contexts_list_unique.sort()
 
+    external_contexts = load_external_contexts(executor_data)
+
     parameters = {
         "contexts_list_unique": contexts_list_unique,
         "class_name": class_name,
         "contexts_write_to": contexts_write_to,
         "executor_data": executor_data,
+        "external_contexts": external_contexts,
     }
 
     t = Templite(filename=current_directory + "/genSchemas/exeHeader.gens")
@@ -134,9 +159,12 @@ def gen_source(folder, executor_data):
     class_name = _to_class_name(executor_name)
     file_name_source = class_name + "Executor.cpp"
 
+    external_contexts = load_external_contexts(executor_data)
+
     parameters = {
         "class_name": class_name,
         "executor_data": executor_data,
+        "external_contexts": external_contexts,
     }
 
     t = Templite(filename=current_directory + "/genSchemas/exeSource.gens")

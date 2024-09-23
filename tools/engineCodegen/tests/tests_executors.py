@@ -101,6 +101,18 @@ class TestExecutors(gen_base_test.TestBaseGen):
         self.assertEqual(usage["executor6"][0].shared_instance, "poolInst3")
         self.assertEqual(usage["executor6"][0].executor_scontext, "pool3")
 
+    def test_load_external_contexts(self):
+        executors_data = load_executors_for_class()
+        data = executors.load_external_contexts(executors_data[0])
+
+        self.assertEqual(len(data), 3)
+        self.assertEqual(data[0].context_type, "type7")
+        self.assertEqual(data[0].context_name, "external1")
+        self.assertEqual(data[1].context_type, "type7")
+        self.assertEqual(data[1].context_name, "external2")
+        self.assertEqual(data[2].context_type, "type8")
+        self.assertEqual(data[2].context_name, "external3")
+
     def test_gen_executor_test1_header(self):
         def logic(gen_file_name):
             executors_data = load_executors_for_class()

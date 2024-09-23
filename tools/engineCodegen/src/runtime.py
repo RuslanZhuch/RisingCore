@@ -161,10 +161,18 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
     executors_per_contexts = structures.get_executors_per_contexts(structure, structure_contexts_list, optional_executors)
     executors_inputs_context = structures.get_executors_inputs_contexts(structure)
 
+    contexts_type_list = structures.get_contexts_types_list(structure)
+
+    contexts_data = structures.get_contexts_descs_list(structure)
+    executors_types_list = structures.get_executors_type_list(structure)
+    executors_descs_list = structures.get_executors_descs_list(structure)
+
     parameters = {
         "executors_data": executors_data,
-        "unique_contexts_instances": _get_unique_context_instances(validated_shared_context_instances),
-        "contexts_data": validated_shared_context_instances,
+        "executors_types_list": executors_types_list,
+        "executors_descs_list": executors_descs_list,
+        "contexts_type_list": contexts_type_list,
+        "contexts_data": contexts_data,
         "num_of_parts_in_deps_mask": structures.compute_number_of_parts(len(structure_contexts_list)),
         "initial_deps_masks": executors_deps_descs_list,
         "initial_context_mask": initial_context_mask,

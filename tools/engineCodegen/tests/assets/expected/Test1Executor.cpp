@@ -12,6 +12,10 @@ namespace Game::ExecutionBlock
         this->local3Context.load();
         this->local4Context.load();
 
+        externalContexts.external1Context.load();
+        externalContexts.external2Context.load();
+        externalContexts.external3Context.load();
+
     }
 
     void Test1::initiate() noexcept
@@ -28,6 +32,16 @@ namespace Game::ExecutionBlock
     {
         this->target1Context.reset();
         this->target3Context.reset();
+    }
+
+    Assets::CExternalContexts Game::ExecutionBlock::Assets::getExternalContext() noexcept
+    {
+        return CExternalContexts
+        {
+            .external1Context = Context::Type7::convertToConst(externalContexts.external1Context),
+            .external2Context = Context::Type7::convertToConst(externalContexts.external2Context),
+            .external3Context = Context::Type8::convertToConst(externalContexts.external3Context),
+        };
     }
 
 }

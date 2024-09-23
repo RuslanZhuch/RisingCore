@@ -48,6 +48,21 @@
             ]
         }
     ],
+    "contextsExternal": [
+        {
+            "type": "type7",
+            "list": [
+                "external1",
+                "external2"
+            ]
+        },
+        {
+            "type": "type8",
+            "list": [
+                "external3"
+            ]
+        }
+    ],
     "contextsToFlush": [
         "target1",
         "target3"
