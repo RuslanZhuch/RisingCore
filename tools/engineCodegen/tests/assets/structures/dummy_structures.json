@@ -36,6 +36,25 @@
                 "contextJInst1": "SContextF",
                 "contextKInst1": "SContextG"
             },
+            "externalContextsMapping": {
+                "extContextAInst1": "EContextA",
+                "extContextAInst2": "EContextA",
+                "extContextBInst1": "EContextB"
+            },
+            "externalContextsSources": {
+                "extContextAInst1": {
+                    "executor": "executor1",
+                    "instance_name": "extOutput1"
+                },
+                "extContextAInst2": {
+                    "executor": "executor4",
+                    "instance_name": "extOutput1"
+                },
+                "extContextBInst1": {
+                    "executor": "executor4",
+                    "instance_name": "extOutput2"
+                }
+            },
             "contextsToPreserve": [
                 "contextAInst1",
                 "contextCInst1",
@@ -103,6 +122,10 @@
                 },
                 "executor6": {
                     "type": "Executor4",
+                    "externalInputs": {
+                        "extContextAInst1": "extInput1",
+                        "extContextBInst1": "extInput2"
+                    },
                     "inputs": { 
                         "contextFInst1": "context6Input"
                     },
@@ -123,6 +146,9 @@
                 },
                 "executor8": {
                     "type": "Executor6",
+                    "externalInputs": {
+                        "extContextAInst2": "extInput1"
+                    },
                     "inputs": { 
                         "contextHInst1": "context8Input",
                         "contextJInst1": "context10Input"

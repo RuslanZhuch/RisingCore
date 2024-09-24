@@ -33,14 +33,16 @@ class TestCore(unittest.TestCase):
 
         contexts_list = structures.get_contexts_types_list(structure)
 
-        self.assertEqual(len(contexts_list), 7)
-        self.assertEqual(contexts_list[0], "SContextA")
-        self.assertEqual(contexts_list[1], "SContextB")
-        self.assertEqual(contexts_list[2], "SContextC")
-        self.assertEqual(contexts_list[3], "SContextD")
-        self.assertEqual(contexts_list[4], "SContextE")
-        self.assertEqual(contexts_list[5], "SContextF")
-        self.assertEqual(contexts_list[6], "SContextG")
+        self.assertEqual(len(contexts_list), 9)
+        self.assertEqual(contexts_list[0], "EContextA")
+        self.assertEqual(contexts_list[1], "EContextB")
+        self.assertEqual(contexts_list[2], "SContextA")
+        self.assertEqual(contexts_list[3], "SContextB")
+        self.assertEqual(contexts_list[4], "SContextC")
+        self.assertEqual(contexts_list[5], "SContextD")
+        self.assertEqual(contexts_list[6], "SContextE")
+        self.assertEqual(contexts_list[7], "SContextF")
+        self.assertEqual(contexts_list[8], "SContextG")
 
     def test_get_contexts_descs_list(self):
         data = loader.load_file_data("assets/structures/dummy_structures.json")
@@ -82,6 +84,23 @@ class TestCore(unittest.TestCase):
 
         self.assertEqual(contexts_list[10].context_name, "SContextG")
         self.assertEqual(contexts_list[10].instance_name, "contextKInst1")
+
+    def test_get_ext_contexts_descs_list(self):
+        data = loader.load_file_data("assets/structures/dummy_structures.json")
+        schema = data[1]
+        structure = schema["structure"]
+
+        contexts_list = structures.get_ext_contexts_descs_list(structure)
+
+        self.assertEqual(len(contexts_list), 3)
+        self.assertEqual(contexts_list[0].context_name, "EContextA")
+        self.assertEqual(contexts_list[0].instance_name, "extContextAInst1")
+
+        self.assertEqual(contexts_list[1].context_name, "EContextA")
+        self.assertEqual(contexts_list[1].instance_name, "extContextAInst2")
+
+        self.assertEqual(contexts_list[2].context_name, "EContextB")
+        self.assertEqual(contexts_list[2].instance_name, "extContextBInst1")
 
     def test_get_executers_list(self):
         data = loader.load_file_data("assets/structures/dummy_structures.json")
@@ -286,6 +305,45 @@ class TestCore(unittest.TestCase):
         self.assertEqual(data[list(data.keys())[7]][0].instance_name, "contextHInst1")
         self.assertEqual(data[list(data.keys())[7]][1].input_name, "context10Input")
         self.assertEqual(data[list(data.keys())[7]][1].instance_name, "contextJInst1")
+
+    def test_get_executors_ext_inputs_contexts(self):
+        data = loader.load_file_data("assets/structures/dummy_structures.json")
+        schema = data[1]
+        structure = schema["structure"]
+
+        data = structures.get_executors_ext_inputs_contexts(structure)
+
+        self.assertEqual(len(data), 2)
+
+        self.assertEqual(list(data.keys())[0], "executor6")
+        self.assertEqual(len(data[list(data.keys())[0]]), 2)
+        self.assertEqual(data[list(data.keys())[0]][0].input_name, "extInput1")
+        self.assertEqual(data[list(data.keys())[0]][0].instance_name, "extContextAInst1")
+        self.assertEqual(data[list(data.keys())[0]][1].input_name, "extInput2")
+        self.assertEqual(data[list(data.keys())[0]][1].instance_name, "extContextBInst1")
+        
+        self.assertEqual(list(data.keys())[1], "executor8")
+        self.assertEqual(len(data[list(data.keys())[1]]), 1)
+        self.assertEqual(data[list(data.keys())[1]][0].input_name, "extInput1")
+        self.assertEqual(data[list(data.keys())[1]][0].instance_name, "extContextAInst2")
+
+    def test_get_executors_ext_outputs(self):
+        data = loader.load_file_data("assets/structures/dummy_structures.json")
+        schema = data[1]
+        structure = schema["structure"]
+
+        data = structures.get_executors_ext_outputs(structure)
+        self.assertEqual(len(data), 2)
+
+        self.assertEqual(list(data.keys())[0], "executor1")
+        self.assertEqual(len(data[list(data.keys())[0]]), 1)
+        self.assertEqual(data[list(data.keys())[0]][0].output_name, "extOutput1")
+        self.assertEqual(data[list(data.keys())[0]][0].instance_name, "extContextAInst1")
+        self.assertEqual(len(data[list(data.keys())[1]]), 2)
+        self.assertEqual(data[list(data.keys())[1]][0].output_name, "extOutput1")
+        self.assertEqual(data[list(data.keys())[1]][0].instance_name, "extContextAInst2")
+        self.assertEqual(data[list(data.keys())[1]][1].output_name, "extOutput2")
+        self.assertEqual(data[list(data.keys())[1]][1].instance_name, "extContextBInst1")
 
     def test_get_executors_dep_contexts(self):
         data = loader.load_file_data("assets/structures/dummy_structures.json")

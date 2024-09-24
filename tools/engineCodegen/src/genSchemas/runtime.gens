@@ -16,6 +16,11 @@ ${for instance in contexts_data:}$
 ${class_name = to_class_name(instance.context_name)}$
     Game::Context::${class_name}$::Data ${"", instance.instance_name}$Context;
 ${:end-for}$
+
+${for instance in ext_contexts_data:}$
+${class_name = to_class_name(instance.context_name)}$
+    Game::Context::${class_name}$::CData ${"", instance.instance_name}$Context;
+${:end-for}$
 }
 
 namespace
@@ -68,8 +73,16 @@ ${inputs_data = executors_inputs_context[executor_name]}$
 ${for input in inputs_data:}$
         ${executor_name}$.${"", input.input_name}$Context = Game::Context::${"", to_class_name(input.instance_name)}$::convertToConst(${"", input.instance_name}$Context);
 ${:end-for}$
+${inputs_data = executors_ext_inputs_context.get(executor_name, list())}$
+${for input in inputs_data:}$
+        ${executor_name}$.${"", input.input_name}$Context = ${"", input.instance_name}$Context;
+${:end-for}$
         ${executor_name}$.update(dt);
-        const auto externalContext{ ${executor_name}$.getExternalContext() };
+        const auto externalContexts{ ${executor_name}$.getExternalContext() };
+${output_data = executors_ext_outputs.get(executor_name, list())}$
+${for output in output_data:}$
+        ${"", output.instance_name}$Context = externalContexts.${"", output.output_name}$Context;
+${:end-for}$
     }
 
 ${:end-for}$
@@ -83,8 +96,16 @@ ${inputs_data = executors_inputs_context[executor_name]}$
 ${for input in inputs_data:}$
         ${executor_name}$.${"", input.input_name}$Context = Game::Context::${"", to_class_name(input.instance_name)}$::convertToConst(${"", input.instance_name}$Context);
 ${:end-for}$
+${inputs_data = executors_ext_inputs_context.get(executor_name, list())}$
+${for input in inputs_data:}$
+        ${executor_name}$.${"", input.input_name}$Context = ${"", input.instance_name}$Context;
+${:end-for}$
         ${executor_name}$.update(dt);
-        const auto externalContext{ ${executor_name}$.getExternalContext() };
+        const auto externalContexts{ ${executor_name}$.getExternalContext() };
+${output_data = executors_ext_outputs.get(executor_name, list())}$
+${for output in output_data:}$
+        ${"", output.instance_name}$Context = externalContexts.${"", output.output_name}$Context;
+${:end-for}$
     }
 
 ${el_id = el_id + 1}$

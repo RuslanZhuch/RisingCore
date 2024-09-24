@@ -12,6 +12,18 @@ def _get_contexts_mapping(structure):
         return {}
     return data
 
+def _get_ext_contexts_mapping(structure):
+    data = structure.get("externalContextsMapping")
+    if data is None:
+        return {}
+    return data
+
+def _get_ext_contexts_sources(structure):
+    data = structure.get("externalContextsSources")
+    if data is None:
+        return {}
+    return data
+
 def get_contexts_list(structure):
     contexts_list = []
     contexts_set = set()
@@ -35,8 +47,12 @@ def get_contexts_list(structure):
     return contexts_list
 
 def get_contexts_types_list(structure):
-    mapping = _get_contexts_mapping(structure)
     types = set()
+    mapping = _get_contexts_mapping(structure)
+    for instance_name in mapping:
+        types.add(mapping[instance_name])
+    
+    mapping = _get_ext_contexts_mapping(structure)
     for instance_name in mapping:
         types.add(mapping[instance_name])
 
@@ -51,6 +67,15 @@ class ContextDesc:
 
 def get_contexts_descs_list(structure):
     mapping = _get_contexts_mapping(structure)
+    contexts = [
+        ContextDesc(mapping[instance_name], instance_name)
+        for instance_name in sorted(mapping)
+    ]
+
+    return contexts
+
+def get_ext_contexts_descs_list(structure):
+    mapping = _get_ext_contexts_mapping(structure)
     contexts = [
         ContextDesc(mapping[instance_name], instance_name)
         for instance_name in sorted(mapping)
@@ -92,6 +117,45 @@ def get_executors_inputs_contexts(structure):
                 instance_name= input
             ))
         data[executor_name] = descs_list
+
+    return data
+
+def get_executors_ext_inputs_contexts(structure):
+    data = dict()
+    for executor_name in _get_executors_struct(structure):
+        executor_io = _get_executors_struct(structure)[executor_name]
+        if "externalInputs" not in executor_io:
+            continue
+        descs_list = []
+        inputs = executor_io["externalInputs"]
+        for input in inputs:
+            descs_list.append(ExecutorInputsDesc(
+                input_name= inputs[input],
+                instance_name= input
+            ))
+        data[executor_name] = descs_list
+
+    return data
+
+class ExecutorOutputDesc:
+    def __init__(self, output_name: str, instance_name: str):
+        self.output_name = output_name
+        self.instance_name = instance_name
+
+def get_executors_ext_outputs(structure):
+    data = dict()
+    outputs = _get_ext_contexts_sources(structure)
+    for context_name in outputs:
+        context_data = outputs[context_name]
+
+        executor_name = context_data["executor"]
+        if executor_name not in data:
+            data[executor_name] = list()
+        output_name = context_data["instance_name"]
+        data[executor_name].append(ExecutorOutputDesc(
+            output_name= output_name,
+            instance_name= context_name
+        ))
 
     return data
 

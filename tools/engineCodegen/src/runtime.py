@@ -160,12 +160,16 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
 
     executors_per_contexts = structures.get_executors_per_contexts(structure, structure_contexts_list, optional_executors)
     executors_inputs_context = structures.get_executors_inputs_contexts(structure)
+    executors_ext_inputs_context = structures.get_executors_ext_inputs_contexts(structure)
 
     contexts_type_list = structures.get_contexts_types_list(structure)
 
     contexts_data = structures.get_contexts_descs_list(structure)
+    ext_contexts_data = structures.get_ext_contexts_descs_list(structure)
     executors_types_list = structures.get_executors_type_list(structure)
     executors_descs_list = structures.get_executors_descs_list(structure)
+
+    executors_ext_outputs = structures.get_executors_ext_outputs(structure)
 
     parameters = {
         "executors_data": executors_data,
@@ -173,6 +177,8 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
         "executors_descs_list": executors_descs_list,
         "contexts_type_list": contexts_type_list,
         "contexts_data": contexts_data,
+        "ext_contexts_data": ext_contexts_data,
+        "executors_ext_outputs": executors_ext_outputs,
         "num_of_parts_in_deps_mask": structures.compute_number_of_parts(len(structure_contexts_list)),
         "initial_deps_masks": executors_deps_descs_list,
         "initial_context_mask": initial_context_mask,
@@ -183,6 +189,7 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
         "optional_executors_data": optional_executors_data,
         "executors_deps_contexts": executors_deps_contexts,
         "executors_inputs_context": executors_inputs_context,
+        "executors_ext_inputs_context": executors_ext_inputs_context,
         "executors_update_descs": _get_executors_update(workspace_context_data, executors_data, validated_shared_context_instances),
         "pools_flush_descs": contexts.get_pools_flush(workspace_context_data),
         "shared_flush_descs": contexts.get_shared_flush(workspace_context_data),
