@@ -30,23 +30,6 @@ def load(paths : list):
 def get_name(data):
     return data.get("name")
 
-def load_shared_context_usage(workspace_data):
-    output = dict()
-    
-    usage = workspace_data.get("sharedContextsUsage")
-    if usage is None:
-        return output
-    
-    for element in usage:
-        executor_name = element["executorName"]
-        shared_instance = element["instanceName"]
-        executor_scontext = element["executorSharedName"]
-        if output.get(executor_name) is None:
-            output[executor_name] = []    
-        output[executor_name].append(SharedUsage(shared_instance, executor_scontext))
-        
-    return output
-
 def load_pool_context_usage(workspace_data):
     output = dict()
     

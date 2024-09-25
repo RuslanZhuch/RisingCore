@@ -194,57 +194,6 @@ class ContextUsage:
     def __lt__(self, other):
         return self.context_name < other.context_name
 
-def load_shared_context_instances(file) -> list[ContextUsage]:
-    content = loader.load_shared_contexts_usage(file)
-    
-    usage_data = []
-    for usage in content["sharedContextsInstances"]:
-        usage_data.append(ContextUsage(usage["contextName"], usage["instanceName"]))
-    pool_contexts_instances = content.get("poolContextsInstances")
-    if pool_contexts_instances is not None:
-        for usage in pool_contexts_instances:
-            usage_data.append(ContextUsage(usage["contextName"], usage["instanceName"]))
-    return usage_data
-    
-def load_shared_context_to_flush(workspace_data):
-    return workspace_data["sharedContextsInstancesToFlush"]
-    
-def get_shared_flush(workspace_data):
-    flush_list = []
-    flush_data = load_shared_context_to_flush(workspace_data)
-    for context in flush_data:
-        flush_list.append(context)
-
-    return flush_list
-
-def get_pools_flush(workspace_data):
-    pools_flush_list = []
-    pools = workspace_data.get("poolContextsInstances")
-    if pools is None:
-        return pools_flush_list
-    flush_data = [pool["instanceName"] for pool in pools]
-    for context in flush_data:
-        pools_flush_list.append(context)
-
-    return pools_flush_list
-    
-def load_shared_context_merge(workspace_data):    
-    output = dict()
-    
-    merge_data_full = workspace_data.get("sharedContextsMerge")
-    if merge_data_full is None:
-        return output
-    
-    for element in merge_data_full:
-        executor_name = element["executorName"]
-        shared_instance = element["instanceName"]
-        executor_context = element["executorContextName"]
-        if output.get(shared_instance) is None:
-            output[shared_instance] = []
-        output[shared_instance].append(SharedMerge(executor_name, executor_context))
-        
-    return output
-
 def load_pool_context_merge(workspace_data):
     output = dict()
     
@@ -300,25 +249,6 @@ class SharedMergeDesc:
         self.executor_name = executor_name
         self.executor_scontext = executor_scontext
         self.instance_name = instance_name
-
-def get_shared_merge(workspace_data):
-    shared_merge_descs_list = []
-    merge_data = load_shared_context_merge(workspace_data)
-    if merge_data is None:
-        return shared_merge_descs_list
-    
-    for instance_name in merge_data:
-        merge_context_full = merge_data[instance_name]
-        for merge_context in merge_context_full:
-            executor_name = merge_context.executor_name
-            executor_scontext = merge_context.executor_scontext
-            shared_merge_descs_list.append(SharedMergeDesc(
-                executor_name,
-                _to_class_name(executor_scontext),
-                instance_name
-            ))
-            
-    return shared_merge_descs_list
 
 class PoolsMergeDesc:
     def __init__(self, executor_name: str, executor_scontext: str, instance_name: str):
