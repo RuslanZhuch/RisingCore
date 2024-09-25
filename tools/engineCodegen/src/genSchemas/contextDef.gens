@@ -45,7 +45,9 @@ ${ :end-for }$
 
     struct CData
     {
-
+${for variable_data in variables_data_list: }$
+        ${"", variable_data["type"]}$ ${"", variable_data["name"]}$${"", variable_data["initial"]}$;
+${ :end-for }$
 ${for table_data in tables_data_list: }$
         CBuffer${write("", to_class_name(table_data.name))}$ ${"", table_data.name}$;
 ${ :end-for }$

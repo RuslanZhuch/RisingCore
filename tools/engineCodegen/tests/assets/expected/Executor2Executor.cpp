@@ -3,7 +3,7 @@
 namespace Game::ExecutionBlock
 {
 
-    static Assets::ExternalContexts externalContexts;
+    static Executor2::ExternalContexts externalContexts;
 
     void Executor2::loadContext() noexcept
     {

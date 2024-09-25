@@ -150,14 +150,17 @@ def generate_context_def(dest_path, context_file_path, types_cache):
             "type": object.data_type,
             "initial": initial
         })
+    convertion_list = [ "context.{}".format(object.name) for object in context_data.objects_data ]
     convertion_list_tables = [ "Dod::ImTable<{}>(context.{})".format(", ".join(table.data_type_list), table.name) for table in context_data.tables_data ]
-    
+    convertion_list.extend(convertion_list_tables)
+
+
     parameters = {
         "context_class_name": context_name,
         "include_files_list": includes_list,
         "tables_data_list": context_data.tables_data,
         "variables_data_list": objects_data,
-        "conversions_list": convertion_list_tables
+        "conversions_list": convertion_list
     }
 
     t = Templite(filename=current_directory + "/genSchemas/contextDef.gens")

@@ -3,7 +3,7 @@
 namespace Game::ExecutionBlock
 {
 
-    static Assets::ExternalContexts externalContexts;
+    static Test1::ExternalContexts externalContexts;
 
     void Test1::loadContext() noexcept
     {
@@ -34,7 +34,7 @@ namespace Game::ExecutionBlock
         this->target3Context.reset();
     }
 
-    Assets::CExternalContexts Game::ExecutionBlock::Assets::getExternalContext() noexcept
+    Test1::CExternalContexts Game::ExecutionBlock::Test1::getExternalContext() noexcept
     {
         return CExternalContexts
         {

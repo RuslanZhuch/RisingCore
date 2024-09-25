@@ -159,13 +159,11 @@ def get_executors_ext_outputs(structure):
 
     return data
 
-def get_executors_type_list(structure):
+def get_executors_list(structure):
     data = set()
 
     for executor_name in _get_executors_struct(structure):
-        executor_io = _get_executors_struct(structure)[executor_name]
-        executor_type = executor_io["type"]
-        data.add(executor_type)
+        data.add(executor_name)
 
     type_list = list(data)
     type_list.sort()
@@ -175,18 +173,6 @@ class ExecutorDesc:
     def __init__(self, executor_type: str, executor_name: str):
         self.executor_type = executor_type
         self.executor_name = executor_name
-
-def get_executors_descs_list(structure):
-    data = list()
-    for executor_name in _get_executors_struct(structure):
-        executor_io = _get_executors_struct(structure)[executor_name]
-        executor_type = executor_io["type"]
-        data.append(ExecutorDesc(
-            executor_type=executor_type,
-            executor_name=executor_name
-        ))
-
-    return data
 
 def get_initial_deps_mask(structure, anchors_list : list[str], contexts_list : list[str]):
     mask = [0] * len(contexts_list)

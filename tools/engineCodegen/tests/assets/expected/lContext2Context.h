@@ -48,14 +48,16 @@ namespace Game::Context::LContext2
 
     struct CData
     {
-
+        int32_t var1{};
+        Types::Cats::CryingCat cat;
+        float var2{};
         CBufferDbvar0 dbvar0;
         CBufferDbvar1 dbvar1;
     };
 
     [[nodiscard]] static CData convertToConst(const Data& context) noexcept
     {
-        return { Dod::ImTable<float>(context.dbvar0), Dod::ImTable<int64_t>(context.dbvar1) };
+        return { context.var1, context.cat, context.var2, Dod::ImTable<float>(context.dbvar0), Dod::ImTable<int64_t>(context.dbvar1) };
     }
 
 }

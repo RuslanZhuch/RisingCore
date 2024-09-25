@@ -166,15 +166,13 @@ def generate(target_path, executors_data, workspace_shared_contexts_file, loaded
 
     contexts_data = structures.get_contexts_descs_list(structure)
     ext_contexts_data = structures.get_ext_contexts_descs_list(structure)
-    executors_types_list = structures.get_executors_type_list(structure)
-    executors_descs_list = structures.get_executors_descs_list(structure)
+    executors_list = structures.get_executors_list(structure)
 
     executors_ext_outputs = structures.get_executors_ext_outputs(structure)
 
     parameters = {
         "executors_data": executors_data,
-        "executors_types_list": executors_types_list,
-        "executors_descs_list": executors_descs_list,
+        "executors_list": executors_list,
         "contexts_type_list": contexts_type_list,
         "contexts_data": contexts_data,
         "ext_contexts_data": ext_contexts_data,

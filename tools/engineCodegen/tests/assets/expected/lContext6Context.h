@@ -67,7 +67,6 @@ namespace Game::Context::LContext6
 
     struct CData
     {
-
         CBufferDbvar2 dbvar2;
         CBufferData1 data1;
         CBufferData2 data2;

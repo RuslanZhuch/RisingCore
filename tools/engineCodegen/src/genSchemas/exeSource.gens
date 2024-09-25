@@ -3,7 +3,7 @@
 namespace Game::ExecutionBlock
 {
 
-    static Assets::ExternalContexts externalContexts;
+    static ${class_name}$::ExternalContexts externalContexts;
 
     void ${class_name}$::loadContext() noexcept
     {
@@ -42,7 +42,7 @@ ${:end-for}$
 ${:end-if}$
     }
 
-    Assets::CExternalContexts Game::ExecutionBlock::Assets::getExternalContext() noexcept
+    ${class_name}$::CExternalContexts Game::ExecutionBlock::${class_name}$::getExternalContext() noexcept
     {
         return CExternalContexts
         {

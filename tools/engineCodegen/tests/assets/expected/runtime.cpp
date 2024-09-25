@@ -15,6 +15,9 @@
 #include <executors/Executor4Executor.h>
 #include <executors/Executor5Executor.h>
 #include <executors/Executor6Executor.h>
+#include <executors/Executor7Executor.h>
+#include <executors/Executor8Executor.h>
+#include <executors/Executor9Executor.h>
 
 #include <dod/SharedContext.h>
 #include <engine/Timer.h>
@@ -42,14 +45,14 @@ namespace
 namespace
 {
     Game::ExecutionBlock::Executor1 executor1;
-    Game::ExecutionBlock::Executor1 executor2;
-    Game::ExecutionBlock::Executor2 executor3;
-    Game::ExecutionBlock::Executor3 executor4;
-    Game::ExecutionBlock::Executor3 executor5;
-    Game::ExecutionBlock::Executor4 executor6;
-    Game::ExecutionBlock::Executor5 executor7;
-    Game::ExecutionBlock::Executor6 executor8;
-    Game::ExecutionBlock::Executor6 executor9;
+    Game::ExecutionBlock::Executor2 executor2;
+    Game::ExecutionBlock::Executor3 executor3;
+    Game::ExecutionBlock::Executor4 executor4;
+    Game::ExecutionBlock::Executor5 executor5;
+    Game::ExecutionBlock::Executor6 executor6;
+    Game::ExecutionBlock::Executor7 executor7;
+    Game::ExecutionBlock::Executor8 executor8;
+    Game::ExecutionBlock::Executor9 executor9;
 }
 
 struct FlowContext

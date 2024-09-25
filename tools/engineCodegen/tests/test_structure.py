@@ -219,41 +219,17 @@ class TestCore(unittest.TestCase):
         schema = data[1]
         structure = schema["structure"]
 
-        types_list = structures.get_executors_type_list(structure)
+        types_list = structures.get_executors_list(structure)
 
-        self.assertEqual(len(types_list), 6)
-        self.assertEqual(types_list[0], "Executor1")
-        self.assertEqual(types_list[1], "Executor2")
-        self.assertEqual(types_list[2], "Executor3")
-        self.assertEqual(types_list[3], "Executor4")
-        self.assertEqual(types_list[4], "Executor5")
-        self.assertEqual(types_list[5], "Executor6")
-
-
-    def test_get_executors_descs_list(self):
-        data = loader.load_file_data("assets/structures/dummy_structures.json")
-        schema = data[1]
-        structure = schema["structure"]
-
-        descs = structures.get_executors_descs_list(structure)
-
-        self.assertEqual(len(descs), 8)
-        self.assertEqual(descs[0].executor_type, "Executor1")
-        self.assertEqual(descs[0].executor_name, "executor1")
-        self.assertEqual(descs[1].executor_type, "Executor1")
-        self.assertEqual(descs[1].executor_name, "executor2")
-        self.assertEqual(descs[2].executor_type, "Executor2")
-        self.assertEqual(descs[2].executor_name, "executor3")
-        self.assertEqual(descs[3].executor_type, "Executor3")
-        self.assertEqual(descs[3].executor_name, "executor4")
-        self.assertEqual(descs[4].executor_type, "Executor3")
-        self.assertEqual(descs[4].executor_name, "executor5")
-        self.assertEqual(descs[5].executor_type, "Executor4")
-        self.assertEqual(descs[5].executor_name, "executor6")
-        self.assertEqual(descs[6].executor_type, "Executor5")
-        self.assertEqual(descs[6].executor_name, "executor7")
-        self.assertEqual(descs[7].executor_type, "Executor6")
-        self.assertEqual(descs[7].executor_name, "executor8")
+        self.assertEqual(len(types_list), 8)
+        self.assertEqual(types_list[0], "executor1")
+        self.assertEqual(types_list[1], "executor2")
+        self.assertEqual(types_list[2], "executor3")
+        self.assertEqual(types_list[3], "executor4")
+        self.assertEqual(types_list[4], "executor5")
+        self.assertEqual(types_list[5], "executor6")
+        self.assertEqual(types_list[6], "executor7")
+        self.assertEqual(types_list[7], "executor8")
 
     def test_get_executors_inputs_contexts(self):
         data = loader.load_file_data("assets/structures/dummy_structures.json")

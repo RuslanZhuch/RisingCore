@@ -2,8 +2,8 @@ ${for context_type in contexts_type_list:}$
 #include <Contexts/${context_type}$Context.h>
 ${:end-for}$
 
-${for executor_type in executors_types_list:}$
-#include <executors/${executor_type}$Executor.h>
+${for executor_name in executors_list:}$
+#include <executors/${"", to_class_name(executor_name)}$Executor.h>
 ${:end-for}$
 
 #include <dod/SharedContext.h>
@@ -25,8 +25,8 @@ ${:end-for}$
 
 namespace
 {
-${for desc in executors_descs_list:}$
-    Game::ExecutionBlock::${"", to_class_name(desc.executor_type)}$ ${"", desc.executor_name}$;
+${for executor_name in executors_list:}$
+    Game::ExecutionBlock::${"", to_class_name(executor_name)}$ ${"", executor_name}$;
 ${:end-for}$
 }
 
@@ -155,9 +155,9 @@ ${for instance in contexts_data:}$
     ${"", instance.instance_name}$Context.load();
 ${:end-for}$
 
-${for desc in executors_descs_list:}$
-    ${"", desc.executor_name}$.loadContext();
-    ${"", desc.executor_name}$.initiate();
+${for executor_name in executors_list:}$
+    ${"", executor_name}$.loadContext();
+    ${"", executor_name}$.initiate();
 ${:end-for}$
 
     Timer timer;

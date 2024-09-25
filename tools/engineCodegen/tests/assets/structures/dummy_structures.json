@@ -68,7 +68,6 @@
             ],
             "executors": {
                 "executor1": {
-                    "type": "Executor1",
                     "inputs": { 
                         "contextAInst1": "context1Input" 
                     },
@@ -79,7 +78,6 @@
                     "toggleCode": 1
                 },
                 "executor2": {
-                    "type": "Executor1",
                     "inputs": { 
                         "contextBInst1": "context2Input" 
                     },
@@ -91,7 +89,6 @@
                     "isAnchor": true
                 },
                 "executor3": {
-                    "type": "Executor2",
                     "inputs": { 
                         "contextCInst1": "context3Input" 
                     },
@@ -102,7 +99,6 @@
                     "toggleCode": 3
                 },
                 "executor4": {
-                    "type": "Executor3",
                     "inputs": { 
                         "contextDInst1": "context4Input" 
                     },
@@ -112,7 +108,6 @@
                     }
                 },
                 "executor5": {
-                    "type": "Executor3",
                     "inputs": { 
                         "contextEInst1": "context5Input"
                     },
@@ -121,7 +116,6 @@
                     }
                 },
                 "executor6": {
-                    "type": "Executor4",
                     "externalInputs": {
                         "extContextAInst1": "extInput1",
                         "extContextBInst1": "extInput2"
@@ -135,7 +129,6 @@
                     }
                 },
                 "executor7": {
-                    "type": "Executor5",
                     "inputs": { 
                         "contextGInst1": "context7Input"
                     },
@@ -145,7 +138,6 @@
                     }
                 },
                 "executor8": {
-                    "type": "Executor6",
                     "externalInputs": {
                         "extContextAInst2": "extInput1"
                     },
