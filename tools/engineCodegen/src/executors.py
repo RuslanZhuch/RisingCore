@@ -118,6 +118,11 @@ def gen_header(folder, executor_data):
     if contexts_shared is not None:
         for context in contexts_shared:
             contexts_list.append(_to_class_name(context["type"]))
+            
+    contexts_shared = executor_data.get("contextsExternal")
+    if contexts_shared is not None:
+        for context in contexts_shared:
+            contexts_list.append(_to_class_name(context["type"]))
     
     contexts_list_unique = list(set(contexts_list))
     contexts_list_unique.sort()

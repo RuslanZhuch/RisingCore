@@ -6,6 +6,8 @@
 #include <Contexts/Type4Context.h>
 #include <Contexts/Type5Context.h>
 #include <Contexts/Type6Context.h>
+#include <Contexts/Type7Context.h>
+#include <Contexts/Type8Context.h>
 
 #include <dod/MemPool.h>
 #include <dod/SharedContext.h>
