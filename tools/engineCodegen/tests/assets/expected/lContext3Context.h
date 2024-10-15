@@ -18,7 +18,10 @@ namespace Game::Context::LContext3
 
     struct CBufferDbvar : public Dod::ImTable<int32_t>
     {
-
+        CBufferDbvar(const BufferDbvar& mutTable)
+        {
+            *this = mutTable;
+        }
     };
 
     struct Data
@@ -39,7 +42,7 @@ namespace Game::Context::LContext3
 
     [[nodiscard]] static CData convertToConst(const Data& context) noexcept
     {
-        return { Dod::ImTable<int32_t>(context.dbvar) };
+        return { CBufferDbvar(context.dbvar) };
     }
 
 }

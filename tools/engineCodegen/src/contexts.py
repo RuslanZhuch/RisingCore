@@ -151,7 +151,7 @@ def generate_context_def(dest_path, context_file_path, types_cache):
             "initial": initial
         })
     convertion_list = [ "context.{}".format(object.name) for object in context_data.objects_data ]
-    convertion_list_tables = [ "Dod::ImTable<{}>(context.{})".format(", ".join(table.data_type_list), table.name) for table in context_data.tables_data ]
+    convertion_list_tables = [ "CBuffer{}(context.{})".format(_to_class_name(table.name), table.name) for table in context_data.tables_data ]
     convertion_list.extend(convertion_list_tables)
 
 

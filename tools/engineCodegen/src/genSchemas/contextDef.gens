@@ -24,7 +24,10 @@ ${ :end-for }$
 ${for table_data in tables_data_list: }$
     struct CBuffer${"", to_class_name(table_data.name)}$ : public Dod::ImTable<${", ".join(table_data.data_type_list)}$>
     {
-
+        CBuffer${"", to_class_name(table_data.name)}$(const Buffer${"", to_class_name(table_data.name)}$& mutTable)
+        {
+            *this = mutTable;
+        }
     };
 
 ${ :end-for }$

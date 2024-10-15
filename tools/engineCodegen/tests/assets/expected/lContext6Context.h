@@ -34,22 +34,34 @@ namespace Game::Context::LContext6
 
     struct CBufferDbvar2 : public Dod::ImTable<int64_t>
     {
-
+        CBufferDbvar2(const BufferDbvar2& mutTable)
+        {
+            *this = mutTable;
+        }
     };
 
     struct CBufferData1 : public Dod::ImTable<int32_t, float>
     {
-
+        CBufferData1(const BufferData1& mutTable)
+        {
+            *this = mutTable;
+        }
     };
 
     struct CBufferData2 : public Dod::ImTable<Types::Cats::CryingCat, float, int64_t>
     {
-
+        CBufferData2(const BufferData2& mutTable)
+        {
+            *this = mutTable;
+        }
     };
 
     struct CBufferData3 : public Dod::ImTable<float>
     {
-
+        CBufferData3(const BufferData3& mutTable)
+        {
+            *this = mutTable;
+        }
     };
 
     struct Data
@@ -75,7 +87,7 @@ namespace Game::Context::LContext6
 
     [[nodiscard]] static CData convertToConst(const Data& context) noexcept
     {
-        return { Dod::ImTable<int64_t>(context.dbvar2), Dod::ImTable<int32_t, float>(context.data1), Dod::ImTable<Types::Cats::CryingCat, float, int64_t>(context.data2), Dod::ImTable<float>(context.data3) };
+        return { CBufferDbvar2(context.dbvar2), CBufferData1(context.data1), CBufferData2(context.data2), CBufferData3(context.data3) };
     }
 
 }

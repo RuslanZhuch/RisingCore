@@ -24,12 +24,26 @@ namespace Game::Context::LContext1
 
     struct CBufferDbvar1 : public Dod::ImTable<float>
     {
-
+        CBufferDbvar1(const Dod::ImTable<float>& imTable)
+        {
+            *this = imTable;
+        }
+        CBufferDbvar1(const BufferBodies& mutTable)
+        {
+            *this = mutTable;
+        }
     };
 
     struct CBufferDbvar2 : public Dod::ImTable<int64_t>
     {
-
+        CBufferDbvar2(const Dod::ImTable<int64_t>& imTable)
+        {
+            *this = imTable;
+        }
+        CBufferDbvar2(const BufferBodies& mutTable)
+        {
+            *this = mutTable;
+        }
     };
 
     struct Data
