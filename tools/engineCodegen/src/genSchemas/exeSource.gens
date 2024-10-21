@@ -52,4 +52,14 @@ ${:end-for}$
         };
     }
 
+${for context in contexts_write_to:}$
+${for element in context["list"]:}$
+${argument = "{}&".format(class_name)}$
+    void ${class_name}$::modify${"", to_class_name(element)}$(Context::${"", to_class_name(context["type"])}$::Data& data) noexcept
+    {
+        this->modify${"", to_class_name(element)}$(getExternalContext(), data);
+    }
+
+${:end-for}$
+${:end-for}$
 }

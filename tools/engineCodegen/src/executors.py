@@ -147,12 +147,15 @@ def gen_source(folder, executor_data):
     class_name = _to_class_name(executor_name)
     file_name_source = class_name + "Executor.cpp"
 
+    contexts_write_to = executor_data.get("contextsWriteTo")
+
     external_contexts = load_external_contexts(executor_data)
 
     parameters = {
         "class_name": class_name,
         "executor_data": executor_data,
         "external_contexts": external_contexts,
+        "contexts_write_to": contexts_write_to,
     }
 
     t = Templite(filename=current_directory + "/genSchemas/exeSource.gens")
@@ -186,7 +189,7 @@ def inject_modify_methods(folder, executor_data):
         context_name = contexts_names_list[context_id]
         context_type = contexts_types_list[context_id]
 
-        data_to_inject = "void {}::modify{}([[maybe_unused]] Context::{}::Data& {}) noexcept\n{{\n\n}}".format(
+        data_to_inject = "void {}::modify{}([[maybe_unused]] const CExternalContexts& externalContexts, [[maybe_unused]] Context::{}::Data& {}) noexcept\n{{\n\n}}".format(
             class_name, _to_class_name(context_name), context_type, context_name)
         
         return injectors.inject(content, context_name, data_to_inject)

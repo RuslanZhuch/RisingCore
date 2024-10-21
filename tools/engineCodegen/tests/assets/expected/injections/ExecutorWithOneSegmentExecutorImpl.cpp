@@ -13,7 +13,7 @@ void ExecutorWithOneSegment::updateImpl([[maybe_unused]] ExternalContexts& exter
 }
 
 // BEGIN target1
-void ExecutorWithOneSegment::modifyTarget1([[maybe_unused]] Context::LContext1::Data& target1) noexcept
+void ExecutorWithOneSegment::modifyTarget1([[maybe_unused]] const CExternalContexts& externalContexts, [[maybe_unused]] Context::LContext1::Data& target1) noexcept
 {
 
 }

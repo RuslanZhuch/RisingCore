@@ -44,4 +44,19 @@ namespace Game::ExecutionBlock
         };
     }
 
+    void Test1::modifyTarget1(Context::Type4::Data& data) noexcept
+    {
+        this->modifyTarget1(getExternalContext(), data);
+    }
+
+    void Test1::modifyTarget2(Context::Type4::Data& data) noexcept
+    {
+        this->modifyTarget2(getExternalContext(), data);
+    }
+
+    void Test1::modifyTarget3(Context::Type4::Data& data) noexcept
+    {
+        this->modifyTarget3(getExternalContext(), data);
+    }
+
 }

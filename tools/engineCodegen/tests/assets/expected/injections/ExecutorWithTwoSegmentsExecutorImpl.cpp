@@ -13,14 +13,14 @@ void ExecutorWithOneSegmentAndSuspend::updateImpl([[maybe_unused]] ExternalConte
 }
 
 // BEGIN target1
-void ExecutorWithOneSegmentAndSuspend::modifyTarget1([[maybe_unused]] Context::LContext1::Data& target1) noexcept
+void ExecutorWithOneSegmentAndSuspend::modifyTarget1([[maybe_unused]] const CExternalContexts& externalContexts, [[maybe_unused]] Context::LContext1::Data& target1) noexcept
 {
 
 }
 // END target1
 
 // BEGIN target2
-void ExecutorWithOneSegmentAndSuspend::modifyTarget2([[maybe_unused]] Context::LContext3::Data& target2) noexcept
+void ExecutorWithOneSegmentAndSuspend::modifyTarget2([[maybe_unused]] const CExternalContexts& externalContexts, [[maybe_unused]] Context::LContext3::Data& target2) noexcept
 {
 
 }

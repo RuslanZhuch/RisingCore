@@ -54,6 +54,18 @@ ${:end-if}$
         void initImpl(ExternalContexts& externalContexts) noexcept;
         void updateImpl(ExternalContexts& externalContexts, float dt) noexcept;
 
+${for context in contexts_write_to:}$
+${
+context_type = to_class_name(context["type"])
+class_name = "Context::{}::Data".format(context_type)
+}$
+${for element in context["list"]:}$
+${method_name = "modify{}".format(to_class_name(element))}$
+${argument = "{}&".format(class_name)}$
+        ${"void modify{}(const CExternalContexts& externalContexts, {}&) noexcept;".format(to_class_name(element), class_name)}$
+${:end-for}$
+${:end-for}$
+
     public:
         Dod::MemPool memory;
 ${contexts_local = executor_data.get("contextsLocal")}$

@@ -49,6 +49,10 @@ namespace Game::ExecutionBlock
         void initImpl(ExternalContexts& externalContexts) noexcept;
         void updateImpl(ExternalContexts& externalContexts, float dt) noexcept;
 
+        void modifyTarget1(const CExternalContexts& externalContexts, Context::Type4::Data&) noexcept;
+        void modifyTarget2(const CExternalContexts& externalContexts, Context::Type4::Data&) noexcept;
+        void modifyTarget3(const CExternalContexts& externalContexts, Context::Type4::Data&) noexcept;
+
     public:
         Dod::MemPool memory;
         Context::Type1::Data local1Context;
