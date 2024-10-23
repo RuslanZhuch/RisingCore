@@ -119,12 +119,6 @@
     <ClCompile Include="sources\DataUtilsForTables.cpp">
       <Filter>sources</Filter>
     </ClCompile>
-    <ClCompile Include="sources\LocalMemoryBuffer.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\LocalTable.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
     <ClCompile Include="sources\MemPool.cpp">
       <Filter>sources</Filter>
     </ClCompile>
@@ -138,9 +132,6 @@
       <Filter>sources</Filter>
     </ClCompile>
     <ClCompile Include="sources\String.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\TablesSequence.cpp">
       <Filter>sources</Filter>
     </ClCompile>
     <ClCompile Include="sources\TypeHelpers.cpp">
