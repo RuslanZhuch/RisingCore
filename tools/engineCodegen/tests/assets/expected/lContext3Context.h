@@ -18,9 +18,12 @@ namespace Game::Context::LContext3
 
     struct CBufferDbvar : public Dod::ImTable<int32_t>
     {
+        CBufferDbvar() = default;
         CBufferDbvar(const BufferDbvar& mutTable)
         {
-            *this = mutTable;
+            this->dataBegin = mutTable.dataBegin;
+            this->capacityEls = mutTable.capacityEls;
+            this->numOfElements = mutTable.numOfFilledEls;
         }
     };
 

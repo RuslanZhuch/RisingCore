@@ -134,11 +134,14 @@
     <ClCompile Include="sources\Contexts.cpp" />
     <ClCompile Include="sources\DataStream.cpp" />
     <ClCompile Include="sources\DataUtilsForTables.cpp" />
+    <ClCompile Include="sources\LocalMemoryBuffer.cpp" />
+    <ClCompile Include="sources\LocalTable.cpp" />
     <ClCompile Include="sources\MemPool.cpp" />
     <ClCompile Include="sources\MemUtils.cpp" />
     <ClCompile Include="sources\StaticMap.cpp" />
     <ClCompile Include="sources\StaticVector.cpp" />
     <ClCompile Include="sources\String.cpp" />
+    <ClCompile Include="sources\TablesSequence.cpp" />
     <ClCompile Include="sources\TypeHelpers.cpp" />
     <ClCompile Include="sources\Types.cpp" />
     <ClCompile Include="sources\utils\TypesDesImpl.cpp" />

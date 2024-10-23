@@ -22,11 +22,27 @@ ${for table_data in tables_data_list: }$
 
 ${ :end-for }$
 ${for table_data in tables_data_list: }$
+    struct MutBuffer${"", to_class_name(table_data.name)}$ : public Dod::MutTable<${", ".join(table_data.data_type_list)}$>
+    {
+        MutBuffer${"", to_class_name(table_data.name)}$() = default;
+        MutBuffer${"", to_class_name(table_data.name)}$(const Buffer${"", to_class_name(table_data.name)}$& dTable)
+        {
+            this->dataBegin = dTable.dataBegin;
+            this->capacityEls = dTable.capacityEls;
+            this->numOfElements = dTable.numOfFilledEls;
+        }
+    };
+
+${ :end-for }$
+${for table_data in tables_data_list: }$
     struct CBuffer${"", to_class_name(table_data.name)}$ : public Dod::ImTable<${", ".join(table_data.data_type_list)}$>
     {
+        CBuffer${"", to_class_name(table_data.name)}$() = default;
         CBuffer${"", to_class_name(table_data.name)}$(const Buffer${"", to_class_name(table_data.name)}$& mutTable)
         {
-            *this = mutTable;
+            this->dataBegin = mutTable.dataBegin;
+            this->capacityEls = mutTable.capacityEls;
+            this->numOfElements = mutTable.numOfFilledEls;
         }
     };
 
@@ -67,6 +83,18 @@ namespace Game::Context
 {
 ${for table_data in tables_data_list: }$${if len(table_data.data_type_full_list) >= 2:}$
     [[nodiscard]] static auto decoupleData(${context_class_name}$::Buffer${"", to_class_name(table_data.name)}$& ${"", table_data.name}$ToDecouple) noexcept
+    {
+        struct Output
+        {
+
+${for type_name in table_data.data_type_full_list: }$
+            Dod::MutTable<${"", table_data.data_type_full_list[type_name]}$> ${type_name}$;${ :end-for }$
+        };
+        const auto data{ Dod::DataUtils::get(${"", table_data.name}$ToDecouple) };
+        return Output(${", ".join([f"std::get<{i}>(data)" for i in list(range(len(table_data.data_type_list)))])}$);
+    }
+
+    [[nodiscard]] static auto decoupleData(${context_class_name}$::MutBuffer${"", to_class_name(table_data.name)}$& ${"", table_data.name}$ToDecouple) noexcept
     {
         struct Output
         {

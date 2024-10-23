@@ -22,19 +22,47 @@ namespace Game::Context::LContext1
 
     };
 
+    struct MutBufferDbvar1 : public Dod::MutTable<float>
+    {
+        MutBufferDbvar1() = default;
+        MutBufferDbvar1(const BufferDbvar1& dTable)
+        {
+            this->dataBegin = dTable.dataBegin;
+            this->capacityEls = dTable.capacityEls;
+            this->numOfElements = dTable.numOfFilledEls;
+        }
+    };
+
+    struct MutBufferDbvar2 : public Dod::MutTable<int64_t>
+    {
+        MutBufferDbvar2() = default;
+        MutBufferDbvar2(const BufferDbvar2& dTable)
+        {
+            this->dataBegin = dTable.dataBegin;
+            this->capacityEls = dTable.capacityEls;
+            this->numOfElements = dTable.numOfFilledEls;
+        }
+    };
+
     struct CBufferDbvar1 : public Dod::ImTable<float>
     {
+        CBufferDbvar1() = default;
         CBufferDbvar1(const BufferDbvar1& mutTable)
         {
-            *this = mutTable;
+            this->dataBegin = mutTable.dataBegin;
+            this->capacityEls = mutTable.capacityEls;
+            this->numOfElements = mutTable.numOfFilledEls;
         }
     };
 
     struct CBufferDbvar2 : public Dod::ImTable<int64_t>
     {
+        CBufferDbvar2() = default;
         CBufferDbvar2(const BufferDbvar2& mutTable)
         {
-            *this = mutTable;
+            this->dataBegin = mutTable.dataBegin;
+            this->capacityEls = mutTable.capacityEls;
+            this->numOfElements = mutTable.numOfFilledEls;
         }
     };
 
