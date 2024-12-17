@@ -109,6 +109,7 @@ namespace Dod::Algorithms
 	template <typename T>
 	[[nodiscard]] static int32_t getIndexByValue(Dod::CommonData::CMonoImTable auto src, T value, int32_t startIndex = 0) noexcept
 	{
+		startIndex = std::max(0, startIndex);
 
 		const auto firstPassIndex{ startIndex };
 		for (int32_t elId{ firstPassIndex }; elId < Dod::DataUtils::getNumFilledElements(src); ++elId)

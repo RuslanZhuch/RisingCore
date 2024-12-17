@@ -250,7 +250,8 @@ TEST(Algorithm, GetIndexByValue)
 			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 42, 0), -1);
 		}
 		{
-			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, 0), 0);
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, -42), 0);
+			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, -1), 0);
 			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, 0), 0);
 			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, 1), 3);
 			EXPECT_EQ(Dod::Algorithms::getIndexByValue(Dod::ImTable(buffer), 2, 2), 3);
