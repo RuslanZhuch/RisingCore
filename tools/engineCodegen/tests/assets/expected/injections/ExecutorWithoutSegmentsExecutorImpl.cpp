@@ -7,6 +7,16 @@ void ExecutorWithoutSegments::initImpl([[maybe_unused]] ExternalContexts& extern
 
 }
 
+void ExecutorWithoutSegments::onActivatedImpl([[maybe_unused]] ExternalContexts& externalContexts) noexcept
+{
+
+}
+
+void ExecutorWithoutSegments::onDeactivatedImpl([[maybe_unused]] ExternalContexts& externalContexts) noexcept
+{
+
+}
+
 void ExecutorWithoutSegments::updateImpl([[maybe_unused]] ExternalContexts& externalContexts, [[maybe_unused]] float dt) noexcept
 {
 

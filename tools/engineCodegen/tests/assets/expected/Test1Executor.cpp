@@ -23,8 +23,22 @@ namespace Game::ExecutionBlock
         this->initImpl(externalContexts);
     }
 
+    void Test1::deactivate() noexcept
+    {
+        if (this->bIsRunning)
+        {
+            this->bIsRunning = false;
+            this->onDeactivatedImpl(externalContexts);
+        }
+    }
+
     void Test1::update(float dt) noexcept
     {
+        if (!this->bIsRunning)
+        {
+            this->bIsRunning = true;
+            this->onActivatedImpl(externalContexts);
+        }
         this->updateImpl(externalContexts, dt);
     }
 

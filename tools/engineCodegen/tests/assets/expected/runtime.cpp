@@ -190,7 +190,10 @@ namespace
     void tryRunExecutor1(float dt)
     {
         if (!Engine::Bitmask::get(enabledExecutors, 0))
+        {
+            executor1.deactivate();
             return;
+        }
         executor1.context1InputContext = Game::Context::ContextAInst1::convertToConst(contextAInst1Context);
         executor1.update(dt);
         const auto externalContexts{ executor1.getExternalContext() };
@@ -200,7 +203,10 @@ namespace
     void tryRunExecutor3(float dt)
     {
         if (!Engine::Bitmask::get(enabledExecutors, 1))
+        {
+            executor3.deactivate();
             return;
+        }
         executor3.context3InputContext = Game::Context::ContextCInst1::convertToConst(contextCInst1Context);
         executor3.update(dt);
         const auto externalContexts{ executor3.getExternalContext() };
@@ -209,7 +215,10 @@ namespace
     void tryRunExecutor8(float dt)
     {
         if (!Engine::Bitmask::get(enabledExecutors, 2))
+        {
+            executor8.deactivate();
             return;
+        }
         executor8.context8InputContext = Game::Context::ContextHInst1::convertToConst(contextHInst1Context);
         executor8.context10InputContext = Game::Context::ContextJInst1::convertToConst(contextJInst1Context);
         executor8.extInput1Context = extContextAInst2Context;
@@ -446,7 +455,18 @@ int main()
                 const auto cmdData{ Dod::DataUtils::get(sApplicationContext.commands, cmdId) };
                 const auto cmd{ cmdData & 0xF };
                 if (cmd == 1)
+                {
+                    executor1.deactivate();
+                    executor2.deactivate();
+                    executor3.deactivate();
+                    executor4.deactivate();
+                    executor5.deactivate();
+                    executor6.deactivate();
+                    executor7.deactivate();
+                    executor8.deactivate();
+                    executor9.deactivate();
                     return 0;
+                }
                 if (cmd == 2 || cmd == 3)
                 {
                     const auto executorCode{ cmdData >> 16 };

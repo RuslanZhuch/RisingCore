@@ -27,8 +27,22 @@ ${:end-for}$
         this->initImpl(externalContexts);
     }
 
+    void ${class_name}$::deactivate() noexcept
+    {
+        if (this->bIsRunning)
+        {
+            this->bIsRunning = false;
+            this->onDeactivatedImpl(externalContexts);
+        }
+    }
+
     void ${class_name}$::update(float dt) noexcept
     {
+        if (!this->bIsRunning)
+        {
+            this->bIsRunning = true;
+            this->onActivatedImpl(externalContexts);
+        }
         this->updateImpl(externalContexts, dt);
     }
 

@@ -7,6 +7,16 @@ void Test1::initImpl([[maybe_unused]] ExternalContexts& externalContexts) noexce
 
 }
 
+void Test1::onActivatedImpl([[maybe_unused]] ExternalContexts& externalContexts) noexcept
+{
+
+}
+
+void Test1::onDeactivatedImpl([[maybe_unused]] ExternalContexts& externalContexts) noexcept
+{
+
+}
+
 void Test1::updateImpl([[maybe_unused]] ExternalContexts& externalContexts, [[maybe_unused]] float dt) noexcept
 {
     // Some modifications

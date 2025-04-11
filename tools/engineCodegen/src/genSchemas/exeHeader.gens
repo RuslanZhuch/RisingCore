@@ -33,6 +33,7 @@ ${:end-for}$
     public:
         void loadContext() noexcept;
         void initiate() noexcept;
+        void deactivate() noexcept;
         void update(float dt) noexcept;
         void flushSharedLocalContexts() noexcept;
 ${if contexts_write_to is not None:}$
@@ -54,6 +55,9 @@ ${:end-if}$
         void initImpl(ExternalContexts& externalContexts) noexcept;
         void updateImpl(ExternalContexts& externalContexts, float dt) noexcept;
 
+        void onActivatedImpl(ExternalContexts& externalContexts) noexcept;
+        void onDeactivatedImpl(ExternalContexts& externalContexts) noexcept;
+
 ${for context in contexts_write_to:}$
 ${
 context_type = to_class_name(context["type"])
@@ -67,6 +71,7 @@ ${:end-for}$
 ${:end-for}$
 
     public:
+        bool bIsRunning {};
         Dod::MemPool memory;
 ${contexts_local = executor_data.get("contextsLocal")}$
 ${if contexts_local is not None:}$

@@ -29,6 +29,7 @@ namespace Game::ExecutionBlock
     public:
         void loadContext() noexcept;
         void initiate() noexcept;
+        void deactivate() noexcept;
         void update(float dt) noexcept;
         void flushSharedLocalContexts() noexcept;
         void modifyTarget1(Context::LContext1::Data&) noexcept;
@@ -40,7 +41,11 @@ namespace Game::ExecutionBlock
         void initImpl(ExternalContexts& externalContexts) noexcept;
         void updateImpl(ExternalContexts& externalContexts, float dt) noexcept;
 
+        void onActivatedImpl(ExternalContexts& externalContexts) noexcept;
+        void onDeactivatedImpl(ExternalContexts& externalContexts) noexcept;
+
     public:
+        bool bIsRunning {};
         Dod::MemPool memory;
         Context::LContext1::Data local1Context;
         Context::LContext2::Data local2Context;

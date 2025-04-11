@@ -7,6 +7,16 @@ void Executor2::initImpl([[maybe_unused]] ExternalContexts& externalContexts) no
 
 }
 
+void Executor2::onActivatedImpl([[maybe_unused]] ExternalContexts& externalContexts) noexcept
+{
+
+}
+
+void Executor2::onDeactivatedImpl([[maybe_unused]] ExternalContexts& externalContexts) noexcept
+{
+
+}
+
 void Executor2::updateImpl([[maybe_unused]] ExternalContexts& externalContexts, [[maybe_unused]] float dt) noexcept
 {
 
