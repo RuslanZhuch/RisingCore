@@ -306,6 +306,12 @@ protected:
 		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), expectedEls);
 	}
 
+	void removeOne(int32_t expectedEls, int32_t index)
+	{
+		Dod::DataUtils::removeOne(this->table, index);
+		EXPECT_EQ(Dod::DataUtils::getNumFilledElements(this->table), expectedEls);
+	}
+
 	alignas(alignment) std::array<Dod::MemTypes::data_t, memorySize + memoryAlignmentOffset> memory{};
 	Dod::DTable<Types...> table;
 
@@ -908,6 +914,30 @@ TEST_F(RemoveElementsIntFloat, RemoveElements)
 	Dod::DataUtils::flush(this->table);
 
 }
+
+TEST_F(RemoveElementsIntFloat, RemoveOneElement)
+{
+
+	this->init(3);
+
+	this->pushBack(1, 1, 2.f);
+	this->pushBack(2, 3, 4.f);
+	this->removeOne(1, 1);
+	this->checkTable<int, float>({ { 1 }, { 2.f } });
+
+	this->removeOne(0, 0);
+
+	this->pushBack(1, 5, 6.f);
+	this->pushBack(2, 7, 8.f);
+	this->removeOne(1, 0);
+	this->checkTable<int, float>({ { 7 }, { 8.f } });
+
+	this->removeOne(0, 0);
+
+	Dod::DataUtils::flush(this->table);
+
+}
+
 
 TEST(DataUtils, CreateGuidedImTable)
 {

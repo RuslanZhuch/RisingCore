@@ -509,6 +509,32 @@ namespace Dod::DataUtils
 
 	}
 
+	void removeOne(CommonData::CDTrivialTable auto& table, int32_t index) noexcept
+	{
+
+		auto columnDataBegin{ table.dataBegin };
+		using tableType = std::decay_t<decltype(table)>;
+		using types_t = tableType::types_t;
+		constexpr auto numOfColumns{ std::tuple_size_v<types_t> };
+		const auto totalElements{ getNumFilledElements(table) };
+		RisingCore::Helpers::constexprLoop<numOfColumns>([&]<size_t currColId>() {
+			using columnType_t = std::tuple_element_t<currColId, types_t>;
+			constexpr auto columnTypeSize{ sizeof(columnType_t) };
+			const auto targetIdx{ totalElements - 1 };
+			const auto columnTypedDataBegin{ reinterpret_cast<columnType_t*>(columnDataBegin) };
+			if constexpr (std::is_move_assignable_v<columnType_t>)
+				columnTypedDataBegin[index] = std::move(columnTypedDataBegin[targetIdx]);
+			else
+				columnTypedDataBegin[index] = columnTypedDataBegin[targetIdx];
+
+			const auto offset{ roundToCells(table.capacityEls * columnTypeSize) };
+			columnDataBegin += offset;
+		});
+
+		--table.numOfFilledEls;
+
+	}
+
 	[[nodiscard]] auto createGuidedImTable(CommonData::CMonoImTable auto srcTable, CommonData::CMonoImTable auto indices) noexcept requires
 		std::is_same_v<std::tuple_element_t<0, typename decltype(indices)::types_t>, int32_t>
 	{

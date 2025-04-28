@@ -1,11 +1,25 @@
 #include <gtest/gtest.h>
 
-#include <dod/MemPool.h>
-
 #include <engine/LocalTable.h>
 
 namespace
 {
+}
+
+TEST(LocalTable, heapPool)
+{
+
+	Engine::LocalTable::MemoryPool pool(1024);
+	EXPECT_EQ(pool.dataBegin + 1024, pool.dataEnd);
+
+}
+
+TEST(LocalTable, stackPool)
+{
+
+	Engine::LocalTable::StackPool<1024> pool;
+	EXPECT_EQ(pool.dataBegin + 1024, pool.dataEnd);
+
 }
 
 TEST(LocalTable, creation)
@@ -14,7 +28,7 @@ TEST(LocalTable, creation)
 	Engine::LocalTable::MemoryPool mem(256);
 	Dod::MemTypes::capacity_t header{};
 
-	auto table1{ Engine::LocalTable::create<int>(16, mem, header) };
+	auto table1{ Engine::LocalTable::createAndUpdateHeader<int>(16, mem, header) };
 	
 	EXPECT_EQ(Dod::DataUtils::getCapacity(table1), 16);
 	EXPECT_EQ(Dod::DataUtils::getNumFilledElements(table1), 0);
@@ -23,8 +37,7 @@ TEST(LocalTable, creation)
 	Dod::DataUtils::pushBack(table1, true, 1);
 	EXPECT_EQ(Dod::DataUtils::get(table1, 0), 1);
 
-
-	auto table2{ Engine::LocalTable::create<int>(16, mem, header) };
+	auto table2{ Engine::LocalTable::createAndUpdateHeader<int>(16, mem, header) };
 
 	EXPECT_EQ(Dod::DataUtils::getCapacity(table2), 16);
 	EXPECT_EQ(Dod::DataUtils::getNumFilledElements(table2), 0);
@@ -67,7 +80,7 @@ TEST(LocalTable, creationResetStableHeader)
 	Engine::LocalTable::MemoryPool mem(256);
 	Dod::MemTypes::capacity_t header{};
 
-	auto table1{ Engine::LocalTable::create<int>(16, mem, header) };
+	auto table1{ Engine::LocalTable::createAndUpdateHeader<int>(16, mem, header) };
 
 	EXPECT_EQ(Dod::DataUtils::getCapacity(table1), 16);
 	EXPECT_EQ(Dod::DataUtils::getNumFilledElements(table1), 0);
