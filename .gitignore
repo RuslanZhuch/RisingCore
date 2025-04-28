@@ -403,3 +403,5 @@ RisingCore.sln
 RisingCore.vcxproj
 RisingCore.vcxproj.filters
 *.make
+*.vcxproj
+Tests/Tests.vcxproj.filters
